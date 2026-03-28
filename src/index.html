@@ -1,0 +1,2618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BertinoMusicBlocs</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    /* ═══════════════════════════════════════════════════════
+       CSS VARIABLES — Dark / Light themes
+    ═══════════════════════════════════════════════════════ */
+    :root {
+      --bg:        #0a0a10;
+      --surface:   #13131f;
+      --surface2:  #1c1c2e;
+      --surface3:  #242438;
+      --accent:    #7c5bf0;
+      --accent2:   #a78bfa;
+      --neon:      #c084fc;
+      --text:      #e2e8f0;
+      --text2:     #94a3b8;
+      --text3:     #64748b;
+      --border:    rgba(255,255,255,0.07);
+      --border2:   rgba(255,255,255,0.12);
+      --shadow:    0 4px 24px rgba(0,0,0,0.5);
+      --radius:    10px;
+      --radius-sm: 6px;
+      --titlebar:  38px;
+    }
+
+    :root.light {
+      --bg:        #f0f0f7;
+      --surface:   #ffffff;
+      --surface2:  #f5f5fb;
+      --surface3:  #eaeaf5;
+      --accent:    #6d3de8;
+      --accent2:   #8b5cf6;
+      --neon:      #a855f7;
+      --text:      #1e1b4b;
+      --text2:     #4c4b7b;
+      --text3:     #7c7aab;
+      --border:    rgba(0,0,0,0.07);
+      --border2:   rgba(0,0,0,0.12);
+      --shadow:    0 4px 24px rgba(0,0,0,0.12);
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       RESET & BASE
+    ═══════════════════════════════════════════════════════ */
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+    body {
+      font-family: 'Syne', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: background 0.3s, color 0.3s;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       HEADER / TOOLBAR
+    ═══════════════════════════════════════════════════════ */
+    #header {
+      height: var(--titlebar);
+      min-height: var(--titlebar);
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 12px 0 80px; /* 80px left for macOS traffic lights */
+      -webkit-app-region: drag;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 100;
+    }
+
+    #header * { -webkit-app-region: no-drag; }
+
+    .logo {
+      font-family: 'Space Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent2);
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+
+    .project-name-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 8px;
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      transition: border-color 0.2s;
+      cursor: text;
+    }
+    .project-name-wrap:hover { border-color: var(--border2); }
+
+    #project-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      background: none;
+      border: none;
+      outline: none;
+      min-width: 80px;
+      max-width: 200px;
+      font-family: 'Syne', sans-serif;
+      -webkit-user-select: text;
+      user-select: text;
+    }
+
+    .header-sep {
+      width: 1px;
+      height: 18px;
+      background: var(--border2);
+      margin: 0 4px;
+    }
+
+    .header-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .header-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    select.hdr-select, input.hdr-input {
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      border-radius: var(--radius-sm);
+      padding: 3px 6px;
+      font-size: 12px;
+      font-family: 'Space Mono', monospace;
+      outline: none;
+      cursor: pointer;
+      height: 26px;
+    }
+    select.hdr-select:hover, input.hdr-input:hover { border-color: var(--accent2); }
+
+    input.hdr-input { width: 52px; text-align: center; -webkit-user-select: text; user-select: text; }
+
+    .header-spacer { flex: 1; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border2);
+      background: var(--surface2);
+      color: var(--text);
+      font-size: 12px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+      white-space: nowrap;
+      height: 26px;
+    }
+    .btn:hover { background: var(--surface3); border-color: var(--accent2); }
+    .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .btn.primary:hover { background: var(--accent2); border-color: var(--accent2); }
+    .btn.icon-only { padding: 4px 7px; font-size: 14px; }
+
+    /* ═══════════════════════════════════════════════════════
+       KEY INFO BAR
+    ═══════════════════════════════════════════════════════ */
+    #key-bar {
+      height: 28px;
+      min-height: 28px;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0;
+      padding: 0 12px;
+      flex-shrink: 0;
+      overflow-x: auto;
+    }
+
+    .degree-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2px 9px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: 'Space Mono', monospace;
+      margin-right: 6px;
+      cursor: default;
+      border: 1px solid transparent;
+      transition: transform 0.1s;
+    }
+    .degree-pill:hover { transform: scale(1.05); }
+
+    /* ═══════════════════════════════════════════════════════
+       MAIN LAYOUT
+    ═══════════════════════════════════════════════════════ */
+    #main {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       BLOCK PALETTE (left sidebar)
+    ═══════════════════════════════════════════════════════ */
+    #palette {
+      width: 220px;
+      min-width: 220px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 10px 8px;
+      gap: 4px;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+
+    .palette-title {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text3);
+      padding: 4px 4px 8px;
+    }
+
+    .palette-bloc {
+      padding: 7px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: grab;
+      border: 1px solid transparent;
+      transition: transform 0.1s, opacity 0.1s, box-shadow 0.1s;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      color: #fff;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+    }
+    .palette-bloc:hover { transform: translateX(2px); box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+    .palette-bloc:active { cursor: grabbing; opacity: 0.8; }
+
+    .palette-bloc .bloc-icon { font-size: 14px; }
+    .palette-bloc .bloc-label { font-size: 11px; }
+
+    /* Block type colours */
+    .bloc-intro       { background: linear-gradient(135deg,#2563eb,#7c3aed); }
+    .bloc-verse       { background: linear-gradient(135deg,#0d9488,#0891b2); }
+    .bloc-pre-chorus  { background: linear-gradient(135deg,#d97706,#ea580c); }
+    .bloc-chorus      { background: linear-gradient(135deg,#dc2626,#db2777); }
+    .bloc-bridge      { background: linear-gradient(135deg,#16a34a,#0d9488); }
+    .bloc-break       { background: linear-gradient(135deg,#475569,#64748b); }
+    .bloc-outro       { background: linear-gradient(135deg,#7c3aed,#2563eb); }
+    .bloc-solo        { background: linear-gradient(135deg,#ca8a04,#d97706); }
+    .bloc-interlude   { background: linear-gradient(135deg,#0891b2,#6d28d9); }
+    .bloc-coda        { background: linear-gradient(135deg,#be185d,#7c3aed); }
+
+    /* Action bloc colours */
+    .bloc-yes  { background: linear-gradient(135deg,#166534,#15803d); }
+    .bloc-no   { background: linear-gradient(135deg,#7f1d1d,#991b1b); }
+    .bloc-on   { background: linear-gradient(135deg,#0369a1,#0284c7); }
+    .bloc-stop { background: linear-gradient(135deg,#1c1c28,#374151); }
+
+    /* Palette section divider */
+    .palette-section-divider {
+      margin-top: 10px;
+      padding: 8px 4px 6px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text3);
+      border-top: 1px solid var(--border2);
+    }
+
+    /* 2-column grid for action blocs */
+    .palette-action-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+    }
+
+    .palette-action-bloc {
+      justify-content: center;
+      padding: 9px 4px;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      border-radius: var(--radius-sm);
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       TIMELINE CENTER
+    ═══════════════════════════════════════════════════════ */
+    #timeline {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Ruler */
+    #ruler {
+      height: 26px;
+      min-height: 26px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: stretch;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .ruler-label-spacer {
+      width: 160px;
+      min-width: 160px;
+      border-right: 1px solid var(--border2);
+      background: var(--surface2);
+      flex-shrink: 0;
+    }
+
+    .ruler-measures {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    .ruler-measure {
+      min-width: 80px;
+      width: 80px;
+      border-right: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding-left: 6px;
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      color: var(--text3);
+      flex-shrink: 0;
+    }
+
+    /* Tracks scroll area */
+    #tracks-scroll {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: auto;
+    }
+
+    #tracks-inner {
+      min-height: 100%;
+    }
+
+    /* Track row */
+    .track-row {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      min-height: 66px;
+      transition: background 0.15s;
+    }
+    .track-row:hover .track-label { background: var(--surface3); }
+    .track-row.drag-over .track-blocks { background: rgba(124, 91, 240, 0.08); }
+
+    .track-label {
+      width: 160px;
+      min-width: 160px;
+      background: var(--surface2);
+      border-right: 1px solid var(--border2);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      flex-shrink: 0;
+      transition: background 0.15s;
+      position: sticky;
+      left: 0;
+      z-index: 2;
+    }
+
+    .track-icon { font-size: 16px; }
+
+    .track-info { flex: 1; min-width: 0; }
+    .track-name {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .track-type-badge {
+      font-size: 9px;
+      font-family: 'Space Mono', monospace;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .track-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+    .track-row:hover .track-actions { opacity: 1; }
+
+    .track-btn {
+      background: none;
+      border: none;
+      color: var(--text3);
+      cursor: pointer;
+      font-size: 11px;
+      padding: 1px 3px;
+      border-radius: 3px;
+      transition: color 0.1s, background 0.1s;
+      line-height: 1;
+    }
+    .track-btn:hover { color: var(--text); background: var(--border2); }
+    .track-btn.danger:hover { color: #f87171; }
+
+    .track-blocks {
+      flex: 1;
+      position: relative;
+      display: flex;
+      align-items: center;
+      padding: 6px 0;
+      min-width: 32 * 80px; /* 32 measures */
+      transition: background 0.15s;
+    }
+
+    /* Block chip inside a track */
+    .block-chip {
+      position: absolute;
+      height: 54px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      flex-direction: column;
+      cursor: grab;
+      border: 2px solid transparent;
+      transition: box-shadow 0.1s, border-color 0.1s, filter 0.2s, opacity 0.15s;
+      overflow: hidden;
+      color: #fff;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+      z-index: 1;
+      user-select: none;
+    }
+    .block-chip:active { cursor: grabbing; }
+    .block-chip:hover  { box-shadow: 0 4px 18px rgba(0,0,0,0.45); z-index: 5; }
+    .block-chip.selected { border-color: #fff; box-shadow: 0 0 0 3px rgba(255,255,255,0.2); }
+    .block-chip.dragging  { opacity: 0.35; }
+
+    /* Muted state — full grayscale */
+    .block-chip.muted { filter: grayscale(1) brightness(0.55); }
+    .block-chip.muted .bchip-mute { opacity: 1 !important; background: rgba(255,255,255,0.25); }
+
+    /* Top action bar (mute + delete) */
+    .bchip-top {
+      height: 18px;
+      min-height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      padding: 0 2px;
+      background: rgba(0,0,0,0.18);
+    }
+
+    .bchip-mute {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.25);
+      border: none;
+      border-radius: 999px;
+      color: rgba(255,255,255,0.9);
+      font-size: 9px;
+      font-weight: 700;
+      padding: 1px 7px;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.15s, background 0.15s;
+      white-space: nowrap;
+      line-height: 14px;
+      font-family: 'Space Mono', monospace;
+      letter-spacing: 0.5px;
+    }
+    .bchip-mute:hover { background: rgba(0,0,0,0.5); }
+    .block-chip:hover .bchip-mute { opacity: 1; }
+
+    .bchip-del {
+      position: absolute;
+      right: 3px;
+      background: rgba(220,38,38,0.0);
+      border: none;
+      border-radius: 3px;
+      color: rgba(255,255,255,0.6);
+      font-size: 11px;
+      line-height: 14px;
+      padding: 0 3px;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.15s, color 0.15s, background 0.15s;
+    }
+    .bchip-del:hover { color: #fca5a5; background: rgba(220,38,38,0.35); }
+    .block-chip:hover .bchip-del { opacity: 1; }
+
+    /* Main content row */
+    .bchip-main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      padding: 0 8px;
+      gap: 5px;
+      overflow: hidden;
+      min-width: 0;
+    }
+    .bchip-icon  { font-size: 14px; flex-shrink: 0; }
+    .bchip-label { font-size: 11px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .bchip-dur   { font-size: 9px; font-family:'Space Mono',monospace; opacity:0.8; flex-shrink: 0; margin-left: auto; }
+
+    /* Measure grid lines inside track blocks area */
+    .track-blocks::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: repeating-linear-gradient(
+        90deg,
+        var(--border) 0px,
+        var(--border) 1px,
+        transparent 1px,
+        transparent 80px
+      );
+      pointer-events: none;
+    }
+
+    /* Add track footer */
+    #add-track-row {
+      display: flex;
+      align-items: center;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       RIGHT PANEL — block detail
+    ═══════════════════════════════════════════════════════ */
+    #panel {
+      width: 0;
+      min-width: 0;
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+                  min-width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      flex-shrink: 0;
+    }
+    #panel.open {
+      width: 280px;
+      min-width: 280px;
+    }
+
+    .panel-header {
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .panel-title { font-size: 13px; font-weight: 700; flex: 1; }
+
+    .panel-body { flex: 1; padding: 14px 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
+
+    .field-group { display: flex; flex-direction: column; gap: 5px; }
+    .field-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text3); }
+
+    .field-input, .field-select, .field-textarea {
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      border-radius: var(--radius-sm);
+      padding: 7px 10px;
+      font-size: 13px;
+      font-family: 'Syne', sans-serif;
+      outline: none;
+      width: 100%;
+      transition: border-color 0.15s;
+      -webkit-user-select: text;
+      user-select: text;
+    }
+    .field-input:focus, .field-select:focus, .field-textarea:focus { border-color: var(--accent2); }
+    .field-textarea { resize: vertical; min-height: 80px; }
+
+    .field-row { display: flex; gap: 8px; }
+    .field-row .field-group { flex: 1; }
+
+    .panel-footer {
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 8px;
+    }
+    .panel-footer .btn { flex: 1; justify-content: center; }
+    .btn.danger { border-color: #dc2626; color: #f87171; }
+    .btn.danger:hover { background: rgba(220,38,38,0.1); }
+
+    /* Harmonic degree display inside panel */
+    .degree-display {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       MODALS
+    ═══════════════════════════════════════════════════════ */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+    .modal {
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      padding: 24px;
+      min-width: 360px;
+      max-width: 480px;
+      width: 100%;
+      box-shadow: var(--shadow);
+      transform: scale(0.95);
+      transition: transform 0.2s;
+    }
+    .modal-overlay.open .modal { transform: scale(1); }
+
+    .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 18px; }
+
+    .track-type-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+
+    .track-type-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      border: 2px solid var(--border2);
+      background: var(--surface3);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: 'Syne', sans-serif;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .track-type-btn:hover { border-color: var(--accent2); background: var(--surface); }
+    .track-type-btn.selected { border-color: var(--accent); background: rgba(124,91,240,0.12); color: var(--accent2); }
+
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+    /* ═══════════════════════════════════════════════════════
+       TOAST NOTIFICATION
+    ═══════════════════════════════════════════════════════ */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(60px);
+      background: var(--surface3);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      padding: 10px 20px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: var(--shadow);
+      z-index: 2000;
+      transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s;
+      opacity: 0;
+      pointer-events: none;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+    /* ═══════════════════════════════════════════════════════
+       SCROLLBAR
+    ═══════════════════════════════════════════════════════ */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+    /* ═══════════════════════════════════════════════════════
+       EMPTY STATE
+    ═══════════════════════════════════════════════════════ */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 60px 20px;
+      color: var(--text3);
+      text-align: center;
+    }
+    .empty-state .empty-icon { font-size: 40px; opacity: 0.4; }
+    .empty-state p { font-size: 14px; }
+
+    /* Version snapshot badge */
+    .version-badge {
+      font-size: 10px;
+      font-family: 'Space Mono', monospace;
+      background: var(--surface3);
+      border: 1px solid var(--border2);
+      border-radius: 4px;
+      padding: 2px 7px;
+      color: var(--text2);
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       PALETTE CONTEXT SECTIONS (LYRICS / FRETBOARD / STAFF)
+    ═══════════════════════════════════════════════════════ */
+    #palette-ctx {
+      display: flex;
+      flex-direction: column;
+      margin-top: 6px;
+    }
+
+    .ctx-section {
+      border-top: 1px solid var(--border);
+      padding-top: 8px;
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .ctx-section-title {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text3);
+      padding: 0 2px 2px;
+    }
+
+    .ctx-empty {
+      font-size: 11px;
+      color: var(--text3);
+      font-style: italic;
+      padding: 4px 2px;
+      text-align: center;
+    }
+
+    /* Lyrics */
+    .ctx-lyrics-area {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      border-radius: var(--radius-sm);
+      padding: 6px 8px;
+      font-size: 11px;
+      font-family: 'Space Mono', monospace;
+      resize: vertical;
+      min-height: 72px;
+      max-height: 180px;
+      outline: none;
+      -webkit-user-select: text;
+      user-select: text;
+      transition: border-color 0.15s;
+      line-height: 1.5;
+      box-sizing: border-box;
+    }
+    .ctx-lyrics-area:focus { border-color: var(--accent2); }
+
+    /* Staff */
+    .ctx-staff-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3px;
+    }
+
+    .ctx-staff-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      border-radius: var(--radius-sm);
+      padding: 2px 5px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.1s, border-color 0.1s;
+      min-width: 24px;
+      text-align: center;
+      flex-shrink: 0;
+      line-height: 18px;
+    }
+    .ctx-staff-btn:hover  { background: var(--surface3); border-color: var(--accent2); }
+    .ctx-staff-btn.sel    { background: var(--accent);   border-color: var(--accent);  color:#fff; }
+    .ctx-staff-btn.acc-sel{ background: #92400e;         border-color: #d97706;        color:#fff; }
+
+    .ctx-staff-display {
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-sm);
+      padding: 5px 7px;
+      font-size: 10px;
+      font-family: 'Space Mono', monospace;
+      color: var(--text2);
+      min-height: 36px;
+      max-height: 80px;
+      overflow-y: auto;
+      word-break: break-all;
+      line-height: 1.6;
+      -webkit-user-select: text;
+      user-select: text;
+    }
+
+    /* Fretboard chord input */
+    .ctx-chord-input {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      border-radius: var(--radius-sm);
+      padding: 5px 8px;
+      font-size: 12px;
+      font-family: 'Space Mono', monospace;
+      outline: none;
+      -webkit-user-select: text;
+      user-select: text;
+      transition: border-color 0.15s;
+      box-sizing: border-box;
+    }
+    .ctx-chord-input:focus { border-color: var(--accent2); }
+    .ctx-chord-input::placeholder { color: var(--text3); font-size: 11px; }
+
+    /* ═══════════════════════════════════════════════════════
+       FRETBOARD DIAGRAM
+    ═══════════════════════════════════════════════════════ */
+    .fretboard-container {
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      background: var(--surface);
+    }
+
+    .fretboard-head,
+    .fretboard-body {
+      display: grid;
+      grid-template-columns: 22px repeat(6, 1fr);
+    }
+
+    .fretboard-scroll {
+      max-height: 120px; /* shows ~5 frets; scroll to reach fret 16 */
+      overflow-y: auto;
+    }
+    .fretboard-scroll::-webkit-scrollbar { width: 4px; }
+    .fretboard-scroll::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 2px; }
+
+    .fret-corner {
+      background: var(--surface2);
+      border-right: 1px solid var(--border2);
+      border-bottom: 2px solid var(--border2);
+    }
+
+    .fret-str-header {
+      font-size: 10px;
+      font-family: 'Space Mono', monospace;
+      font-weight: 700;
+      color: var(--text2);
+      text-align: center;
+      padding: 4px 2px;
+      background: var(--surface2);
+      border-bottom: 2px solid var(--border2);
+      border-right: 1px solid var(--border);
+    }
+
+    .fret-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      font-family: 'Space Mono', monospace;
+      color: var(--text3);
+      background: var(--surface2);
+      border-right: 1px solid var(--border2);
+      border-bottom: 1px solid var(--border);
+      min-height: 24px;
+    }
+    /* Standard guitar fret markers (3, 5, 7, 9, 12, 15) */
+    .fret-label.marker      { color: var(--accent2); font-weight: 700; }
+    .fret-label.marker-dbl  { color: var(--neon);    font-weight: 700; } /* 12 */
+
+    .fret-cell {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      min-height: 24px;
+      cursor: pointer;
+      transition: background 0.1s;
+      position: relative;
+    }
+    .fret-cell:last-child { border-right: none; }
+    .fret-cell:hover      { background: rgba(124,91,240,0.13); }
+    .fret-cell.has-dot    { background: rgba(124,91,240,0.07); }
+
+    .fret-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 7px var(--accent2);
+      pointer-events: none;
+      transition: transform 0.1s;
+    }
+    .fret-cell.has-dot:hover .fret-dot { transform: scale(1.15); }
+
+    .fret-scroll-hint {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 9px;
+      font-family: 'Space Mono', monospace;
+      color: var(--text3);
+      padding: 4px 8px;
+      background: var(--surface2);
+      border-top: 1px solid var(--border);
+    }
+    .fret-dot-count {
+      background: var(--accent);
+      color: #fff;
+      font-size: 9px;
+      font-family: 'Space Mono', monospace;
+      border-radius: 999px;
+      padding: 0 6px;
+      line-height: 16px;
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       RAILROAD OVERLAY
+    ═══════════════════════════════════════════════════════ */
+    #railroad-overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 900;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s;
+      overflow: hidden;
+    }
+    #railroad-overlay.open { opacity: 1; pointer-events: all; }
+
+    .rr-topbar {
+      height: 50px;
+      min-height: 50px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border2);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 0 20px;
+      flex-shrink: 0;
+    }
+    .rr-title {
+      font-family: 'Space Mono', monospace;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--accent2);
+      flex: 1;
+    }
+    .rr-meta {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      color: var(--text3);
+    }
+
+    #railroad-scroll {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: auto;
+      padding: 28px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    /* One track row in railroad */
+    .rr-track {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      min-height: 64px;
+    }
+
+    .rr-track-label {
+      width: 130px;
+      min-width: 130px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+      padding-right: 16px;
+      flex-shrink: 0;
+    }
+    .rr-track-name {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 120px;
+    }
+    .rr-track-badge {
+      font-size: 9px;
+      font-family: 'Space Mono', monospace;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 2px;
+    }
+
+    /* The rail line + cars wrapper */
+    .rr-rail-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      position: relative;
+      min-height: 64px;
+    }
+
+    /* The continuous rail line behind the cars */
+    .rr-rail-line {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 4px;
+      transform: translateY(-50%);
+      background: repeating-linear-gradient(
+        90deg,
+        var(--border2) 0px,
+        var(--border2) 18px,
+        transparent 18px,
+        transparent 28px
+      );
+      border-radius: 2px;
+    }
+
+    /* Start cap of rail */
+    .rr-rail-cap {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 2px solid var(--bg);
+      z-index: 2;
+      flex-shrink: 0;
+    }
+    .rr-rail-cap.left  { left: 0; }
+    .rr-rail-cap.right { right: 0; }
+
+    /* Cars container */
+    .rr-cars {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      position: relative;
+      z-index: 1;
+      flex-wrap: nowrap;
+      padding: 0 16px;
+      width: 100%;
+    }
+
+    /* Connector between cars */
+    .rr-connector {
+      width: 24px;
+      min-width: 24px;
+      height: 4px;
+      background: var(--border2);
+      flex-shrink: 0;
+      position: relative;
+    }
+    .rr-connector::before,
+    .rr-connector::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--text3);
+    }
+    .rr-connector::before { left: 2px; }
+    .rr-connector::after  { right: 2px; }
+
+    /* Individual block car */
+    .rr-car {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 14px;
+      border-radius: 10px;
+      border: 2px solid rgba(255,255,255,0.12);
+      min-width: 80px;
+      max-width: 160px;
+      cursor: default;
+      position: relative;
+      color: #fff;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+      flex-shrink: 0;
+    }
+
+    /* Car wheel bumps at bottom */
+    .rr-car::after {
+      content: '';
+      position: absolute;
+      bottom: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60%;
+      height: 6px;
+      background: rgba(0,0,0,0.25);
+      border-radius: 0 0 6px 6px;
+    }
+
+    .rr-car-icon  { font-size: 18px; line-height: 1; }
+    .rr-car-name  { font-size: 11px; font-weight: 700; margin-top: 3px; white-space: nowrap; }
+    .rr-car-meta  { font-size: 9px;  font-family: 'Space Mono', monospace; opacity: 0.8; margin-top: 1px; }
+    .rr-car-chords {
+      font-size: 9px;
+      font-family: 'Space Mono', monospace;
+      opacity: 0.75;
+      margin-top: 3px;
+      white-space: nowrap;
+      max-width: 130px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Empty track in railroad */
+    .rr-empty-track {
+      font-size: 11px;
+      color: var(--text3);
+      font-style: italic;
+      padding: 0 16px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* No tracks at all */
+    .rr-no-tracks {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      gap: 12px;
+      color: var(--text3);
+      font-size: 15px;
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       PRINT — show only railroad content
+    ═══════════════════════════════════════════════════════ */
+    @media print {
+      #header, #key-bar, #main, #modal-add-track, #toast { display: none !important; }
+      #railroad-overlay {
+        position: static !important;
+        opacity: 1 !important;
+        pointer-events: all !important;
+        height: auto !important;
+        overflow: visible !important;
+        background: #fff !important;
+        color: #000 !important;
+      }
+      .rr-topbar { background: #fff !important; border-bottom: 1px solid #ccc !important; }
+      .rr-title  { color: #333 !important; }
+      .rr-meta   { color: #666 !important; }
+      .rr-topbar .btn { display: none !important; }
+      #railroad-scroll { overflow: visible !important; padding: 16px 20px !important; }
+      .rr-rail-line { background: repeating-linear-gradient(90deg,#999 0,#999 18px,transparent 18px,transparent 28px) !important; }
+      .rr-rail-cap  { background: #555 !important; }
+      .rr-car { box-shadow: 0 2px 6px rgba(0,0,0,0.2) !important; border-color: rgba(0,0,0,0.2) !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════ HEADER ═══════════ -->
+  <header id="header">
+    <div class="logo">BertinoMusicBlocs</div>
+    <div class="project-name-wrap">
+      <input id="project-name" type="text" value="Untitled Project" spellcheck="false">
+    </div>
+    <div class="header-sep"></div>
+
+    <div class="header-group">
+      <span class="header-label">Key</span>
+      <select id="key-select" class="hdr-select" onchange="onKeyChange(this.value)">
+        <option>C</option><option>C#</option><option>D</option><option>D#</option>
+        <option>E</option><option>F</option><option>F#</option><option>G</option>
+        <option>G#</option><option>A</option><option>A#</option><option>B</option>
+      </select>
+    </div>
+
+    <div class="header-group">
+      <span class="header-label">Time</span>
+      <select id="time-select" class="hdr-select" onchange="S.timeSign=$('#time-select').value;toast('Time: '+S.timeSign)">
+        <option>4/4</option><option>3/4</option><option>6/8</option><option>5/4</option><option>7/8</option>
+      </select>
+    </div>
+
+    <div class="header-group">
+      <span class="header-label">BPM</span>
+      <input id="tempo-input" class="hdr-input" type="number" min="40" max="300" value="120"
+             onchange="S.tempo=+this.value">
+    </div>
+
+    <div class="header-sep"></div>
+    <span id="version-badge" class="version-badge">v1</span>
+    <button class="btn" onclick="snapshotVersion()" title="Save version snapshot">⏱ Snapshot</button>
+
+    <div class="header-spacer"></div>
+
+    <button class="btn" onclick="showMidiImport()" title="Import MIDI">🎹 MIDI</button>
+    <button class="btn" onclick="exportHTML()" title="Export standalone HTML">⬇ HTML</button>
+    <button class="btn" onclick="showRailroad()" title="Railroad view — printable song structure">🚂 Railroad</button>
+    <button class="btn" onclick="exportPDF()" title="Print / Export PDF">🖨 PDF</button>
+    <button class="btn" onclick="openProject()" title="Open project">📂 Open</button>
+    <button class="btn primary" onclick="saveProject()" title="Save project (Cmd+S)">💾 Save</button>
+    <button class="btn icon-only" id="dark-toggle" onclick="toggleDark()" title="Toggle dark/light mode">🌙</button>
+  </header>
+
+  <!-- ═══════════ KEY INFO BAR ═══════════ -->
+  <div id="key-bar"></div>
+
+  <!-- ═══════════ MAIN ═══════════ -->
+  <div id="main">
+
+    <!-- Left: block palette -->
+    <div id="palette">
+      <div class="palette-title">Blocs</div>
+      <div id="palette-blocs-area"></div>
+      <div id="palette-ctx"></div>
+    </div>
+
+    <!-- Center: timeline -->
+    <div id="timeline">
+      <!-- Ruler -->
+      <div id="ruler">
+        <div class="ruler-label-spacer"></div>
+        <div class="ruler-measures" id="ruler-measures"></div>
+      </div>
+      <!-- Tracks -->
+      <div id="tracks-scroll">
+        <div id="tracks-inner">
+          <!-- Tracks injected here -->
+          <div id="add-track-row">
+            <button class="btn" onclick="showAddTrack()">＋ Add Track</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: block detail panel -->
+    <div id="panel">
+      <div class="panel-header">
+        <span class="panel-title">Block Detail</span>
+        <button class="btn icon-only" onclick="closePanel()" title="Close">✕</button>
+      </div>
+      <div class="panel-body" id="panel-body"></div>
+      <div class="panel-footer" id="panel-footer"></div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════ MODAL: Add Track ═══════════ -->
+  <div class="modal-overlay" id="modal-add-track" onclick="if(event.target===this)closeAddTrack()">
+    <div class="modal">
+      <div class="modal-title">Add a Track</div>
+      <div class="track-type-grid" id="track-type-grid"></div>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeAddTrack()">Cancel</button>
+        <button class="btn primary" onclick="confirmAddTrack()">Add Track</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ RAILROAD OVERLAY ═══════════ -->
+  <div id="railroad-overlay">
+    <div class="rr-topbar">
+      <div class="rr-title" id="rr-title">🚂 Railroad View</div>
+      <div class="rr-meta" id="rr-meta"></div>
+      <button class="btn primary" onclick="printRailroad()" title="Print this page">🖨 Print</button>
+      <button class="btn" onclick="closeRailroad()" title="Close (Esc)">✕ Close</button>
+    </div>
+    <div id="railroad-scroll"></div>
+  </div>
+
+  <!-- ═══════════ TOAST ═══════════ -->
+  <div id="toast"></div>
+
+  <script>
+  /* ═══════════════════════════════════════════════════════════
+     CONSTANTS
+  ═══════════════════════════════════════════════════════════ */
+
+  const BLOCK_DEFS = {
+    intro:      { label:'Intro',      icon:'▶', color:'#2563eb' },
+    verse:      { label:'Verse',      icon:'📝', color:'#0d9488' },
+    'pre-chorus':{ label:'Pre-Chorus', icon:'🔁', color:'#d97706' },
+    chorus:     { label:'Chorus',     icon:'⭐', color:'#dc2626' },
+    bridge:     { label:'Bridge',     icon:'🌉', color:'#16a34a' },
+    break:      { label:'Break',      icon:'⏸', color:'#475569' },
+    outro:      { label:'Outro',      icon:'⏹', color:'#7c3aed' },
+    solo:       { label:'Solo',       icon:'🎸', color:'#ca8a04' },
+    interlude:  { label:'Interlude',  icon:'🎵', color:'#0891b2' },
+    coda:       { label:'Coda',       icon:'🔚', color:'#be185d' },
+    // ── Action blocs ──
+    yes:  { label:'YES',  icon:'✔', color:'#166534' },
+    no:   { label:'NO',   icon:'✖', color:'#7f1d1d' },
+    on:   { label:'ON',   icon:'⚡', color:'#0369a1' },
+    stop: { label:'STOP', icon:'■', color:'#1c1c28' },
+  }
+
+  // Subset rendered in the ACTION palette section
+  const ACTION_TYPES = new Set(['yes','no','on','stop'])
+
+  const TRACK_CONFIGS = {
+    chords:    { icon:'🎵', badge:'CHORDS',    name:'Chords',     defaultName:'Chords' },
+    melody:    { icon:'🎶', badge:'MELODY',    name:'Melody',     defaultName:'Melody' },
+    bass:      { icon:'🎸', badge:'BASS',      name:'Bass',       defaultName:'Bass' },
+    percussion:{ icon:'🥁', badge:'DRUM',      name:'Percussion', defaultName:'Drums' },
+    loops:     { icon:'🔄', badge:'LOOP',      name:'Loops',      defaultName:'Loop' },
+    'guitar-tab':{ icon:'🎼',badge:'TAB',      name:'Guitar Tab', defaultName:'Guitar Tab' },
+    fretboard: { icon:'🎸', badge:'FRET',      name:'Fretboard',  defaultName:'Fretboard' },
+    staff:     { icon:'🎵', badge:'STAFF',     name:'Staff',      defaultName:'Staff' },
+    lyrics:    { icon:'🎤', badge:'LYRICS',    name:'Lyrics',     defaultName:'Lyrics' },
+    arpeggio:  { icon:'🌊', badge:'ARPEGGIO',  name:'Arpeggio',   defaultName:'Arpeggio' },
+  }
+
+  // Major scale degrees (roman numeral + color)
+  const SCALE_DEGREES = [
+    { degree:'I',   interval:0,  color:'#6366f1', bg:'rgba(99,102,241,0.15)' },
+    { degree:'II',  interval:2,  color:'#f59e0b', bg:'rgba(245,158,11,0.15)' },
+    { degree:'III', interval:4,  color:'#10b981', bg:'rgba(16,185,129,0.15)' },
+    { degree:'IV',  interval:5,  color:'#3b82f6', bg:'rgba(59,130,246,0.15)' },
+    { degree:'V',   interval:7,  color:'#ef4444', bg:'rgba(239,68,68,0.15)' },
+    { degree:'VI',  interval:9,  color:'#a855f7', bg:'rgba(168,85,247,0.15)' },
+    { degree:'VII', interval:11, color:'#64748b', bg:'rgba(100,116,139,0.15)' },
+  ]
+  const NOTES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B']
+
+  const MEASURE_WIDTH = 80   // px per measure
+  const MEASURES      = 32   // visible measures
+
+  /* ═══════════════════════════════════════════════════════════
+     GLOBAL STATE
+  ═══════════════════════════════════════════════════════════ */
+  let S = {
+    tracks: [],
+    blocks: [],
+    selectedBlockId: null,
+    key: 'C',
+    timeSign: '4/4',
+    tempo: 120,
+    darkMode: true,
+    versions: [],
+    version: 1,
+    projectName: 'Untitled Project',
+  }
+
+  let TID = 1   // track id counter
+  let BID = 1   // block id counter
+  let _dragType = null  // block type being dragged from palette
+
+  /* ═══════════════════════════════════════════════════════════
+     HELPERS
+  ═══════════════════════════════════════════════════════════ */
+  function $(id) { return document.getElementById(id) }
+  function el(tag, cls, inner) {
+    const e = document.createElement(tag)
+    if (cls) e.className = cls
+    if (inner !== undefined) e.innerHTML = inner
+    return e
+  }
+
+  function toast(msg, duration = 2200) {
+    const t = $('toast')
+    t.textContent = msg
+    t.classList.add('show')
+    clearTimeout(t._tid)
+    t._tid = setTimeout(() => t.classList.remove('show'), duration)
+  }
+
+  function uid(prefix) { return prefix + '_' + Math.random().toString(36).slice(2,9) }
+
+  /* ═══════════════════════════════════════════════════════════
+     INIT
+  ═══════════════════════════════════════════════════════════ */
+  function init() {
+    buildPalette()
+    buildRuler()
+    updateKeyInfo()
+    ensureDefaultTracks()
+    render()
+    updateContextPanels(null)
+    bindKeys()
+    wireElectron()
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     PALETTE
+  ═══════════════════════════════════════════════════════════ */
+  function buildPalette() {
+    const area = $('palette-blocs-area')
+    area.innerHTML = ''
+
+    // ── BLOCS section (music blocks) ──
+    Object.entries(BLOCK_DEFS).forEach(([type, def]) => {
+      if (ACTION_TYPES.has(type)) return
+      area.appendChild(makePaletteChip(type, def, false))
+    })
+
+    // ── ACTION section ──
+    const divider = el('div', 'palette-section-divider', 'Action')
+    area.appendChild(divider)
+
+    const grid = el('div', 'palette-action-grid')
+    ACTION_TYPES.forEach(type => {
+      grid.appendChild(makePaletteChip(type, BLOCK_DEFS[type], true))
+    })
+    area.appendChild(grid)
+  }
+
+  function makePaletteChip(type, def, isAction) {
+    const cls = isAction
+      ? `palette-bloc palette-action-bloc bloc-${type}`
+      : `palette-bloc bloc-${type}`
+    const d = el('div', cls)
+    d.title = `Drag "${def.label}" onto a track`
+    d.draggable = true
+    d.innerHTML = isAction
+      ? `<span class="bloc-label">${def.label}</span>`
+      : `<span class="bloc-icon">${def.icon}</span><span class="bloc-label">${def.label}</span>`
+    d.addEventListener('dragstart', e => {
+      _dragType = type
+      e.dataTransfer.effectAllowed = 'copy'
+      e.dataTransfer.setData('text/plain', type)
+    })
+    d.addEventListener('dragend', () => { _dragType = null })
+    return d
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     RULER
+  ═══════════════════════════════════════════════════════════ */
+  function buildRuler() {
+    const rm = $('ruler-measures')
+    rm.innerHTML = ''
+    for (let m = 1; m <= MEASURES; m++) {
+      const d = el('div', 'ruler-measure', String(m))
+      rm.appendChild(d)
+    }
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     KEY INFO BAR
+  ═══════════════════════════════════════════════════════════ */
+  function updateKeyInfo() {
+    const bar = $('key-bar')
+    bar.innerHTML = ''
+    const rootIdx = NOTES.indexOf(S.key)
+    SCALE_DEGREES.forEach(deg => {
+      const noteIdx = (rootIdx + deg.interval) % 12
+      const note = NOTES[noteIdx]
+      const pill = el('div', 'degree-pill')
+      pill.style.background = deg.bg
+      pill.style.color = deg.color
+      pill.style.borderColor = deg.color + '44'
+      pill.textContent = `${deg.degree} ${note}`
+      bar.appendChild(pill)
+    })
+  }
+
+  function onKeyChange(key) {
+    S.key = key
+    updateKeyInfo()
+    toast(`Key: ${key} Major`)
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     RENDER — main track list
+  ═══════════════════════════════════════════════════════════ */
+  function render() {
+    const inner = $('tracks-inner')
+    // Preserve #add-track-row
+    const addRow = $('add-track-row')
+    inner.innerHTML = ''
+
+    if (S.tracks.length === 0) {
+      const es = el('div', 'empty-state')
+      es.innerHTML = `<div class="empty-icon">🎼</div><p>No tracks yet.<br>Click <strong>+ Add Track</strong> to start.</p>`
+      inner.appendChild(es)
+    } else {
+      S.tracks.forEach(track => inner.appendChild(buildTrackRow(track)))
+    }
+
+    inner.appendChild(addRow)
+  }
+
+  function buildTrackRow(track) {
+    const cfg = TRACK_CONFIGS[track.type] || { icon:'🎵', badge:'TRACK', name:'Track' }
+    const row = el('div', 'track-row')
+    row.dataset.trackId = track.id
+
+    // Label
+    const label = el('div', 'track-label')
+    label.innerHTML = `
+      <span class="track-icon">${cfg.icon}</span>
+      <div class="track-info">
+        <div class="track-name">${track.name}</div>
+        <div class="track-type-badge">${cfg.badge}</div>
+      </div>
+      <div class="track-actions">
+        <button class="track-btn" onclick="moveTrack('${track.id}',-1)" title="Move up">▲</button>
+        <button class="track-btn danger" onclick="removeTrack('${track.id}')" title="Delete track">✕</button>
+        <button class="track-btn" onclick="moveTrack('${track.id}',1)" title="Move down">▼</button>
+      </div>
+    `
+    row.appendChild(label)
+
+    // Blocks area
+    const blocksEl = el('div', 'track-blocks')
+    blocksEl.style.minWidth = (MEASURES * MEASURE_WIDTH) + 'px'
+
+    // Drag-and-drop onto track (palette → new block, chip → move/switch block)
+    let _dragEnterCount = 0
+    blocksEl.addEventListener('dragenter', e => {
+      e.preventDefault()
+      _dragEnterCount++
+      row.classList.add('drag-over')
+    })
+    blocksEl.addEventListener('dragover', e => { e.preventDefault() })
+    blocksEl.addEventListener('dragleave', () => {
+      _dragEnterCount--
+      if (_dragEnterCount <= 0) { _dragEnterCount = 0; row.classList.remove('drag-over') }
+    })
+    blocksEl.addEventListener('drop', e => {
+      e.preventDefault()
+      _dragEnterCount = 0
+      row.classList.remove('drag-over')
+      const rect = blocksEl.getBoundingClientRect()
+      const relX = e.clientX - rect.left
+      const measure = Math.max(1, Math.floor(relX / MEASURE_WIDTH) + 1)
+
+      // Moving an existing block?
+      if (_dragBlockId) {
+        const block = S.blocks.find(b => b.id === _dragBlockId)
+        if (block) {
+          block.trackId = track.id
+          block.measure = measure
+        }
+        _dragBlockId = null
+        render()
+        return
+      }
+
+      // Palette drop → create new block
+      const type = e.dataTransfer.getData('text/plain') || _dragType
+      if (!type || !BLOCK_DEFS[type]) return
+      dropBlock(type, track.id, measure)
+    })
+
+    // Render blocks on this track
+    const trackBlocks = S.blocks.filter(b => b.trackId === track.id)
+    trackBlocks.forEach(block => {
+      const chip = buildBlockChip(block)
+      blocksEl.appendChild(chip)
+    })
+
+    row.appendChild(blocksEl)
+    return row
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     BLOCK CHIP
+  ═══════════════════════════════════════════════════════════ */
+  let _dragBlockId  = null   // id of block chip being dragged
+  let _chipDragging = false  // guard to suppress click after drag
+
+  function buildBlockChip(block) {
+    const def = BLOCK_DEFS[block.type] || { label: block.type, icon:'◼', color:'#475569' }
+    const chip = el('div', 'block-chip')
+    chip.dataset.blockId = block.id
+    chip.draggable = true
+    if (block.id === S.selectedBlockId) chip.classList.add('selected')
+    if (block.muted) chip.classList.add('muted')
+
+    chip.style.left  = ((block.measure - 1) * MEASURE_WIDTH) + 'px'
+    chip.style.width = (block.measures * MEASURE_WIDTH - 4) + 'px'
+    chip.classList.add(`bloc-${block.type}`)
+
+    // Top bar: mute (center) + delete (right)
+    const muteLabel = block.muted ? '🔇 MUTED' : '🔇 Mute'
+    chip.innerHTML = `
+      <div class="bchip-top">
+        <button class="bchip-mute" title="Mute / Unmute block">${muteLabel}</button>
+        <button class="bchip-del"  title="Delete block">✕</button>
+      </div>
+      <div class="bchip-main">
+        <span class="bchip-icon">${def.icon}</span>
+        <span class="bchip-label">${esc(block.name || def.label)}</span>
+        <span class="bchip-dur">${block.measures}m</span>
+      </div>
+    `
+
+    // Mute button
+    chip.querySelector('.bchip-mute').addEventListener('click', e => {
+      e.stopPropagation()
+      toggleMute(block.id)
+    })
+
+    // Quick delete button
+    chip.querySelector('.bchip-del').addEventListener('click', e => {
+      e.stopPropagation()
+      quickDeleteBlock(block.id)
+    })
+
+    // Drag to move / switch track
+    chip.addEventListener('dragstart', e => {
+      _dragBlockId  = block.id
+      _chipDragging = true
+      e.dataTransfer.effectAllowed = 'move'
+      e.dataTransfer.setData('application/block-id', block.id)
+      // Prevent palette type from leaking through
+      e.dataTransfer.setData('text/plain', '')
+      chip.classList.add('dragging')
+    })
+    chip.addEventListener('dragend', () => {
+      chip.classList.remove('dragging')
+      _dragBlockId = null
+      setTimeout(() => { _chipDragging = false }, 0)
+    })
+
+    // Click to open detail panel (not after drag)
+    chip.addEventListener('click', () => {
+      if (_chipDragging) return
+      openBlockDetail(block.id)
+    })
+
+    return chip
+  }
+
+  function toggleMute(id) {
+    const block = S.blocks.find(b => b.id === id)
+    if (!block) return
+    block.muted = !block.muted
+    render()
+    toast(block.muted ? '🔇 Muted' : '🔊 Unmuted')
+  }
+
+  function quickDeleteBlock(id) {
+    S.blocks = S.blocks.filter(b => b.id !== id)
+    if (S.selectedBlockId === id) { S.selectedBlockId = null; closePanel() }
+    render()
+    toast('Block deleted')
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     TRACKS CRUD
+  ═══════════════════════════════════════════════════════════ */
+  let _pendingTrackType = null
+
+  function showAddTrack() {
+    _pendingTrackType = null
+    const grid = $('track-type-grid')
+    grid.innerHTML = ''
+    Object.entries(TRACK_CONFIGS).forEach(([type, cfg]) => {
+      const btn = el('button', 'track-type-btn')
+      btn.innerHTML = `${cfg.icon} ${cfg.name}`
+      btn.dataset.type = type
+      btn.addEventListener('click', () => {
+        grid.querySelectorAll('.track-type-btn').forEach(b => b.classList.remove('selected'))
+        btn.classList.add('selected')
+        _pendingTrackType = type
+      })
+      grid.appendChild(btn)
+    })
+    $('modal-add-track').classList.add('open')
+  }
+
+  function closeAddTrack() { $('modal-add-track').classList.remove('open') }
+
+  function confirmAddTrack() {
+    if (!_pendingTrackType) { toast('Select a track type first'); return }
+    const cfg = TRACK_CONFIGS[_pendingTrackType]
+    const track = {
+      id: 't' + TID++,
+      type: _pendingTrackType,
+      name: cfg.defaultName,
+    }
+    S.tracks.push(track)
+    closeAddTrack()
+    render()
+    toast(`Track "${track.name}" added`)
+  }
+
+  function removeTrack(id) {
+    S.tracks = S.tracks.filter(t => t.id !== id)
+    S.blocks = S.blocks.filter(b => b.trackId !== id)
+    if (S.selectedBlockId && !S.blocks.find(b => b.id === S.selectedBlockId)) {
+      S.selectedBlockId = null
+      closePanel()
+    }
+    render()
+    toast('Track removed')
+  }
+
+  function moveTrack(id, dir) {
+    const idx = S.tracks.findIndex(t => t.id === id)
+    const newIdx = idx + dir
+    if (newIdx < 0 || newIdx >= S.tracks.length) return
+    const tmp = S.tracks[idx]; S.tracks[idx] = S.tracks[newIdx]; S.tracks[newIdx] = tmp
+    render()
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     BLOCKS CRUD
+  ═══════════════════════════════════════════════════════════ */
+  function dropBlock(type, trackId, measure = 1) {
+    const def = BLOCK_DEFS[type]
+    // Find next free measure (avoid exact overlap, simple)
+    const occupied = S.blocks
+      .filter(b => b.trackId === trackId)
+      .map(b => b.measure)
+    let m = measure
+    while (occupied.includes(m)) m++
+    if (m > MEASURES) m = measure  // fallback, allow overlap
+
+    const block = {
+      id: 'b' + BID++,
+      type,
+      trackId,
+      measure: m,
+      measures: 4,
+      name: def.label,
+      notes: '',
+      chords: '',
+      lyrics: '',
+      tempo: S.tempo,
+      key: S.key,
+      muted: false,
+      fretDots: [],
+      staffNotes: '',
+    }
+    S.blocks.push(block)
+    S.selectedBlockId = block.id
+    render()
+    openBlockDetail(block.id)
+    toast(`Block "${def.label}" added`)
+  }
+
+  function openBlockDetail(id) {
+    const block = S.blocks.find(b => b.id === id)
+    if (!block) return
+    S.selectedBlockId = id
+
+    // Re-render to show selection
+    render()
+
+    const def = BLOCK_DEFS[block.type] || { label: block.type, icon:'◼' }
+    const panel = $('panel')
+    const body = $('panel-body')
+    const footer = $('panel-footer')
+
+    body.innerHTML = `
+      <div class="field-group">
+        <div class="field-label">Name</div>
+        <input class="field-input" id="pf-name" value="${esc(block.name)}" type="text">
+      </div>
+      <div class="field-row">
+        <div class="field-group">
+          <div class="field-label">Start (measure)</div>
+          <input class="field-input" id="pf-measure" type="number" min="1" max="${MEASURES}" value="${block.measure}">
+        </div>
+        <div class="field-group">
+          <div class="field-label">Duration (measures)</div>
+          <input class="field-input" id="pf-measures" type="number" min="1" max="16" value="${block.measures}">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field-group">
+          <div class="field-label">Key</div>
+          <select class="field-select" id="pf-key">
+            ${NOTES.map(n=>`<option${n===block.key?' selected':''}>${n}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field-group">
+          <div class="field-label">Tempo (BPM)</div>
+          <input class="field-input" id="pf-tempo" type="number" min="40" max="300" value="${block.tempo}">
+        </div>
+      </div>
+      <div class="field-group">
+        <div class="field-label">Chords / Notes</div>
+        <input class="field-input" id="pf-chords" type="text" placeholder="Am - F - C - G…" value="${esc(block.chords)}">
+      </div>
+      <div class="field-group">
+        <div class="field-label">Lyrics / Notes</div>
+        <textarea class="field-textarea" id="pf-lyrics" placeholder="Lyrics or notes…">${esc(block.lyrics)}</textarea>
+      </div>
+      <div class="field-group">
+        <div class="field-label">Harmonic Degrees</div>
+        <div class="degree-display" id="pf-degrees"></div>
+      </div>
+    `
+
+    // Render degree pills in panel
+    const deg = $('pf-degrees')
+    const rootIdx = NOTES.indexOf(block.key || S.key)
+    SCALE_DEGREES.forEach(d => {
+      const noteIdx = (rootIdx + d.interval) % 12
+      const pill = el('div', 'degree-pill')
+      pill.style.background = d.bg
+      pill.style.color = d.color
+      pill.style.borderColor = d.color + '44'
+      pill.style.cursor = 'pointer'
+      pill.textContent = `${d.degree} ${NOTES[noteIdx]}`
+      pill.title = `Add ${NOTES[noteIdx]} to chords`
+      pill.addEventListener('click', () => {
+        const cf = $('pf-chords')
+        cf.value = cf.value ? cf.value + ' - ' + NOTES[noteIdx] : NOTES[noteIdx]
+      })
+      deg.appendChild(pill)
+    })
+
+    // Fretboard diagram — only for blocks on a fretboard track
+    const parentTrack = S.tracks.find(t => t.id === block.trackId)
+    if (parentTrack && parentTrack.type === 'fretboard') {
+      body.appendChild(buildFretboard(block))
+    }
+
+    footer.innerHTML = ''
+    const saveBtn = el('button', 'btn primary', '✔ Save')
+    saveBtn.addEventListener('click', saveBlockDetail)
+    const delBtn = el('button', 'btn danger', '✕ Delete')
+    delBtn.addEventListener('click', deleteBlock)
+    footer.appendChild(saveBtn)
+    footer.appendChild(delBtn)
+
+    updateContextPanels(block)
+    panel.classList.add('open')
+  }
+
+  function saveBlockDetail() {
+    const block = S.blocks.find(b => b.id === S.selectedBlockId)
+    if (!block) return
+    block.name    = $('pf-name').value.trim() || BLOCK_DEFS[block.type].label
+    block.measure = Math.max(1, Math.min(MEASURES, +$('pf-measure').value))
+    block.measures= Math.max(1, Math.min(16, +$('pf-measures').value))
+    block.key     = $('pf-key').value
+    block.tempo   = +$('pf-tempo').value
+    block.chords  = $('pf-chords').value
+    block.lyrics  = $('pf-lyrics').value
+    render()
+    toast('Block saved')
+  }
+
+  function deleteBlock() {
+    S.blocks = S.blocks.filter(b => b.id !== S.selectedBlockId)
+    S.selectedBlockId = null
+    closePanel()
+    render()
+    toast('Block deleted')
+  }
+
+  function closePanel() {
+    S.selectedBlockId = null
+    $('panel').classList.remove('open')
+    render()
+    updateContextPanels(null)
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     VERSIONS
+  ═══════════════════════════════════════════════════════════ */
+  function snapshotVersion() {
+    S.versions.push({ v: S.version, state: JSON.stringify(S), at: Date.now() })
+    S.version++
+    $('version-badge').textContent = 'v' + S.version
+    toast(`Snapshot v${S.version - 1} saved`)
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     DARK / LIGHT MODE
+  ═══════════════════════════════════════════════════════════ */
+  function toggleDark() {
+    S.darkMode = !S.darkMode
+    document.documentElement.classList.toggle('light', !S.darkMode)
+    $('dark-toggle').textContent = S.darkMode ? '🌙' : '☀️'
+    toast(S.darkMode ? 'Dark mode' : 'Light mode')
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     EXPORT — BROWSER VERSIONS (overridden by wireElectron)
+  ═══════════════════════════════════════════════════════════ */
+  function saveProject() {
+    const data = serializeState()
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = (S.projectName || 'project') + '.bmb'
+    a.click()
+    toast('Project saved')
+  }
+
+  function openProject() {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = '.bmb,.json'
+    input.onchange = e => {
+      const file = e.target.files[0]
+      if (!file) return
+      const reader = new FileReader()
+      reader.onload = ev => {
+        try {
+          loadState(JSON.parse(ev.target.result))
+          toast('Project loaded')
+        } catch { toast('Error: invalid project file') }
+      }
+      reader.readAsText(file)
+    }
+    input.click()
+  }
+
+  function exportHTML() {
+    const html = buildExportHTML()
+    const blob = new Blob([html], { type: 'text/html' })
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = (S.projectName || 'chart') + '.html'
+    a.click()
+    toast('HTML exported')
+  }
+
+  function exportPDF() { window.print() }
+
+  function showMidiImport() {
+    toast('MIDI import requires the Electron app', 3000)
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     STATE SERIALIZATION
+  ═══════════════════════════════════════════════════════════ */
+  function serializeState() {
+    return {
+      schema: '1.0',
+      app: 'BertinoMusicBlocs',
+      savedAt: new Date().toISOString(),
+      projectName: $('project-name').value,
+      key: S.key,
+      timeSign: S.timeSign,
+      tempo: S.tempo,
+      darkMode: S.darkMode,
+      version: S.version,
+      tracks: S.tracks,
+      blocks: S.blocks,
+    }
+  }
+
+  function loadState(data) {
+    if (data.app && data.app !== 'BertinoMusicBlocs') {
+      // still try to load for forward-compat
+    }
+    S.key      = data.key      || 'C'
+    S.timeSign = data.timeSign || '4/4'
+    S.tempo    = data.tempo    || 120
+    S.darkMode = data.darkMode !== false
+    S.version  = data.version  || 1
+    S.tracks   = data.tracks   || []
+    S.blocks   = data.blocks   || []
+    S.projectName = data.projectName || 'Untitled Project'
+
+    // Sync counters
+    TID = S.tracks.reduce((m,t) => Math.max(m, +(t.id.replace('t',''))||0), 0) + 1
+    BID = S.blocks.reduce((m,b) => Math.max(m, +(b.id.replace('b',''))||0), 0) + 1
+
+    $('project-name').value = S.projectName
+    $('key-select').value   = S.key
+    $('time-select').value  = S.timeSign
+    $('tempo-input').value  = S.tempo
+    $('version-badge').textContent = 'v' + S.version
+    document.documentElement.classList.toggle('light', !S.darkMode)
+    $('dark-toggle').textContent = S.darkMode ? '🌙' : '☀️'
+
+    S.selectedBlockId = null
+    closePanel()
+    updateKeyInfo()
+    render()
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     STANDALONE HTML EXPORT
+  ═══════════════════════════════════════════════════════════ */
+  function buildExportHTML() {
+    const data = serializeState()
+    const blocks = S.blocks
+    const blocksByTrack = {}
+    S.tracks.forEach(t => { blocksByTrack[t.id] = [] })
+    blocks.forEach(b => { if (blocksByTrack[b.trackId]) blocksByTrack[b.trackId].push(b) })
+
+    let rows = S.tracks.map(t => {
+      const cfg = TRACK_CONFIGS[t.type] || { icon:'🎵', badge:'TRACK' }
+      const bhtml = (blocksByTrack[t.id] || []).map(b => {
+        const def = BLOCK_DEFS[b.type] || { label:b.type, icon:'◼' }
+        return `<div class="block-chip bloc-${b.type}" style="left:${(b.measure-1)*MEASURE_WIDTH}px;width:${b.measures*MEASURE_WIDTH-4}px">
+          ${def.icon} <strong>${b.name}</strong> <small>${b.measures}m</small>
+          ${b.chords ? `<br><small>${b.chords}</small>` : ''}
+        </div>`
+      }).join('')
+      return `<div class="track-row">
+        <div class="track-label">${cfg.icon} ${t.name}</div>
+        <div class="track-blocks" style="min-width:${MEASURES*MEASURE_WIDTH}px">${bhtml}</div>
+      </div>`
+    }).join('')
+
+    return `<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><title>${esc(data.projectName)} — BertinoMusicBlocs</title>
+<style>
+body{font-family:sans-serif;background:#0a0a10;color:#e2e8f0;margin:0;padding:20px}
+h1{color:#a78bfa;font-size:20px;margin-bottom:4px}
+.meta{color:#64748b;font-size:12px;margin-bottom:20px}
+.track-row{display:flex;border-bottom:1px solid rgba(255,255,255,0.07);min-height:52px;margin-bottom:2px}
+.track-label{width:160px;min-width:160px;background:#1c1c2e;padding:8px 12px;font-size:13px;font-weight:bold;display:flex;align-items:center}
+.track-blocks{flex:1;position:relative;display:flex;align-items:center}
+.block-chip{position:absolute;height:40px;border-radius:6px;display:flex;align-items:center;padding:0 10px;gap:6px;color:#fff;font-size:11px;font-weight:bold}
+.bloc-intro{background:linear-gradient(135deg,#2563eb,#7c3aed)}
+.bloc-verse{background:linear-gradient(135deg,#0d9488,#0891b2)}
+.bloc-pre-chorus{background:linear-gradient(135deg,#d97706,#ea580c)}
+.bloc-chorus{background:linear-gradient(135deg,#dc2626,#db2777)}
+.bloc-bridge{background:linear-gradient(135deg,#16a34a,#0d9488)}
+.bloc-break{background:linear-gradient(135deg,#475569,#64748b)}
+.bloc-outro{background:linear-gradient(135deg,#7c3aed,#2563eb)}
+.bloc-solo{background:linear-gradient(135deg,#ca8a04,#d97706)}
+.bloc-interlude{background:linear-gradient(135deg,#0891b2,#6d28d9)}
+.bloc-coda{background:linear-gradient(135deg,#be185d,#7c3aed)}
+.bloc-yes{background:linear-gradient(135deg,#166534,#15803d)}
+.bloc-no{background:linear-gradient(135deg,#7f1d1d,#991b1b)}
+.bloc-on{background:linear-gradient(135deg,#0369a1,#0284c7)}
+.bloc-stop{background:linear-gradient(135deg,#1c1c28,#374151)}
+</style>
+</head><body>
+<h1>🎵 ${esc(data.projectName)}</h1>
+<p class="meta">Key: ${data.key} | ${data.timeSign} | ${data.tempo} BPM | Exported ${new Date().toLocaleDateString()}</p>
+${rows}
+</body></html>`
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     KEYBOARD SHORTCUTS
+  ═══════════════════════════════════════════════════════════ */
+  function bindKeys() {
+    document.addEventListener('keydown', e => {
+      const mod = e.metaKey || e.ctrlKey
+      if (mod && e.key === 's') { e.preventDefault(); saveProject() }
+      if (mod && e.key === 'o') { e.preventDefault(); openProject() }
+      if (mod && e.key === 'n') { e.preventDefault(); newProject() }
+      if (e.key === 'Escape') {
+        if ($('railroad-overlay').classList.contains('open')) closeRailroad()
+        else if ($('modal-add-track').classList.contains('open')) closeAddTrack()
+        else closePanel()
+      }
+      if ((e.key === 'Delete' || e.key === 'Backspace') && S.selectedBlockId &&
+          !['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) {
+        deleteBlock()
+      }
+    })
+  }
+
+  function newProject() {
+    if (S.tracks.length > 0 || S.blocks.length > 0) {
+      if (!confirm('Start a new project? Unsaved changes will be lost.')) return
+    }
+    S = {
+      tracks: [], blocks: [], selectedBlockId: null,
+      key: 'C', timeSign: '4/4', tempo: 120, darkMode: S.darkMode,
+      versions: [], version: 1, projectName: 'Untitled Project',
+    }
+    TID = 1; BID = 1
+    $('project-name').value = 'Untitled Project'
+    $('key-select').value = 'C'
+    $('time-select').value = '4/4'
+    $('tempo-input').value = 120
+    $('version-badge').textContent = 'v1'
+    ensureDefaultTracks()
+    closePanel()
+    updateKeyInfo()
+    render()
+    updateContextPanels(null)
+    toast('New project')
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     UTILITY
+  ═══════════════════════════════════════════════════════════ */
+  function esc(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     DEFAULT TRACKS
+  ═══════════════════════════════════════════════════════════ */
+  function ensureDefaultTracks() {
+    const DEFAULTS = [
+      { type:'fretboard', name:'Fretboard' },   // added in reverse for unshift order
+      { type:'staff',     name:'Staff'     },
+      { type:'lyrics',    name:'Lyrics'    },
+    ]
+    DEFAULTS.forEach(({ type, name }) => {
+      if (!S.tracks.some(t => t.type === type))
+        S.tracks.unshift({ id:'t'+TID++, type, name })
+    })
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     PALETTE CONTEXT PANELS
+  ═══════════════════════════════════════════════════════════ */
+  let _staffDur = 'q'    // current note duration
+  let _staffAcc = ''     // current accidental
+
+  function updateContextPanels(block) {
+    const ctx = $('palette-ctx')
+    if (!ctx) return
+    ctx.innerHTML = ''
+    ctx.appendChild(buildCtxLyrics(block))
+    ctx.appendChild(buildCtxFretboard(block))
+    ctx.appendChild(buildCtxStaff(block))
+  }
+
+  // ── LYRICS ────────────────────────────────────────────────
+  function buildCtxLyrics(block) {
+    const sec = el('div', 'ctx-section')
+    sec.appendChild(el('div', 'ctx-section-title', 'Lyrics'))
+    if (!block) { sec.appendChild(el('div', 'ctx-empty', 'Select a block')); return sec }
+    const ta = el('textarea', 'ctx-lyrics-area')
+    ta.placeholder = 'Enter lyrics…'
+    ta.value = block.lyrics || ''
+    ta.addEventListener('input', () => {
+      block.lyrics = ta.value
+      const pf = $('pf-lyrics')
+      if (pf) pf.value = ta.value
+    })
+    sec.appendChild(ta)
+    return sec
+  }
+
+  // ── FRETBOARD ─────────────────────────────────────────────
+  function buildCtxFretboard(block) {
+    const sec = el('div', 'ctx-section')
+    sec.appendChild(el('div', 'ctx-section-title', 'Fretboard'))
+    if (!block) { sec.appendChild(el('div', 'ctx-empty', 'Select a block')); return sec }
+    if (!block.fretDots) block.fretDots = []
+
+    const container = el('div', 'fretboard-container')
+    const head = el('div', 'fretboard-head')
+    head.appendChild(el('div', 'fret-corner'))
+    FRET_STRINGS.forEach(s => head.appendChild(el('div', 'fret-str-header', s)))
+    container.appendChild(head)
+
+    const scrollEl = el('div', 'fretboard-scroll')
+    const bodyEl   = el('div', 'fretboard-body')
+    for (let f = 1; f <= FRET_COUNT; f++) {
+      let cls = 'fret-label'
+      if (FRET_MARKERS_DBL.has(f)) cls += ' marker-dbl'
+      else if (FRET_MARKERS.has(f)) cls += ' marker'
+      bodyEl.appendChild(el('div', cls, String(f)))
+      for (let s = 1; s <= 6; s++) {
+        const cell = el('div', 'fret-cell')
+        if (block.fretDots.some(d => d.f===f && d.s===s)) {
+          cell.classList.add('has-dot')
+          cell.appendChild(el('div', 'fret-dot'))
+        }
+        cell.addEventListener('click', () => {
+          toggleFretDot(block, f, s, cell)
+          dotCount.textContent = String(block.fretDots.length)
+        })
+        bodyEl.appendChild(cell)
+      }
+    }
+    scrollEl.appendChild(bodyEl)
+    container.appendChild(scrollEl)
+
+    const hint = el('div', 'fret-scroll-hint')
+    const dotCount = el('span', 'fret-dot-count', String(block.fretDots.length))
+    hint.appendChild(dotCount)
+    hint.appendChild(document.createTextNode(' dots  ·  scroll ↕ 1–16'))
+    container.appendChild(hint)
+    sec.appendChild(container)
+
+    const chordIn = el('input', 'ctx-chord-input')
+    chordIn.type = 'text'
+    chordIn.placeholder = 'Chord name  (Am, G7…)'
+    chordIn.value = block.chords || ''
+    chordIn.addEventListener('input', () => {
+      block.chords = chordIn.value
+      const pf = $('pf-chords')
+      if (pf) pf.value = chordIn.value
+    })
+    sec.appendChild(chordIn)
+    return sec
+  }
+
+  // ── STAFF ─────────────────────────────────────────────────
+  const DURATIONS = [
+    { k:'w', sym:'𝅝' , tip:'Whole'      },
+    { k:'h', sym:'𝅗𝅥' , tip:'Half'       },
+    { k:'q', sym:'♩'  , tip:'Quarter'    },
+    { k:'e', sym:'♪'  , tip:'Eighth'     },
+    { k:'s', sym:'𝅘𝅥𝅮' , tip:'Sixteenth'  },
+  ]
+  const DUR_SYMS = { w:'𝅝', h:'𝅗𝅥', q:'♩', e:'♪', s:'𝅘𝅥𝅮' }
+
+  function buildCtxStaff(block) {
+    const sec = el('div', 'ctx-section')
+    sec.appendChild(el('div', 'ctx-section-title', 'Staff'))
+    if (!block) { sec.appendChild(el('div', 'ctx-empty', 'Select a block')); return sec }
+    if (!block.staffNotes) block.staffNotes = ''
+
+    // Duration row
+    const durRow = el('div', 'ctx-staff-row')
+    const durBtns = {}
+    DURATIONS.forEach(({ k, sym, tip }) => {
+      const btn = el('button', 'ctx-staff-btn' + (k===_staffDur?' sel':''), sym)
+      btn.title = tip
+      btn.addEventListener('click', () => {
+        _staffDur = k
+        Object.values(durBtns).forEach(b => b.classList.remove('sel'))
+        btn.classList.add('sel')
+      })
+      durBtns[k] = btn
+      durRow.appendChild(btn)
+    })
+    const restBtn = el('button', 'ctx-staff-btn', '𝄾')
+    restBtn.title = 'Rest'
+    restBtn.addEventListener('click', () => staffAppend(block, 'Rest', display))
+    durRow.appendChild(restBtn)
+    sec.appendChild(durRow)
+
+    // Accidentals row
+    const accRow = el('div', 'ctx-staff-row')
+    const ACC = [{ k:'#', sym:'♯' }, { k:'b', sym:'♭' }, { k:'', sym:'♮' }]
+    const accBtns = {}
+    ACC.forEach(({ k, sym }) => {
+      const btn = el('button', 'ctx-staff-btn' + (k===_staffAcc?' acc-sel':''), sym)
+      btn.addEventListener('click', () => {
+        _staffAcc = k
+        Object.values(accBtns).forEach(b => b.classList.remove('acc-sel'))
+        btn.classList.add('acc-sel')
+      })
+      accBtns[k] = btn
+      accRow.appendChild(btn)
+    })
+    sec.appendChild(accRow)
+
+    // Note buttons
+    const noteRow = el('div', 'ctx-staff-row')
+    ;['C','D','E','F','G','A','B'].forEach(n => {
+      const btn = el('button', 'ctx-staff-btn', n)
+      btn.addEventListener('click', () => staffAppend(block, n, display))
+      noteRow.appendChild(btn)
+    })
+    sec.appendChild(noteRow)
+
+    // Control row
+    const ctrlRow = el('div', 'ctx-staff-row')
+    const bkBtn = el('button', 'ctx-staff-btn', '⌫')
+    bkBtn.title = 'Delete last note'
+    bkBtn.addEventListener('click', () => {
+      const tokens = (block.staffNotes||'').trim().split(/\s+/).filter(Boolean)
+      tokens.pop()
+      block.staffNotes = tokens.join(' ')
+      display.textContent = staffFormat(block.staffNotes)
+    })
+    const clrBtn = el('button', 'ctx-staff-btn', '✕')
+    clrBtn.title = 'Clear all'
+    clrBtn.addEventListener('click', () => {
+      block.staffNotes = ''
+      display.textContent = '—'
+    })
+    ctrlRow.appendChild(bkBtn)
+    ctrlRow.appendChild(clrBtn)
+    sec.appendChild(ctrlRow)
+
+    // Display
+    const display = el('div', 'ctx-staff-display')
+    display.textContent = staffFormat(block.staffNotes)
+    sec.appendChild(display)
+    return sec
+  }
+
+  function staffAppend(block, noteName, displayEl) {
+    const token = noteName === 'Rest'
+      ? `${_staffDur}:Rest`
+      : `${_staffDur}:${noteName}${_staffAcc}4`
+    _staffAcc = ''
+    block.staffNotes = block.staffNotes ? block.staffNotes+' '+token : token
+    if (displayEl) displayEl.textContent = staffFormat(block.staffNotes)
+  }
+
+  function staffFormat(notes) {
+    if (!notes || !notes.trim()) return '—'
+    return notes.trim().split(/\s+/).map(t => {
+      const [dur, note] = t.split(':')
+      return (DUR_SYMS[dur]||dur) + (note||'')
+    }).join(' ')
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     FRETBOARD DIAGRAM
+  ═══════════════════════════════════════════════════════════ */
+  const FRET_STRINGS  = ['E', 'A', 'D', 'G', 'B', 'e']  // low → high
+  const FRET_MARKERS  = new Set([3, 5, 7, 9, 15])        // single-dot frets
+  const FRET_MARKERS_DBL = new Set([12])                  // double-dot (octave)
+  const FRET_COUNT    = 16
+
+  function buildFretboard(block) {
+    if (!block.fretDots) block.fretDots = []
+
+    const wrap = el('div', 'field-group')
+    wrap.appendChild(el('div', 'field-label', 'Fretboard  (frets 1 – 16)'))
+
+    const container = el('div', 'fretboard-container')
+
+    // ── Fixed header row: corner + string names ──
+    const head = el('div', 'fretboard-head')
+    head.appendChild(el('div', 'fret-corner'))
+    FRET_STRINGS.forEach(s => head.appendChild(el('div', 'fret-str-header', s)))
+    container.appendChild(head)
+
+    // ── Scrollable fret rows (1 – FRET_COUNT) ──
+    const scrollEl = el('div', 'fretboard-scroll')
+    const body     = el('div', 'fretboard-body')
+
+    for (let f = 1; f <= FRET_COUNT; f++) {
+      // Fret number label (left column)
+      let markerCls = 'fret-label'
+      if (FRET_MARKERS_DBL.has(f)) markerCls += ' marker-dbl'
+      else if (FRET_MARKERS.has(f)) markerCls += ' marker'
+      const fretLbl = el('div', markerCls, String(f))
+      body.appendChild(fretLbl)
+
+      // 6 string cells
+      for (let s = 1; s <= 6; s++) {
+        const cell  = el('div', 'fret-cell')
+        const hasDot = block.fretDots.some(d => d.f === f && d.s === s)
+        if (hasDot) {
+          cell.classList.add('has-dot')
+          cell.appendChild(el('div', 'fret-dot'))
+        }
+        cell.addEventListener('click', () => {
+          toggleFretDot(block, f, s, cell)
+          updateFretHint(block, hintCount)
+        })
+        body.appendChild(cell)
+      }
+    }
+
+    scrollEl.appendChild(body)
+    container.appendChild(scrollEl)
+
+    // ── Status bar: dot count + scroll hint ──
+    const hint = el('div', 'fret-scroll-hint')
+    const hintCount = el('span', 'fret-dot-count', String(block.fretDots.length))
+    hint.appendChild(hintCount)
+    hint.appendChild(document.createTextNode(' dots placed  ·  scroll ↕ frets 1–16'))
+    container.appendChild(hint)
+
+    wrap.appendChild(container)
+    return wrap
+  }
+
+  function toggleFretDot(block, fret, string, cellEl) {
+    if (!block.fretDots) block.fretDots = []
+    const idx = block.fretDots.findIndex(d => d.f === fret && d.s === string)
+    if (idx >= 0) {
+      block.fretDots.splice(idx, 1)
+      cellEl.classList.remove('has-dot')
+      cellEl.innerHTML = ''
+    } else {
+      block.fretDots.push({ f: fret, s: string })
+      cellEl.classList.add('has-dot')
+      cellEl.appendChild(el('div', 'fret-dot'))
+    }
+  }
+
+  function updateFretHint(block, countEl) {
+    countEl.textContent = String(block.fretDots.length)
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     RAILROAD VIEW
+  ═══════════════════════════════════════════════════════════ */
+  function showRailroad() {
+    const overlay  = $('railroad-overlay')
+    const scroll   = $('railroad-scroll')
+    const titleEl  = $('rr-title')
+    const metaEl   = $('rr-meta')
+    const projName = $('project-name').value || 'Untitled Project'
+
+    titleEl.textContent = '🚂 ' + projName
+    metaEl.textContent  = `Key: ${S.key}  •  ${S.timeSign}  •  ${S.tempo} BPM  •  ${S.blocks.length} bloc${S.blocks.length !== 1 ? 's' : ''}`
+
+    scroll.innerHTML = ''
+
+    if (S.tracks.length === 0) {
+      const msg = el('div', 'rr-no-tracks')
+      msg.innerHTML = '<div style="font-size:36px;opacity:0.3">🚂</div><p>No tracks yet — add some tracks and blocks first.</p>'
+      scroll.appendChild(msg)
+      overlay.classList.add('open')
+      return
+    }
+
+    S.tracks.forEach(track => {
+      const cfg        = TRACK_CONFIGS[track.type] || { icon:'🎵', badge:'TRACK' }
+      const trackBlocks = S.blocks
+        .filter(b => b.trackId === track.id)
+        .slice()
+        .sort((a, b) => a.measure - b.measure)
+
+      const row = el('div', 'rr-track')
+
+      // Label
+      const labelEl = el('div', 'rr-track-label')
+      labelEl.innerHTML = `
+        <div class="rr-track-name">${cfg.icon} ${track.name}</div>
+        <div class="rr-track-badge">${cfg.badge}</div>
+      `
+      row.appendChild(labelEl)
+
+      // Rail wrap
+      const railWrap = el('div', 'rr-rail-wrap')
+
+      // Background rail line
+      const railLine = el('div', 'rr-rail-line')
+      railWrap.appendChild(railLine)
+
+      // Left cap
+      const capL = el('div', 'rr-rail-cap left')
+      railWrap.appendChild(capL)
+
+      // Cars container
+      const cars = el('div', 'rr-cars')
+
+      if (trackBlocks.length === 0) {
+        const empty = el('span', 'rr-empty-track', 'No blocks on this track')
+        cars.appendChild(empty)
+      } else {
+        trackBlocks.forEach((block, i) => {
+          const def = BLOCK_DEFS[block.type] || { label: block.type, icon:'◼' }
+
+          const car = el('div', `rr-car bloc-${block.type}`)
+          car.title = block.chords ? `${block.name} — ${block.chords}` : block.name
+
+          let carHTML = `
+            <span class="rr-car-icon">${def.icon}</span>
+            <span class="rr-car-name">${esc(block.name)}</span>
+            <span class="rr-car-meta">${block.measures}m • M${block.measure}</span>
+          `
+          if (block.chords) {
+            carHTML += `<span class="rr-car-chords">${esc(block.chords)}</span>`
+          }
+          car.innerHTML = carHTML
+          cars.appendChild(car)
+
+          // Connector between cars (not after last)
+          if (i < trackBlocks.length - 1) {
+            cars.appendChild(el('div', 'rr-connector'))
+          }
+        })
+      }
+
+      railWrap.appendChild(cars)
+
+      // Right cap
+      const capR = el('div', 'rr-rail-cap right')
+      railWrap.appendChild(capR)
+
+      row.appendChild(railWrap)
+      scroll.appendChild(row)
+    })
+
+    overlay.classList.add('open')
+  }
+
+  function closeRailroad() {
+    $('railroad-overlay').classList.remove('open')
+  }
+
+  function printRailroad() {
+    window.print()
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     ELECTRON WIRE-UP — override browser functions with native
+  ═══════════════════════════════════════════════════════════ */
+  function wireElectron() {
+    if (!window.electronAPI) return
+
+    // Override save
+    saveProject = async function() {
+      const data = serializeState()
+      const name = ($('project-name').value || 'project').replace(/[^a-zA-Z0-9_\- ]/g,'')
+      const result = await window.electronAPI.saveJSON(data, name + '.bmb')
+      if (result.ok) toast('Project saved → ' + result.filePath.split(/[\\/]/).pop())
+    }
+
+    // Override open
+    openProject = async function() {
+      const result = await window.electronAPI.openJSON()
+      if (!result.ok) return
+      try { loadState(result.data); toast('Project loaded') }
+      catch { toast('Error reading project file') }
+    }
+
+    // Override export HTML
+    exportHTML = async function() {
+      const html = buildExportHTML()
+      const name = ($('project-name').value || 'chart').replace(/[^a-zA-Z0-9_\- ]/g,'')
+      const result = await window.electronAPI.exportHTML(html, name + '.html')
+      if (result.ok) toast('HTML exported → ' + result.filePath.split(/[\\/]/).pop())
+    }
+
+    // Override MIDI import
+    showMidiImport = async function() {
+      const result = await window.electronAPI.importMidi()
+      if (!result.ok) return
+      toast('MIDI imported (simulation) — ' + result.filePath.split(/[\\/]/).pop(), 3000)
+    }
+
+    // Load a recent project opened from the File menu
+    window.electronAPI.onLoadRecent(({ data, filePath, error }) => {
+      if (error) { toast('⚠ File not found: ' + (filePath||'').split(/[\\/]/).pop()); return }
+      try { loadState(data); toast('Opened: ' + filePath.split(/[\\/]/).pop()) }
+      catch { toast('Error reading project') }
+    })
+
+    // Listen for menu actions (Cmd+S, Cmd+O, etc.)
+    window.electronAPI.onMenuAction(action => {
+      switch (action) {
+        case 'new':         newProject(); break
+        case 'save':        saveProject(); break
+        case 'open':        openProject(); break
+        case 'export-html': exportHTML(); break
+        case 'export-pdf':  exportPDF(); break
+        case 'import-midi': showMidiImport(); break
+        case 'toggle-dark': toggleDark(); break
+      }
+    })
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     START
+  ═══════════════════════════════════════════════════════════ */
+  document.addEventListener('DOMContentLoaded', init)
+  </script>
+</body>
+</html>

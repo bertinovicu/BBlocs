@@ -1,0 +1,72 @@
+{
+  "name": "bertino-music-blocs",
+  "version": "1.0.0",
+  "description": "BertinoMusicBlocs — Music composition and arrangement for macOS",
+  "main": "src/main.js",
+  "author": "Bertinovic",
+  "copyright": "Copyright © 2025 Bertinovic",
+  "scripts": {
+    "dev":           "electron .",
+    "build":         "electron-builder --mac --universal",
+    "build:arm":     "electron-builder --mac --arm64",
+    "build:intel":   "electron-builder --mac --x64",
+    "build:win":     "electron-builder --win --x64",
+    "build:dir":     "electron-builder --dir",
+    "make-icon":     "node scripts/make-icon.js"
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.0.0"
+  },
+  "build": {
+    "appId": "com.bertinovic.musicblocs",
+    "productName": "BertinoMusicBlocs",
+    "copyright": "Copyright © 2025 Bertinovic",
+    "directories": {
+      "output":         "dist",
+      "buildResources": "assets"
+    },
+    "files": [
+      "src/**/*",
+      "assets/entitlements.mac.plist",
+      "!**/*.map"
+    ],
+    "asar": true,
+
+    "mac": {
+      "category": "public.app-category.music",
+      "hardenedRuntime": false,
+      "entitlements":        "assets/entitlements.mac.plist",
+      "entitlementsInherit": "assets/entitlements.mac.plist",
+      "icon": "assets/icon.icns",
+      "target": [
+        { "target": "dmg", "arch": ["arm64", "x64"] },
+        { "target": "zip", "arch": ["arm64", "x64"] }
+      ]
+    },
+    "dmg": {
+      "title": "${productName} ${version}",
+      "icon": "assets/icon.icns",
+      "background": "assets/dmg-background.png",
+      "contents": [
+        { "x": 130, "y": 220 },
+        { "x": 410, "y": 220, "type": "link", "path": "/Applications" }
+      ],
+      "window": { "width": 540, "height": 380 }
+    },
+
+    "win": {
+      "icon": "assets/icon.png",
+      "target": [
+        { "target": "nsis", "arch": ["x64"] }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "BertinoMusicBlocs"
+    }
+  }
+}

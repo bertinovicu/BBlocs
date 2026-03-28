@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BertinoMusicBlocs</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      width: 480px;
+      height: 300px;
+      overflow: hidden;
+      background: transparent;
+      -webkit-app-region: no-drag;
+      user-select: none;
+    }
+
+    .splash {
+      width: 480px;
+      height: 300px;
+      background: linear-gradient(145deg, #0e0e1a 0%, #16103a 45%, #0e1e2a 100%);
+      border-radius: 18px;
+      border: 1px solid rgba(140, 110, 255, 0.25);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      animation: fadeIn 0.6s ease forwards;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Ambient glow background */
+    .splash::before {
+      content: '';
+      position: absolute;
+      width: 280px;
+      height: 280px;
+      background: radial-gradient(circle, rgba(124, 91, 255, 0.15) 0%, transparent 70%);
+      top: -60px;
+      left: 50%;
+      transform: translateX(-50%);
+      pointer-events: none;
+    }
+    .splash::after {
+      content: '';
+      position: absolute;
+      width: 200px;
+      height: 200px;
+      background: radial-gradient(circle, rgba(56, 200, 255, 0.08) 0%, transparent 70%);
+      bottom: -40px;
+      right: 40px;
+      pointer-events: none;
+    }
+
+    .logo-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      z-index: 1;
+    }
+
+    .logo-icon {
+      font-size: 52px;
+      line-height: 1;
+      filter: drop-shadow(0 0 18px rgba(140, 110, 255, 0.7));
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .app-name {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      background: linear-gradient(90deg, #a78bfa, #60a5fa, #a78bfa);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: shimmer 2.5s linear infinite;
+    }
+
+    .app-version {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 12px;
+      color: rgba(167, 139, 250, 0.55);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+
+    /* Equalizer bars */
+    .equalizer {
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      height: 32px;
+      z-index: 1;
+    }
+
+    .eq-bar {
+      width: 5px;
+      border-radius: 3px 3px 0 0;
+      background: linear-gradient(180deg, #a78bfa, #6d28d9);
+      animation: eqBounce var(--dur, 0.8s) ease-in-out infinite alternate;
+    }
+    .eq-bar:nth-child(1)  { --dur: 0.55s; height: 14px; }
+    .eq-bar:nth-child(2)  { --dur: 0.72s; height: 24px; }
+    .eq-bar:nth-child(3)  { --dur: 0.43s; height: 18px; }
+    .eq-bar:nth-child(4)  { --dur: 0.65s; height: 30px; }
+    .eq-bar:nth-child(5)  { --dur: 0.50s; height: 20px; }
+    .eq-bar:nth-child(6)  { --dur: 0.78s; height: 26px; }
+    .eq-bar:nth-child(7)  { --dur: 0.60s; height: 16px; }
+    .eq-bar:nth-child(8)  { --dur: 0.85s; height: 22px; }
+    .eq-bar:nth-child(9)  { --dur: 0.48s; height: 12px; }
+    .eq-bar:nth-child(10) { --dur: 0.70s; height: 28px; }
+
+    .loading-text {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 11px;
+      color: rgba(148, 163, 184, 0.45);
+      letter-spacing: 2px;
+      z-index: 1;
+      animation: blink 1.4s ease-in-out infinite;
+    }
+
+    /* Progress bar */
+    .progress-track {
+      width: 200px;
+      height: 2px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 2px;
+      z-index: 1;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #7c3aed, #a78bfa);
+      border-radius: 2px;
+      animation: progress 2.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.96); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50%       { transform: scale(1.06); }
+    }
+    @keyframes shimmer {
+      0%   { background-position: 0% center; }
+      100% { background-position: 200% center; }
+    }
+    @keyframes eqBounce {
+      from { transform: scaleY(0.3); opacity: 0.7; }
+      to   { transform: scaleY(1);   opacity: 1; }
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 0.45; }
+      50%       { opacity: 0.9; }
+    }
+    @keyframes progress {
+      0%   { width: 0%; }
+      30%  { width: 35%; }
+      60%  { width: 68%; }
+      85%  { width: 88%; }
+      100% { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="splash">
+    <div class="logo-area">
+      <div class="logo-icon">🎵</div>
+      <div class="app-name">BertinoMusicBlocs</div>
+      <div class="app-version">Version 1.0</div>
+    </div>
+
+    <div class="equalizer">
+      <div class="eq-bar"></div>
+      <div class="eq-bar"></div>
+      <div class="eq-bar"></div>
+      <div class="eq-bar"></div>
+      <div class="eq-bar"></div>
+      <div class="eq-bar"></div>
+      <div class="eq-bar"></div>
+      <div class="eq-bar"></div>
+      <div class="eq-bar"></div>
+      <div class="eq-bar"></div>
+    </div>
+
+    <div class="progress-track">
+      <div class="progress-fill"></div>
+    </div>
+
+    <div class="loading-text">LOADING…</div>
+  </div>
+</body>
+</html>
