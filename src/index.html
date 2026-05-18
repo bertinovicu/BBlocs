@@ -3537,10 +3537,10 @@ ${rows}
       grid.appendChild(el('div', cls, String(f)))
     }
 
-    // String rows: E(s=1) → e(s=6), top to bottom
-    for (let si = 0; si < 6; si++) {
+    // String rows: e(s=6) → E(s=1), top to bottom (standard chord-diagram view)
+    for (let si = 5; si >= 0; si--) {
       const s = si + 1
-      grid.appendChild(el('div', 'fret-str-header', FRET_STRINGS[si]))
+      grid.appendChild(el('div', 'fret-str-header', FRET_STRINGS[si].toUpperCase()))
       for (let f = 1; f <= FRET_COUNT; f++) {
         const cell = el('div', 'fret-cell')
         if (block.fretDots.some(d => d.f === f && d.s === s)) {
@@ -3761,10 +3761,10 @@ ${rows}
       grid.appendChild(el('div', cls, String(f)))
     }
 
-    // String rows: E(s=1) → e(s=6), top to bottom
-    for (let si = 0; si < 6; si++) {
+    // String rows: e(s=6) → E(s=1), top to bottom (standard chord-diagram view)
+    for (let si = 5; si >= 0; si--) {
       const s = si + 1
-      grid.appendChild(el('div', 'fret-str-header', FRET_STRINGS[si]))
+      grid.appendChild(el('div', 'fret-str-header', FRET_STRINGS[si].toUpperCase()))
       for (let f = 1; f <= FRET_COUNT; f++) {
         const cell = el('div', 'fret-cell')
         if (block.fretDots.some(d => d.f === f && d.s === s)) {
