@@ -614,11 +614,12 @@
       );
     }
 
-    /* Ghost note — floating preview that follows the cursor on a staff track */
+    /* Ghost note — covers the full track-blocks; head+label placed by JS */
     .staff-ghost {
       position: absolute;
+      inset: 0;
       pointer-events: none;
-      z-index: 10;
+      z-index: 20;
       display: none;
     }
     .staff-ghost-head {
@@ -626,12 +627,11 @@
       width: 11px; height: 8px;
       border-radius: 50%;
       border: 1.5px solid rgba(167,139,250,0.9);
-      background: rgba(167,139,250,0.35);
+      background: rgba(167,139,250,0.4);
       transform: rotate(-15deg);
     }
     .staff-ghost-label {
       position: absolute;
-      left: 14px;
       font-size: 9px;
       font-family: 'Space Mono', monospace;
       font-weight: 700;
@@ -639,9 +639,18 @@
       white-space: nowrap;
     }
 
-    /* Pencil cursor on staff track — signals note-entry zone */
-    .track-row.is-staff .track-blocks {
-      cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'><path d='M13 2 L18 7 L7 18 L2 19 L3 14 Z' fill='white' stroke='%23111' stroke-width='1.2' stroke-linejoin='round'/><line x1='13' y1='2' x2='15' y2='4' stroke='%23bbb' stroke-width='1'/><path d='M3 14 L7 18 L4.5 16.5 Z' fill='%23555'/></svg>") 3 17, crosshair;
+    /* Pencil cursor everywhere on the staff track (track-blocks + chip) */
+    .track-row.is-staff .track-blocks,
+    .track-row.is-staff .staff-chip,
+    .track-row.is-staff .staff-chip svg {
+      cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'><path d='M13 2 L18 7 L7 18 L2 19 L3 14 Z' fill='white' stroke='%23111' stroke-width='1.2' stroke-linejoin='round'/><line x1='13' y1='2' x2='15' y2='4' stroke='%23bbb' stroke-width='1'/><path d='M3 14 L7 18 L4.5 16.5 Z' fill='%23555'/></svg>") 3 17, crosshair !important;
+    }
+    /* Restore normal cursors for chip action buttons */
+    .track-row.is-staff .bchip-top,
+    .track-row.is-staff .bchip-mute,
+    .track-row.is-staff .bchip-del,
+    .track-row.is-staff .bchip-resize {
+      cursor: auto !important;
     }
 
     /* Staff block chip */
@@ -649,9 +658,9 @@
       height: 92px !important;
       display: flex !important;
       flex-direction: column !important;
-      overflow: hidden;
+      overflow: visible;
     }
-    .staff-chip svg { display: block; }
+    .staff-chip svg { display: block; overflow: visible; }
 
     /* Floating note-entry popup (right-click on staff) */
     #staff-popup {
@@ -2309,16 +2318,18 @@
       blocksEl.addEventListener('mousemove', e => {
         if (_dragBlockId || _chipDragging || _resizing) { ghost.style.display = 'none'; return }
         const rect = blocksEl.getBoundingClientRect()
+        const relX = e.clientX - rect.left
         const relY = e.clientY - rect.top
         if (relY < 18) { ghost.style.display = 'none'; return }
         const [letter, oct] = staffYToPitch(relY)
         const acc = _spalAcc || ''
         const trackY = staffPitchToTrackY(letter, oct)
+        ghostHead.style.left = (relX - 5) + 'px'
         ghostHead.style.top  = (trackY - 4) + 'px'
+        ghostLbl.style.left  = (relX + 8) + 'px'
         ghostLbl.style.top   = (trackY - 6) + 'px'
         ghostLbl.textContent = `${letter}${acc || ''}${oct}`
-        ghost.style.left    = (e.clientX - rect.left + 6) + 'px'
-        ghost.style.display = 'block'
+        ghost.style.display  = 'block'
       })
       blocksEl.addEventListener('mouseleave', () => { ghost.style.display = 'none' })
 
