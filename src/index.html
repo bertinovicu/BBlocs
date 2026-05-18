@@ -614,6 +614,11 @@
       );
     }
 
+    /* Pencil cursor on staff track — signals note-entry zone */
+    .track-row.is-staff .track-blocks {
+      cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'><path d='M13 2 L18 7 L7 18 L2 19 L3 14 Z' fill='white' stroke='%23111' stroke-width='1.2' stroke-linejoin='round'/><line x1='13' y1='2' x2='15' y2='4' stroke='%23bbb' stroke-width='1'/><path d='M3 14 L7 18 L4.5 16.5 Z' fill='%23555'/></svg>") 3 17, crosshair;
+    }
+
     /* Staff block chip */
     .staff-chip {
       height: 92px !important;
@@ -1312,41 +1317,27 @@
     .fretboard-container {
       border: 1px solid var(--border2);
       border-radius: var(--radius-sm);
-      overflow: hidden;
+      overflow-x: auto;
       background: var(--surface);
     }
+    .fretboard-container::-webkit-scrollbar { height: 4px; }
+    .fretboard-container::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 2px; }
 
-    .fretboard-head,
-    .fretboard-body {
+    /* Flat grid: 1 label column + 16 fret columns — strings are rows */
+    .fretboard-grid {
       display: grid;
-      grid-template-columns: 22px repeat(6, 1fr);
+      grid-template-columns: 26px repeat(16, minmax(26px, 34px));
+      width: max-content;
+      min-width: 100%;
     }
-
-    .fretboard-scroll {
-      max-height: 120px; /* shows ~5 frets; scroll to reach fret 16 */
-      overflow-y: auto;
-    }
-    .fretboard-scroll::-webkit-scrollbar { width: 4px; }
-    .fretboard-scroll::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 2px; }
 
     .fret-corner {
       background: var(--surface2);
-      border-right: 1px solid var(--border2);
+      border-right: 2px solid var(--border2);
       border-bottom: 2px solid var(--border2);
     }
 
-    .fret-str-header {
-      font-size: 10px;
-      font-family: 'Space Mono', monospace;
-      font-weight: 700;
-      color: var(--text2);
-      text-align: center;
-      padding: 4px 2px;
-      background: var(--surface2);
-      border-bottom: 2px solid var(--border2);
-      border-right: 1px solid var(--border);
-    }
-
+    /* Top header: fret numbers */
     .fret-label {
       display: flex;
       align-items: center;
@@ -1355,13 +1346,34 @@
       font-family: 'Space Mono', monospace;
       color: var(--text3);
       background: var(--surface2);
-      border-right: 1px solid var(--border2);
-      border-bottom: 1px solid var(--border);
-      min-height: 24px;
+      border-right: 1px solid var(--border);
+      border-bottom: 2px solid var(--border2);
+      min-height: 20px;
+      padding: 2px 0;
     }
-    /* Standard guitar fret markers (3, 5, 7, 9, 12, 15) */
     .fret-label.marker      { color: var(--accent2); font-weight: 700; }
-    .fret-label.marker-dbl  { color: var(--neon);    font-weight: 700; } /* 12 */
+    .fret-label.marker-dbl  { color: var(--neon);    font-weight: 700; }
+    .fret-label.marker::after     { content: ' ●'; font-size: 7px; }
+    .fret-label.marker-dbl::after { content: ' ◉'; font-size: 7px; }
+
+    /* Left column: string names */
+    .fret-str-header {
+      font-size: 10px;
+      font-family: 'Space Mono', monospace;
+      font-weight: 700;
+      color: var(--text2);
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--surface2);
+      border-right: 2px solid var(--border2);
+      border-bottom: 1px solid var(--border);
+      min-height: 28px;
+    }
+
+    /* Keep .fretboard-scroll as a no-op for legacy references */
+    .fretboard-scroll { display: contents; }
 
     .fret-cell {
       display: flex;
@@ -3432,38 +3444,39 @@ ${rows}
     chordWrap.appendChild(chordIn)
     sec.appendChild(chordWrap)
 
-    // ── Fretboard diagram ──
+    // ── Fretboard diagram (strings = rows, frets = columns) ──
     const container = el('div', 'fretboard-container')
-    const head = el('div', 'fretboard-head')
-    head.appendChild(el('div', 'fret-corner'))
-    FRET_STRINGS.forEach(s => head.appendChild(el('div', 'fret-str-header', s)))
-    container.appendChild(head)
+    const grid = el('div', 'fretboard-grid')
 
-    const scrollEl = el('div', 'fretboard-scroll')
-    const bodyEl   = el('div', 'fretboard-body')
+    // Header row: corner + fret numbers 1..16
+    grid.appendChild(el('div', 'fret-corner'))
     for (let f = 1; f <= FRET_COUNT; f++) {
       let cls = 'fret-label'
       if (FRET_MARKERS_DBL.has(f)) cls += ' marker-dbl'
       else if (FRET_MARKERS.has(f)) cls += ' marker'
-      bodyEl.appendChild(el('div', cls, String(f)))
-      for (let s = 1; s <= 6; s++) {
+      grid.appendChild(el('div', cls, String(f)))
+    }
+
+    // String rows: E(s=1) → e(s=6), top to bottom
+    for (let si = 0; si < 6; si++) {
+      const s = si + 1
+      grid.appendChild(el('div', 'fret-str-header', FRET_STRINGS[si]))
+      for (let f = 1; f <= FRET_COUNT; f++) {
         const cell = el('div', 'fret-cell')
-        if (block.fretDots.some(d => d.f===f && d.s===s)) {
+        if (block.fretDots.some(d => d.f === f && d.s === s)) {
           cell.classList.add('has-dot')
           cell.appendChild(el('div', 'fret-dot'))
         }
         cell.addEventListener('click', () => {
           toggleFretDot(block, f, s, cell)
           dotCount.textContent = String(block.fretDots.length)
-          // Refresh mini diagram in chip
           const chipDiag = document.querySelector(`.block-chip[data-block-id="${block.id}"] .mini-chord-diag`)
           if (chipDiag) chipDiag.replaceWith(buildMiniChordDiagram(block))
         })
-        bodyEl.appendChild(cell)
+        grid.appendChild(cell)
       }
     }
-    scrollEl.appendChild(bodyEl)
-    container.appendChild(scrollEl)
+    container.appendChild(grid)
 
     const hint = el('div', 'fret-scroll-hint')
     const dotCount = el('span', 'fret-dot-count', String(block.fretDots.length))
@@ -3657,30 +3670,24 @@ ${rows}
     wrap.appendChild(el('div', 'field-label', 'Fretboard  (frets 1 – 16)'))
 
     const container = el('div', 'fretboard-container')
+    const grid = el('div', 'fretboard-grid')
 
-    // ── Fixed header row: corner + string names ──
-    const head = el('div', 'fretboard-head')
-    head.appendChild(el('div', 'fret-corner'))
-    FRET_STRINGS.forEach(s => head.appendChild(el('div', 'fret-str-header', s)))
-    container.appendChild(head)
-
-    // ── Scrollable fret rows (1 – FRET_COUNT) ──
-    const scrollEl = el('div', 'fretboard-scroll')
-    const body     = el('div', 'fretboard-body')
-
+    // Header row: corner + fret numbers 1..16
+    grid.appendChild(el('div', 'fret-corner'))
     for (let f = 1; f <= FRET_COUNT; f++) {
-      // Fret number label (left column)
-      let markerCls = 'fret-label'
-      if (FRET_MARKERS_DBL.has(f)) markerCls += ' marker-dbl'
-      else if (FRET_MARKERS.has(f)) markerCls += ' marker'
-      const fretLbl = el('div', markerCls, String(f))
-      body.appendChild(fretLbl)
+      let cls = 'fret-label'
+      if (FRET_MARKERS_DBL.has(f)) cls += ' marker-dbl'
+      else if (FRET_MARKERS.has(f)) cls += ' marker'
+      grid.appendChild(el('div', cls, String(f)))
+    }
 
-      // 6 string cells
-      for (let s = 1; s <= 6; s++) {
-        const cell  = el('div', 'fret-cell')
-        const hasDot = block.fretDots.some(d => d.f === f && d.s === s)
-        if (hasDot) {
+    // String rows: E(s=1) → e(s=6), top to bottom
+    for (let si = 0; si < 6; si++) {
+      const s = si + 1
+      grid.appendChild(el('div', 'fret-str-header', FRET_STRINGS[si]))
+      for (let f = 1; f <= FRET_COUNT; f++) {
+        const cell = el('div', 'fret-cell')
+        if (block.fretDots.some(d => d.f === f && d.s === s)) {
           cell.classList.add('has-dot')
           cell.appendChild(el('div', 'fret-dot'))
         }
@@ -3688,18 +3695,16 @@ ${rows}
           toggleFretDot(block, f, s, cell)
           updateFretHint(block, hintCount)
         })
-        body.appendChild(cell)
+        grid.appendChild(cell)
       }
     }
-
-    scrollEl.appendChild(body)
-    container.appendChild(scrollEl)
+    container.appendChild(grid)
 
     // ── Status bar: dot count + scroll hint ──
     const hint = el('div', 'fret-scroll-hint')
     const hintCount = el('span', 'fret-dot-count', String(block.fretDots.length))
     hint.appendChild(hintCount)
-    hint.appendChild(document.createTextNode(' dots placed  ·  scroll ↕ frets 1–16'))
+    hint.appendChild(document.createTextNode(' dots placed  ·  scroll ↔ frets 1–16'))
     container.appendChild(hint)
 
     wrap.appendChild(container)
