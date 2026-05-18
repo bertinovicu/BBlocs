@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BertinoMusicBlocs — Compte rendu de session</title>
+<style>
+  :root {
+    --bg: #0a0a10;
+    --surface: #13131f;
+    --surface2: #1c1c2e;
+    --surface3: #242438;
+    --accent: #7c5bf0;
+    --accent2: #a78bfa;
+    --neon: #c084fc;
+    --green: #22c55e;
+    --yellow: #f59e0b;
+    --red: #ef4444;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --text3: #64748b;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* ── Sidebar ── */
+  nav {
+    width: 240px;
+    min-width: 240px;
+    background: var(--surface);
+    border-right: 1px solid var(--border2);
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    overflow-y: auto;
+    padding: 24px 0;
+    z-index: 100;
+  }
+  nav .logo {
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent2);
+    letter-spacing: 1px;
+    padding: 0 20px 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 12px;
+  }
+  nav a {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 20px;
+    color: var(--text2);
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 500;
+    transition: background 0.15s, color 0.15s;
+    border-left: 3px solid transparent;
+  }
+  nav a:hover { background: var(--surface2); color: var(--text); border-left-color: var(--accent); }
+  nav .nav-section {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text3);
+    padding: 16px 20px 6px;
+  }
+
+  /* ── Main ── */
+  main {
+    margin-left: 240px;
+    flex: 1;
+    padding: 40px 48px;
+    max-width: 960px;
+  }
+
+  .page-header {
+    margin-bottom: 40px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border2);
+  }
+  .page-header h1 {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--accent2);
+    margin-bottom: 6px;
+  }
+  .page-header .meta {
+    font-size: 12px;
+    color: var(--text3);
+    font-family: 'Courier New', monospace;
+  }
+
+  h2 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+    margin: 48px 0 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border2);
+    scroll-margin-top: 20px;
+  }
+  h3 {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent2);
+    margin: 24px 0 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+
+  /* ── Dashboard cards ── */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+    margin: 24px 0;
+  }
+  .card {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+  }
+  .card .num {
+    font-size: 32px;
+    font-weight: 800;
+    font-family: 'Courier New', monospace;
+    color: var(--accent2);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .card .lbl { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; }
+  .card.green .num { color: var(--green); }
+  .card.yellow .num { color: var(--yellow); }
+  .card.red .num { color: var(--red); }
+
+  /* ── Badges ── */
+  .badge {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .badge.new      { background: rgba(34,197,94,0.15);  color: #22c55e; }
+  .badge.fix      { background: rgba(245,158,11,0.15); color: #f59e0b; }
+  .badge.critical { background: rgba(239,68,68,0.15);  color: #ef4444; }
+  .badge.perf     { background: rgba(124,91,240,0.15); color: #a78bfa; }
+
+  /* ── Tables ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin: 16px 0;
+  }
+  th {
+    background: var(--surface2);
+    color: var(--text2);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 2px solid var(--border2);
+  }
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    color: var(--text);
+  }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+  td code {
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    background: var(--surface3);
+    padding: 1px 6px;
+    border-radius: 4px;
+    color: var(--accent2);
+  }
+
+  /* ── Feature blocks ── */
+  .feature-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 16px 0;
+  }
+  .feature {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+  .feature .title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent2);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .feature ul {
+    margin: 0;
+    padding-left: 16px;
+    font-size: 12px;
+    color: var(--text2);
+  }
+  .feature ul li { margin-bottom: 2px; }
+
+  /* ── Timeline / Steps ── */
+  .timeline { margin: 16px 0; }
+  .step {
+    display: flex;
+    gap: 16px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .step:last-child { border-bottom: none; }
+  .step-num {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .step-body .step-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+  .step-body .step-desc  { font-size: 12px; color: var(--text2); }
+
+  /* ── Bug list ── */
+  .bug {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-left: 4px solid var(--red);
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    margin-bottom: 10px;
+  }
+  .bug.warn { border-left-color: var(--yellow); }
+  .bug.info { border-left-color: var(--accent); }
+  .bug .bug-title { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+  .bug .bug-desc  { font-size: 12px; color: var(--text2); margin-bottom: 4px; }
+  .bug .bug-fix   { font-size: 11px; color: var(--green); font-family: 'Courier New', monospace; }
+
+  /* ── Tomorrow note ── */
+  .tomorrow {
+    background: rgba(124,91,240,0.08);
+    border: 1px solid rgba(124,91,240,0.3);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin: 20px 0;
+  }
+  .tomorrow .tomorrow-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent2);
+    margin-bottom: 8px;
+  }
+  .tomorrow ul { padding-left: 16px; font-size: 12px; color: var(--text2); }
+  .tomorrow ul li { margin-bottom: 4px; }
+
+  /* ── Print ── */
+  @media print {
+    nav { display: none; }
+    main { margin-left: 0; padding: 20px; }
+    body { background: #fff; color: #000; }
+    h2 { color: #333; }
+    .card { border: 1px solid #ccc; }
+    .card .num { color: #333; }
+    .feature { border: 1px solid #ccc; }
+    td, th { border-color: #ccc; }
+    .badge { border: 1px solid #ccc; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">BertinoMusicBlocs<br>Session Report</div>
+
+  <div class="nav-section">Vue d'ensemble</div>
+  <a href="#dashboard">📊 Dashboard</a>
+  <a href="#livraisons">✅ Livraisons</a>
+
+  <div class="nav-section">Détail technique</div>
+  <a href="#infra">🔧 Infrastructure</a>
+  <a href="#hierarchy">🏗 Hiérarchie pistes</a>
+  <a href="#fretboard">🎸 Fretboard</a>
+  <a href="#staff">🎼 Staff / Portée</a>
+  <a href="#lyrics">📝 Lyrics</a>
+  <a href="#railroad">🚂 Railroad</a>
+  <a href="#ux">🖱 UX &amp; Drag</a>
+  <a href="#ruler">📏 Règle timeline</a>
+
+  <div class="nav-section">Qualité</div>
+  <a href="#bugfixes">🐛 Bugs corrigés</a>
+  <a href="#audit">🔍 Audit</a>
+  <a href="#demain">🔮 Demain</a>
+</nav>
+
+<main>
+
+  <!-- ══ HEADER ══ -->
+  <div class="page-header">
+    <h1>🧱 BertinoMusicBlocs — Compte rendu de session</h1>
+    <div class="meta">
+      Date : 18 mai 2026 &nbsp;·&nbsp;
+      Branche : <code>claude/silly-euler-342115</code> &nbsp;·&nbsp;
+      Fichier principal : <code>src/index.html</code> (~3 700 lignes)
+    </div>
+  </div>
+
+  <!-- ══ DASHBOARD ══ -->
+  <h2 id="dashboard">📊 Dashboard</h2>
+  <div class="cards">
+    <div class="card green"><div class="num">22</div><div class="lbl">Fonctionnalités livrées</div></div>
+    <div class="card red"><div class="num">8</div><div class="lbl">Bugs corrigés</div></div>
+    <div class="card"><div class="num">13</div><div class="lbl">Types de pistes</div></div>
+    <div class="card"><div class="num">11</div><div class="lbl">Types de blocs</div></div>
+    <div class="card yellow"><div class="num">3 700</div><div class="lbl">Lignes index.html</div></div>
+    <div class="card"><div class="num">54 Ko</div><div class="lbl">Rapport AUDIT.html</div></div>
+  </div>
+
+  <!-- ══ LIVRAISONS ══ -->
+  <h2 id="livraisons">✅ Livraisons de la session</h2>
+  <table>
+    <tr><th>Catégorie</th><th>Fonctionnalité</th><th>Statut</th></tr>
+    <tr><td>Infrastructure</td><td>Suppression support Windows (macOS only)</td><td><span class="badge new">Livré</span></td></tr>
+    <tr><td>Infrastructure</td><td>Réinstallation Electron macOS (était .exe Windows)</td><td><span class="badge fix">Fix</span></td></tr>
+    <tr><td>Infrastructure</td><td>Correction package.json (JSON malformé)</td><td><span class="badge fix">Fix</span></td></tr>
+    <tr><td>Hiérarchie</td><td>STRUCTURE = piste principale avec icône 🧱</td><td><span class="badge new">Livré</span></td></tr>
+    <tr><td>Hiérarchie</td><td>9 sous-pistes (Loops, Solo, Voix, Arpeggio, Drums, Bass, Keyboard, Sample, Beat)</td><td><span class="badge new">Livré</span></td></tr>
+    <tr><td>Hiérarchie</td><td>3 pistes libres (Lyrics, Fretboard, Staff)</td><td><span class="badge new">Livré</span></td></tr>
+    <tr><td>Hiérarchie</td><td>Collapse groupe ▼ sur STRUCTURE (masque sous-pistes)</td><td><span class="badge new">Livré</span></td></tr>
+    <tr><td>Hiérarchie</td><td>Collapse individuel ▼ par sous-piste</td><td><span class="badge new">Livré</span></td></tr>
+    <tr><td>Hiérarchie</td><td>Indentation visuelle des sous-pistes</td><td><span class="badge new">Livré</span></td></tr>
+    <tr><td>Hiérarchie</td><td>normalizeTrackOrder() — sous-pistes toujours sous STRUCTURE</td><td><span class="badge new">Livré</span></td></tr>
+    <tr><td>Hiérarchie</td><td>Empilage canonical : Lyrics → Fretboard → Structure → Sous-pistes → Staff</td><td><span class="badge new">Livré</span></td></tr>
+    <tr><td>Fretboard</td><td>Piste plus haute (136 px), layout horizontal (type | diagramme | accord)</td><td><span class="badge new">Livré</span></td></tr>
+    <tr><td>Fretboard</td><td>Nom de l'accord proéminent dans le panneau gauche</td><td><span class="badge new">Livré</span></td></tr>
+    <tr><td>Fretboard</td><td>Mini diagramme SVG live dans chaque bloc</td><td><span class="badge new">Livré</span></td></tr>
+    <tr><td>Fretboard</td><td>Mise à jour live du chip au typage (sans re-render)</td><td><span class="badge perf">Perf</span></td></tr>
+    <tr><td>Staff</td><td>Portée en clé de Sol en continu (CSS background)</td><td><span class="badge new">Livré</span></td></tr>
+    <tr><td>Staff</td><td>Rendu SVG des notes (têtes, hampes, crochets) par bloc</td><td><span class="badge new">Livré</span></td></tr>
+    <tr><td>Staff</td><td>Palette flottante déplaçable (pointer capture drag)</td><td><span class="badge new">Livré</span></td></tr>
+    <tr><td>Staff</td><td>Clic droit sur portée → popup saisie de note positionnelle</td><td><span class="badge new">Livré</span></td></tr>
+    <tr><td>Lyrics</td><td>Blocs Lyrics affichent le texte des paroles (3 lignes clampées)</td><td><span class="badge new">Livré</span></td></tr>
+    <tr><td>Lyrics</td><td>Mise à jour live du chip au typage</td><td><span class="badge perf">Perf</span></td></tr>
+    <tr><td>Railroad</td><td>Vue séquentielle positionnelle (blocs absolus sur timeline)</td><td><span class="badge new">Livré</span></td></tr>
+    <tr><td>Railroad</td><td>Règle mesures collante en haut</td><td><span class="badge new">Livré</span></td></tr>
+    <tr><td>Railroad</td><td>Filtre : exclut Lyrics, Fretboard, Staff</td><td><span class="badge new">Livré</span></td></tr>
+    <tr><td>UX</td><td>Drag entier du label de piste pour réordonner</td><td><span class="badge new">Livré</span></td></tr>
+    <tr><td>UX</td><td>Modal "Add Track" groupé : Principale / Sous-pistes / Libres</td><td><span class="badge new">Livré</span></td></tr>
+    <tr><td>UX</td><td>Saisie du nom personnalisé lors de l'ajout de piste</td><td><span class="badge new">Livré</span></td></tr>
+    <tr><td>Notation</td><td>Icônes SVG pour ronde, blanche, double croche, silence (remplacement Unicode cassé)</td><td><span class="badge fix">Fix</span></td></tr>
+    <tr><td>Blocs</td><td>Bloc "Lyrics" ajouté, "Interlude" supprimé</td><td><span class="badge new">Livré</span></td></tr>
+    <tr><td>Timeline</td><td>Règle synchronisée horizontalement (dans tracks-scroll, sticky)</td><td><span class="badge fix">Fix</span></td></tr>
+    <tr><td>Timeline</td><td>Démarre à "0" au lieu de "1"</td><td><span class="badge fix">Fix</span></td></tr>
+    <tr><td>Audit</td><td>Rapport AUDIT.html (54 Ko, 10 sections, dark theme)</td><td><span class="badge new">Livré</span></td></tr>
+  </table>
+
+  <!-- ══ INFRA ══ -->
+  <h2 id="infra">🔧 Infrastructure</h2>
+  <div class="feature-grid">
+    <div class="feature">
+      <div class="title">📦 Build macOS uniquement</div>
+      <ul>
+        <li>Suppression <code>build:win</code> dans package.json</li>
+        <li>Suppression blocs <code>win</code> / <code>nsis</code></li>
+        <li>CLAUDE.md mis à jour</li>
+      </ul>
+    </div>
+    <div class="feature">
+      <div class="title">⚡ Electron binary</div>
+      <ul>
+        <li>node_modules contenait un <code>electron.exe</code> Windows</li>
+        <li>Suppression + réinstallation → <code>Electron.app</code> macOS</li>
+        <li>Permissions +x restaurées</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ══ HIERARCHY ══ -->
+  <h2 id="hierarchy">🏗 Hiérarchie des pistes</h2>
+
+  <h3>Ordre canonical (top → bottom)</h3>
+  <table>
+    <tr><th>Position</th><th>Groupe</th><th>Pistes</th><th>Comportement</th></tr>
+    <tr><td>1</td><td><span class="badge new">FREE</span></td><td>Lyrics</td><td>Toujours visible, pas de collapse, pas d'indentation</td></tr>
+    <tr><td>2</td><td><span class="badge new">FREE</span></td><td>Fretboard</td><td>Toujours visible, pas de collapse, pas d'indentation</td></tr>
+    <tr><td>3</td><td><span class="badge perf">MAIN</span></td><td>Structure 🧱</td><td>▼ collapse contrôle TOUTES les sous-pistes</td></tr>
+    <tr><td>4–12</td><td><span class="badge fix">SUB</span></td><td>Loops, Solo, Voix, Arpeggio, Drums, Bass, Keyboard, Sample, Beat</td><td>Indentées 22 px, collapse individuel, masquées si group collapsed</td></tr>
+    <tr><td>Bas</td><td><span class="badge new">FREE</span></td><td>Staff</td><td>Toujours visible, pas de collapse</td></tr>
+  </table>
+
+  <h3>normalizeTrackOrder()</h3>
+  <p style="font-size:12px;color:var(--text2);margin-top:8px">
+    Appelée après chaque drag-drop et après les boutons ▲▼. Trie stablement par groupe (free=0, main=1, sub=2, staff=3).
+    Garantit qu'une sous-piste ne peut jamais remonter au-dessus de STRUCTURE.
+  </p>
+
+  <!-- ══ FRETBOARD ══ -->
+  <h2 id="fretboard">🎸 Piste Fretboard</h2>
+  <div class="feature-grid">
+    <div class="feature">
+      <div class="title">Layout horizontal des blocs</div>
+      <ul>
+        <li><strong>Gauche :</strong> nom du bloc (texte vertical)</li>
+        <li><strong>Centre :</strong> mini diagramme SVG 6 cordes × 5 cases (cellules 15 px)</li>
+        <li><strong>Droite :</strong> nom de l'accord (Am, G7…) texte vertical</li>
+        <li>Hauteur de piste : 136 px</li>
+      </ul>
+    </div>
+    <div class="feature">
+      <div class="title">Panneau gauche redessiné</div>
+      <ul>
+        <li>Champ "Nom de l'accord" en tête, proéminent (18 px bold, bordure accent)</li>
+        <li>Mise à jour live du chip sans re-render via querySelector</li>
+        <li>Mise à jour live du mini diagramme au clic sur la grille</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ══ STAFF ══ -->
+  <h2 id="staff">🎼 Piste Staff — Portée</h2>
+  <div class="feature-grid">
+    <div class="feature">
+      <div class="title">Portée en continu</div>
+      <ul>
+        <li>5 lignes CSS background (::after pseudo-élément)</li>
+        <li>Hauteur piste : 104 px</li>
+        <li>Clé de Sol SVG dans chaque chip</li>
+      </ul>
+    </div>
+    <div class="feature">
+      <div class="title">Rendu SVG des notes</div>
+      <ul>
+        <li>Ronde, blanche, noire, croche, double croche</li>
+        <li>Hampes, crochets, lignes de léger (C4)</li>
+        <li>Map pitch → Y (C4 à G5)</li>
+        <li>Rafraîchissement ciblé sans re-render</li>
+      </ul>
+    </div>
+    <div class="feature">
+      <div class="title">Palette flottante déplaçable</div>
+      <ul>
+        <li>Position fixed, z-index 600</li>
+        <li>Drag via <code>setPointerCapture</code></li>
+        <li>Durée + altération + note + silence + ⌫</li>
+        <li>Ouverture auto au clic d'un bloc Staff</li>
+      </ul>
+    </div>
+    <div class="feature">
+      <div class="title">Clic droit sur portée</div>
+      <ul>
+        <li>Popup contextuel positionné sous le curseur</li>
+        <li>Pitch estimé depuis position Y (staffYToPitch)</li>
+        <li>Crée un bloc si zone vide, sinon édite l'existant</li>
+        <li>Fermeture : Échap, clic extérieur</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ══ LYRICS ══ -->
+  <h2 id="lyrics">📝 Piste Lyrics</h2>
+  <div class="feature-grid">
+    <div class="feature">
+      <div class="title">Blocs avec affichage des paroles</div>
+      <ul>
+        <li>Hauteur 84 px, chip personnalisé</li>
+        <li>Nom du bloc (petit, subdued)</li>
+        <li>Texte des paroles (<code>-webkit-line-clamp: 3</code>)</li>
+        <li><code>white-space: pre-wrap</code> pour sauts de ligne</li>
+      </ul>
+    </div>
+    <div class="feature">
+      <div class="title">Live update</div>
+      <ul>
+        <li>Frappe dans le panneau gauche → chip mis à jour instantanément</li>
+        <li>Mise à jour via querySelector ciblé, pas de re-render complet</li>
+        <li>Transition empty → text gérée</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ══ RAILROAD ══ -->
+  <h2 id="railroad">🚂 Vue Railroad</h2>
+  <div class="feature-grid">
+    <div class="feature">
+      <div class="title">Layout séquentiel positionnel</div>
+      <ul>
+        <li>Blocs positionnés en <code>position: absolute</code></li>
+        <li><code>left = (measure-1) × 48px</code></li>
+        <li><code>width = measures × 48px − 4</code></li>
+        <li>Gaps entre blocs visuellement visibles</li>
+      </ul>
+    </div>
+    <div class="feature">
+      <div class="title">Filtrage &amp; règle</div>
+      <ul>
+        <li>Exclut Lyrics, Fretboard, Staff</li>
+        <li>Règle en haut (sticky), labels de mesure</li>
+        <li>Largeur calculée sur dernière mesure utilisée</li>
+        <li>Blocs muted exclus du rendu</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ══ UX ══ -->
+  <h2 id="ux">🖱 UX &amp; Interactions</h2>
+
+  <h3>Drag-and-drop des pistes</h3>
+  <ul style="font-size:12px;color:var(--text2);padding-left:20px;margin-bottom:12px">
+    <li>Drag sur le <strong>label entier</strong> (pas besoin d'un handle séparé)</li>
+    <li>Boutons portent <code>draggable="false"</code> pour ne pas interférer</li>
+    <li><code>normalizeTrackOrder()</code> appelée après chaque drop</li>
+    <li>Indicateur de drop : <code>box-shadow inset</code> sur le label cible</li>
+  </ul>
+
+  <h3>Modal "Add Track" — 3 sections</h3>
+  <table>
+    <tr><th>Section</th><th>Pistes disponibles</th></tr>
+    <tr><td>Piste principale</td><td>Structure 🧱</td></tr>
+    <tr><td>Sous-pistes</td><td>Loops, Solo, Choeurs/Voix, Arpeggio, Drums, Bass, Keyboard, Sample, Beat</td></tr>
+    <tr><td>Pistes libres</td><td>Lyrics, Fretboard, Staff</td></tr>
+  </table>
+
+  <!-- ══ RULER ══ -->
+  <h2 id="ruler">📏 Règle Timeline</h2>
+  <div class="feature-grid">
+    <div class="feature">
+      <div class="title">Synchronisation horizontale</div>
+      <ul>
+        <li>Règle déplacée <strong>à l'intérieur</strong> de <code>#tracks-scroll</code></li>
+        <li><code>position: sticky; top: 0</code> — reste visible au scroll vertical</li>
+        <li><code>.ruler-label-spacer { position: sticky; left: 0 }</code></li>
+        <li>Défile naturellement avec les blocs horizontalement</li>
+      </ul>
+    </div>
+    <div class="feature">
+      <div class="title">Démarre à 0</div>
+      <ul>
+        <li>Boucle <code>for (m=0; m&lt;MEASURES; m++)</code></li>
+        <li>Affiché : 0, 1, 2… 31</li>
+        <li>Blocs toujours stockés en 1-based en interne</li>
+        <li>Railroad aussi mis à jour (0-based)</li>
+      </ul>
+    </div>
+  </div>
+  <div class="bug info" style="margin-top:12px">
+    <div class="bug-title">⚠ Note : décalage sémantique interne</div>
+    <div class="bug-desc">Les blocs sont stockés avec <code>block.measure</code> en base 1. La règle affiche m−1. Le champ "Start (measure)" dans le panneau droite affiche toujours la valeur interne (1-based). À aligner demain si souhaité.</div>
+  </div>
+
+  <!-- ══ BUGS ══ -->
+  <h2 id="bugfixes">🐛 Bugs corrigés</h2>
+
+  <div class="bug">
+    <div class="bug-title">🔴 CRITIQUE — Déclaration JS dupliquée (<code>const parentTrack</code>)</div>
+    <div class="bug-desc">Deux <code>const parentTrack</code> dans la même fonction <code>openBlockDetail()</code> → SyntaxError → toute l'app ne se chargeait pas (écran noir).</div>
+    <div class="bug-fix">→ Fusion en une seule déclaration, logique staff palette déplacée au bon endroit.</div>
+  </div>
+
+  <div class="bug">
+    <div class="bug-title">🔴 CRITIQUE — Règle détruite à chaque render()</div>
+    <div class="bug-desc">Après déplacement de <code>#ruler</code> à l'intérieur de <code>#tracks-inner</code>, le <code>inner.innerHTML = ''</code> de <code>render()</code> supprimait la règle à chaque appel.</div>
+    <div class="bug-fix">→ Sauvegarde de la référence <code>$('ruler')</code> avant le clear, réinsertion en premier.</div>
+  </div>
+
+  <div class="bug warn">
+    <div class="bug-title">🟡 Règle non synchronisée horizontalement</div>
+    <div class="bug-desc"><code>#ruler</code> était en dehors de <code>#tracks-scroll</code> avec <code>overflow: hidden</code> → scroll horizontal ne déplaçait pas la règle → désalignement mesures/blocs.</div>
+    <div class="bug-fix">→ Règle déplacée dans <code>#tracks-inner</code> avec <code>position: sticky; top: 0</code>.</div>
+  </div>
+
+  <div class="bug warn">
+    <div class="bug-title">🟡 Electron binary Windows sur macOS</div>
+    <div class="bug-desc"><code>node_modules/electron/dist/electron.exe</code> → erreur EACCES au lancement.</div>
+    <div class="bug-fix">→ <code>rm -rf node_modules/electron && npm install</code> → <code>Electron.app</code> macOS installé.</div>
+  </div>
+
+  <div class="bug warn">
+    <div class="bug-title">🟡 package.json malformé</div>
+    <div class="bug-desc">Suppression des blocs <code>win/nsis</code> avait laissé une virgule trailing + lignes vides dans l'objet JSON → <code>JSONParseError</code>.</div>
+    <div class="bug-fix">→ Réécriture propre du fichier avec le tool Write.</div>
+  </div>
+
+  <div class="bug warn">
+    <div class="bug-title">🟡 Icônes musicales Unicode cassées</div>
+    <div class="bug-desc">Ronde (<code>𝅝</code>), blanche (<code>𝅗𝅥</code>), silence (<code>𝄾</code>) du bloc Musical Symbols U+1D100+ ne rendaient pas dans Electron → □ □□ □□□.</div>
+    <div class="bug-fix">→ Remplacement par des SVG inline <code>currentColor</code> pour ronde, blanche, double croche, silence. ♩ ♪ gardés (U+2600).</div>
+  </div>
+
+  <div class="bug info">
+    <div class="bug-title">🔵 Backspace/Clear staff ne rafraîchissaient pas le chip</div>
+    <div class="bug-desc"><code>bkBtn</code> et <code>clrBtn</code> dans <code>buildCtxStaff()</code> modifiaient <code>block.staffNotes</code> mais n'appelaient pas <code>refreshStaffChip()</code>.</div>
+    <div class="bug-fix">→ Ajout de <code>refreshStaffChip(block)</code> sur les deux handlers. Fallback <code>render()</code> si chip introuvable.</div>
+  </div>
+
+  <div class="bug info">
+    <div class="bug-title">🔵 normalizeTrackOrder manquant sur moveTrack()</div>
+    <div class="bug-desc">Les boutons ▲▼ pouvaient déplacer une sous-piste au-dessus de STRUCTURE.</div>
+    <div class="bug-fix">→ Appel de <code>normalizeTrackOrder()</code> ajouté dans <code>moveTrack()</code> et dans le drop handler.</div>
+  </div>
+
+  <!-- ══ AUDIT ══ -->
+  <h2 id="audit">🔍 Audit — Points de vigilance</h2>
+
+  <h3>Performance</h3>
+  <table>
+    <tr><th>Problème</th><th>Impact</th><th>Piste</th></tr>
+    <tr><td><code>render()</code> appelé ~20 fois pour des micro-actions (mute, move…)</td><td>Moyen</td><td>Targeted DOM updates (chip individuel)</td></tr>
+    <tr><td>Event listeners accumulés (chip jeté mais listeners non nettoyés)</td><td>Faible (session)</td><td>Event delegation sur <code>#tracks-inner</code></td></tr>
+    <tr><td><code>S.versions</code> array non borné (snapshots illimités)</td><td>Faible (RAM)</td><td>Cap à 10 versions, FIFO</td></tr>
+  </table>
+
+  <h3>Qualité code</h3>
+  <table>
+    <tr><th>Élément</th><th>Ligne</th><th>Recommandation</th></tr>
+    <tr><td><code>uid()</code> — fonction dead code</td><td>~1816</td><td>Supprimer</td></tr>
+    <tr><td><code>S.versions</code> write-only (jamais affiché)</td><td>—</td><td>Supprimer ou implémenter UI versions</td></tr>
+    <tr><td>14 gradients CSS dupliqués dans export HTML</td><td>~3137</td><td>Générer depuis JS (unique source of truth)</td></tr>
+    <tr><td>Inline onclick strings (<code>"moveTrack('${id}',-1)"</code>)</td><td>~2051</td><td>Event delegation ou data-attributes</td></tr>
+  </table>
+
+  <h3>Sécurité</h3>
+  <table>
+    <tr><th>Risque</th><th>Lieu</th><th>Statut</th></tr>
+    <tr><td>XSS potentiel dans <code>buildExportHTML()</code> — <code>b.name</code>, <code>t.name</code> sans <code>esc()</code></td><td>~ligne 3116</td><td><span class="badge fix">À corriger</span></td></tr>
+    <tr><td><code>nodeIntegration: false</code>, contextBridge OK</td><td>main.js</td><td><span class="badge new">OK</span></td></tr>
+    <tr><td>Pas de CSP dans la meta</td><td>index.html head</td><td><span class="badge fix">À ajouter</span></td></tr>
+    <tr><td>Validation schéma absente au chargement .bmb</td><td>loadState()</td><td><span class="badge fix">À ajouter</span></td></tr>
+  </table>
+
+  <!-- ══ DEMAIN ══ -->
+  <h2 id="demain">🔮 Demain — Travaux prévus</h2>
+
+  <div class="tomorrow">
+    <div class="tomorrow-title">🎼 Blocs Staff étirables + saisie mélodique améliorée</div>
+    <ul>
+      <li><strong>Resize des blocs Staff par drag du bord droit</strong> — handle de 6 px sur le bord droit du chip, drag horizontal → update <code>block.measures</code> en temps réel</li>
+      <li><strong>Snap sur les mesures</strong> — le resize snap au MEASURE_WIDTH (80 px) pendant le drag</li>
+      <li><strong>Palette Staff</strong> — améliorer la liaison entre position Y du clic et pitch automatiquement sélectionné dans la popup</li>
+      <li><strong>Affichage octave</strong> — permettre de saisir des notes sur plusieurs octaves (pas seulement octave 4)</li>
+      <li><strong>Synchronisation panneau gauche ↔ chip</strong> — quand la palette flottante ajoute une note, le display du panneau gauche doit aussi se mettre à jour</li>
+    </ul>
+  </div>
+
+  <h3>Quick wins à traiter en parallèle</h3>
+  <table>
+    <tr><th>Priorité</th><th>Effort</th><th>Action</th></tr>
+    <tr><td><span class="badge critical">Haute</span></td><td>15 min</td><td>Corriger XSS dans <code>buildExportHTML()</code> — ajouter <code>esc()</code> sur t.name et b.name</td></tr>
+    <tr><td><span class="badge fix">Moyenne</span></td><td>10 min</td><td>Supprimer <code>uid()</code> dead code (ligne ~1816)</td></tr>
+    <tr><td><span class="badge fix">Moyenne</span></td><td>30 min</td><td>Aligner affichage "Start measure" panneau droite sur base 0</td></tr>
+    <tr><td><span class="badge new">Basse</span></td><td>20 min</td><td>Cap S.versions à 10 (FIFO)</td></tr>
+  </table>
+
+  <div style="margin-top:48px;padding-top:20px;border-top:1px solid var(--border);font-size:11px;color:var(--text3)">
+    Rapport généré le 18 mai 2026 · BertinoMusicBlocs v1.0 · Branche silly-euler-342115
+  </div>
+
+</main>
+</body>
+</html>

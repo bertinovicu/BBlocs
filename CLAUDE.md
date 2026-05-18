@@ -16,10 +16,7 @@ npm run dev          # launch in dev mode
 npm run build        # Universal DMG (arm64 + x64, .dmg + .zip)
 npm run build:arm    # Apple Silicon DMG only
 npm run build:intel  # Intel DMG only
-
-# Build — works on Windows:
-npm run build:win    # Windows NSIS installer (x64)
-npm run build:dir    # unpacked directory (any platform, fast test)
+npm run build:dir    # unpacked directory (fast test)
 
 # Icon generation (run once, or after replacing assets/icon.png):
 node scripts/make-icon.js
@@ -99,6 +96,5 @@ newType: { label:'New', icon:'★', color:'#...' }
 - JSON schema version: `1.0`
 - Electron: `^31.x` (resolved to 31.7.7 at install time)
 - Project file extension: `.bmb`
-- Icon source: `assets/icon.png` (512×512) — auto-converted to `.icns`/`.ico` at build time
+- Icon source: `assets/icon.png` (512×512) — auto-converted to `.icns` at build time
 - macOS Universal DMG requires macOS host (needs `hdiutil` and `iconutil`)
-- Windows NSIS installer builds on any platform

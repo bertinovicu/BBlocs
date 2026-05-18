@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Audit — BertinoMusicBlocs v1.0</title>
+  <style>
+    :root {
+      --bg:       #0a0a12;
+      --surface:  #12121e;
+      --surface2: #1a1a2e;
+      --surface3: #22223a;
+      --accent:   #7c5bf0;
+      --accent2:  #a78bfa;
+      --neon:     #c084fc;
+      --text:     #e2e8f0;
+      --text2:    #94a3b8;
+      --text3:    #64748b;
+      --border:   rgba(255,255,255,0.07);
+      --border2:  rgba(255,255,255,0.13);
+      --red:      #ef4444;
+      --orange:   #f59e0b;
+      --green:    #22c55e;
+      --blue:     #3b82f6;
+      --sidebar-w: 240px;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      display: flex;
+    }
+
+    /* ── SIDEBAR ── */
+    #sidebar {
+      width: var(--sidebar-w);
+      min-width: var(--sidebar-w);
+      background: var(--surface);
+      border-right: 1px solid var(--border2);
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      flex-shrink: 0;
+      padding: 20px 0 40px;
+    }
+
+    .sb-logo {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--accent2);
+      padding: 0 16px 16px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 12px;
+    }
+
+    .sb-section-label {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text3);
+      padding: 10px 16px 4px;
+    }
+
+    #sidebar a {
+      display: block;
+      padding: 6px 16px;
+      font-size: 12px;
+      color: var(--text2);
+      text-decoration: none;
+      border-left: 2px solid transparent;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+    }
+    #sidebar a:hover {
+      color: var(--accent2);
+      border-left-color: var(--accent);
+      background: rgba(124,91,240,0.08);
+    }
+
+    /* ── MAIN CONTENT ── */
+    #content {
+      flex: 1;
+      min-width: 0;
+      padding: 40px 48px 80px;
+      max-width: 1000px;
+    }
+
+    /* ── REPORT HEADER ── */
+    .report-header {
+      margin-bottom: 40px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border2);
+    }
+
+    .report-super {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+
+    .report-title {
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    .report-meta {
+      font-size: 13px;
+      color: var(--text3);
+    }
+
+    /* ── SECTIONS ── */
+    section {
+      margin-bottom: 56px;
+    }
+
+    h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--accent2);
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    h2 .section-num {
+      font-size: 11px;
+      font-weight: 700;
+      font-family: monospace;
+      color: var(--text3);
+      background: var(--surface3);
+      padding: 2px 7px;
+      border-radius: 4px;
+    }
+
+    h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      margin: 24px 0 10px;
+    }
+
+    p {
+      font-size: 14px;
+      color: var(--text2);
+      margin-bottom: 12px;
+      line-height: 1.75;
+    }
+
+    ul, ol {
+      padding-left: 20px;
+      margin-bottom: 14px;
+    }
+
+    li {
+      font-size: 14px;
+      color: var(--text2);
+      margin-bottom: 6px;
+      line-height: 1.65;
+    }
+
+    strong { color: var(--text); font-weight: 600; }
+
+    /* ── DASHBOARD CARDS ── */
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .metric-card {
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 10px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .metric-value {
+      font-size: 28px;
+      font-weight: 800;
+      font-family: monospace;
+      color: var(--accent2);
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .metric-label {
+      font-size: 11px;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* ── SCORE CARDS ── */
+    .score-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .score-card {
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      padding: 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .score-bar-wrap {
+      flex: 1;
+    }
+
+    .score-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 5px;
+    }
+
+    .score-bar {
+      height: 6px;
+      border-radius: 3px;
+      background: var(--surface3);
+      overflow: hidden;
+      margin-bottom: 3px;
+    }
+
+    .score-fill {
+      height: 100%;
+      border-radius: 3px;
+    }
+
+    .score-num {
+      font-size: 20px;
+      font-weight: 800;
+      font-family: monospace;
+      line-height: 1;
+      min-width: 28px;
+      text-align: right;
+    }
+
+    /* ── BADGES ── */
+    .badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      vertical-align: middle;
+      margin-left: 6px;
+    }
+
+    .badge-red    { background: rgba(239,68,68,0.18);  color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+    .badge-orange { background: rgba(245,158,11,0.18); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
+    .badge-green  { background: rgba(34,197,94,0.15);  color: #4ade80; border: 1px solid rgba(34,197,94,0.25); }
+    .badge-blue   { background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.25); }
+    .badge-purple { background: rgba(124,91,240,0.18); color: #a78bfa; border: 1px solid rgba(124,91,240,0.3); }
+
+    /* ── TABLES ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-bottom: 24px;
+    }
+
+    thead th {
+      background: var(--surface3);
+      color: var(--text3);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 8px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border2);
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background 0.1s;
+    }
+
+    tbody tr:hover { background: var(--surface2); }
+
+    tbody td {
+      padding: 9px 12px;
+      color: var(--text2);
+      vertical-align: top;
+    }
+
+    tbody td:first-child { color: var(--text); font-weight: 500; }
+
+    /* ── CODE BLOCKS ── */
+    pre {
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      padding: 14px 16px;
+      overflow-x: auto;
+      margin-bottom: 16px;
+    }
+
+    code {
+      font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+      font-size: 12px;
+      color: #c4b5fd;
+      line-height: 1.6;
+    }
+
+    p code, li code {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-size: 11.5px;
+      color: var(--accent2);
+    }
+
+    /* ── CALLOUT BOXES ── */
+    .callout {
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+      border-left: 3px solid;
+      font-size: 13.5px;
+      line-height: 1.7;
+    }
+
+    .callout-red    { background: rgba(239,68,68,0.06);  border-color: #ef4444; color: #fca5a5; }
+    .callout-orange { background: rgba(245,158,11,0.06); border-color: #f59e0b; color: #fcd34d; }
+    .callout-green  { background: rgba(34,197,94,0.06);  border-color: #22c55e; color: #86efac; }
+    .callout-blue   { background: rgba(59,130,246,0.06); border-color: #3b82f6; color: #93c5fd; }
+
+    .callout strong { color: inherit; }
+
+    /* ── PROS/CONS ── */
+    .pros-cons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .pros, .cons {
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      padding: 14px 16px;
+    }
+
+    .pros h4 { color: #4ade80; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+    .cons h4 { color: #f87171; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+
+    .pros li { color: #86efac; font-size: 13px; }
+    .cons li { color: #fca5a5; font-size: 13px; }
+
+    /* ── FLOW DIAGRAM (ASCII) ── */
+    .flow {
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      padding: 16px 20px;
+      font-family: monospace;
+      font-size: 12px;
+      color: var(--text2);
+      line-height: 1.8;
+      margin-bottom: 16px;
+    }
+
+    .flow .node { color: var(--accent2); font-weight: 700; }
+    .flow .arrow { color: var(--text3); }
+
+    /* ── PRINT ── */
+    @media print {
+      #sidebar { display: none !important; }
+      #content { padding: 24px; max-width: 100%; }
+      .report-title { font-size: 24px; }
+      pre { break-inside: avoid; }
+      section { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════ SIDEBAR ════════════════════════════ -->
+<nav id="sidebar">
+  <div class="sb-logo">BertinoMusicBlocs<br>Audit v1.0</div>
+
+  <div class="sb-section-label">Vue d'ensemble</div>
+  <a href="#s1">1. Résumé exécutif</a>
+  <a href="#s2">2. Architecture</a>
+
+  <div class="sb-section-label">Qualité</div>
+  <a href="#s3">3. Bugs corrigés</a>
+  <a href="#s4">4. Performance</a>
+  <a href="#s5">5. Qualité code</a>
+
+  <div class="sb-section-label">Risques</div>
+  <a href="#s6">6. Sécurité</a>
+  <a href="#s7">7. Stabilité</a>
+
+  <div class="sb-section-label">Roadmap</div>
+  <a href="#s8">8. Quick Wins</a>
+  <a href="#s9">9. Améliorations</a>
+  <a href="#s10">10. Métriques</a>
+</nav>
+
+<!-- ════════════════════════════ CONTENT ════════════════════════════ -->
+<main id="content">
+
+  <!-- HEADER -->
+  <div class="report-header">
+    <div class="report-super">Rapport d'audit technique</div>
+    <div class="report-title">BertinoMusicBlocs v1.0</div>
+    <div class="report-meta">Fichier principal : <code>src/index.html</code> · Généré le 18 mai 2026 · Auditeur : Claude Sonnet 4.6</div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <section id="s1">
+    <h2><span class="section-num">01</span> Résumé exécutif</h2>
+
+    <p>
+      BertinoMusicBlocs est une application Electron de composition musicale organisée autour d'un modèle de blocs (Verse, Chorus, Bridge, etc.) disposés sur des pistes dans une vue timeline horizontale. L'architecture choisie — tout dans un seul fichier HTML — est volontaire et cohérente avec sa cible (app desktop légère, sans bundler). Le code est lisible, bien commenté et structuré en sections nommées. La v1.0 est fonctionnelle et déployable.
+    </p>
+
+    <p>
+      Les points de vigilance prioritaires sont : la sur-utilisation de <code>render()</code> (appel complet du DOM à chaque micro-interaction), quelques vecteurs XSS dans l'export HTML statique, et un état de snapshot (<code>S.versions</code>) qui grossit sans mécanisme de restauration exposé à l'utilisateur.
+    </p>
+
+    <!-- Score cards -->
+    <div class="score-grid">
+      <div class="score-card">
+        <div class="score-bar-wrap">
+          <div class="score-name">Architecture</div>
+          <div class="score-bar"><div class="score-fill" style="width:80%;background:#a78bfa"></div></div>
+        </div>
+        <div class="score-num" style="color:#a78bfa">8</div>
+      </div>
+      <div class="score-card">
+        <div class="score-bar-wrap">
+          <div class="score-name">Performance</div>
+          <div class="score-bar"><div class="score-fill" style="width:55%;background:#f59e0b"></div></div>
+        </div>
+        <div class="score-num" style="color:#f59e0b">5.5</div>
+      </div>
+      <div class="score-card">
+        <div class="score-bar-wrap">
+          <div class="score-name">Qualité code</div>
+          <div class="score-bar"><div class="score-fill" style="width:65%;background:#60a5fa"></div></div>
+        </div>
+        <div class="score-num" style="color:#60a5fa">6.5</div>
+      </div>
+      <div class="score-card">
+        <div class="score-bar-wrap">
+          <div class="score-name">Sécurité</div>
+          <div class="score-bar"><div class="score-fill" style="width:70%;background:#4ade80"></div></div>
+        </div>
+        <div class="score-num" style="color:#4ade80">7</div>
+      </div>
+      <div class="score-card">
+        <div class="score-bar-wrap">
+          <div class="score-name">Stabilité</div>
+          <div class="score-bar"><div class="score-fill" style="width:65%;background:#fb923c"></div></div>
+        </div>
+        <div class="score-num" style="color:#fb923c">6.5</div>
+      </div>
+      <div class="score-card">
+        <div class="score-bar-wrap">
+          <div class="score-name">Note globale</div>
+          <div class="score-bar"><div class="score-fill" style="width:69%;background:#c084fc"></div></div>
+        </div>
+        <div class="score-num" style="color:#c084fc">6.9</div>
+      </div>
+    </div>
+
+    <!-- Metric dashboard -->
+    <div class="dashboard">
+      <div class="metric-card">
+        <div class="metric-value">3 729</div>
+        <div class="metric-label">Lignes totales</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">69</div>
+        <div class="metric-label">Fonctions JS</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">62</div>
+        <div class="metric-label">Event listeners</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">26</div>
+        <div class="metric-label">usages innerHTML</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">20</div>
+        <div class="metric-label">appels render()</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">14</div>
+        <div class="metric-label">Types de blocs</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">12</div>
+        <div class="metric-label">Types de pistes</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">26</div>
+        <div class="metric-label">Handlers inline</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <section id="s2">
+    <h2><span class="section-num">02</span> Architecture</h2>
+
+    <h3>Pattern single-file</h3>
+    <p>
+      L'intégralité du rendu vit dans <code>src/index.html</code> (HTML + CSS inline + JS inline). Le process principal Electron est dans <code>src/main.js</code>, le bridge de sécurité dans <code>src/preload.js</code>. Pas de bundler, pas de framework, pas de module ES — choix intentionnel et documenté.
+    </p>
+
+    <h3>Flux de données</h3>
+    <div class="flow">
+      <span class="node">S{}</span> <span class="arrow">── État global ──────────────────</span><br>
+      <span class="arrow">  ↓ mutation directe</span><br>
+      <span class="node">render()</span> <span class="arrow">── innerHTML total de #tracks-inner</span><br>
+      <span class="arrow">  ↓ buildTrackRow() → buildBlockChip()</span><br>
+      <span class="node">DOM</span> <span class="arrow">── Re-attachement de tous les listeners</span><br>
+      <br>
+      <span class="node">window.electronAPI</span> <span class="arrow">── contextBridge (preload.js)</span><br>
+      <span class="arrow">  ↓ ipcRenderer.invoke()</span><br>
+      <span class="node">ipcMain.handle()</span> <span class="arrow">── main.js : dialogs, fs, menu</span>
+    </div>
+
+    <h3>Globals intentionnels</h3>
+    <ul>
+      <li><code>S</code> — état complet de l'application (tracks, blocks, selectedBlockId, key, tempo…)</li>
+      <li><code>TID</code> / <code>BID</code> — compteurs d'ID pour tracks et blocs</li>
+      <li><code>_dragType</code>, <code>_dragBlockId</code>, <code>_dragTrackId</code> — état du drag en cours</li>
+      <li><code>_spalBlock</code>, <code>_spBlock</code> — blocs actifs dans les deux palettes staff</li>
+      <li><code>staffNotes</code>, <code>fretDots</code> — données embarquées dans les objets block</li>
+    </ul>
+
+    <h3>Flux IPC (Electron)</h3>
+    <ul>
+      <li><strong>Renderer → Main :</strong> <code>ipcRenderer.invoke('save-json')</code>, <code>'open-json'</code>, <code>'export-html'</code>, <code>'import-midi'</code></li>
+      <li><strong>Main → Renderer :</strong> <code>webContents.send('menu-action', action)</code>, <code>'load-recent'</code></li>
+      <li>Le <code>contextBridge</code> n'expose que des wrappers tipés — pas de <code>ipcRenderer</code> brut dans le renderer. <span class="badge badge-green">OK</span></li>
+    </ul>
+
+    <div class="pros-cons">
+      <div class="pros">
+        <h4>Avantages</h4>
+        <ul>
+          <li>Zéro dépendance runtime</li>
+          <li>Portable : fonctionne en navigateur direct</li>
+          <li>Déboguable sans build step</li>
+          <li>contextBridge correctement utilisé</li>
+          <li>Guards <code>if (window.electronAPI)</code> partout</li>
+          <li>Pattern override dans <code>wireElectron()</code> propre</li>
+        </ul>
+      </div>
+      <div class="cons">
+        <h4>Inconvénients</h4>
+        <ul>
+          <li>Fichier &gt; 3 700 lignes, navigation difficile</li>
+          <li>Pas de séparation CSS/JS — refactoring risqué</li>
+          <li>Pas de tests automatisés</li>
+          <li>Globals mutables sans protection</li>
+          <li>Aucun système de module / namespace</li>
+          <li>Duplication de logique (3× staff UI)</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <section id="s3">
+    <h2><span class="section-num">03</span> Bugs corrigés</h2>
+
+    <p>Liste des corrections appliquées au cours de la session de développement initiale :</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Bug</th>
+          <th>Symptôme</th>
+          <th>Correction apportée</th>
+          <th>Sévérité</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Drag counter <code>_dragEnterCount</code></td>
+          <td>La classe <code>drag-over</code> restait sur la track après un drag-leave si l'on entrait sur un enfant</td>
+          <td>Ajout du compteur <code>_dragEnterCount</code> sur <code>dragenter</code>/<code>dragleave</code> pour décrémentation correcte</td>
+          <td><span class="badge badge-orange">Moyen</span></td>
+        </tr>
+        <tr>
+          <td>Blocage de drag sur bouton de track</td>
+          <td><code>dragstart</code> sur le label entier déclenchait le drag même lors d'un clic sur un bouton ▲/✕</td>
+          <td>Guard <code>if (e.target.closest('button')) { e.preventDefault(); return }</code> ligne 2106</td>
+          <td><span class="badge badge-orange">Moyen</span></td>
+        </tr>
+        <tr>
+          <td>Click post-drag</td>
+          <td>Un drag de chip ouvrait le panneau de détail au drop</td>
+          <td>Flag <code>_chipDragging</code> + <code>setTimeout(() =&gt; { _chipDragging = false }, 0)</code> dans <code>dragend</code></td>
+          <td><span class="badge badge-orange">Moyen</span></td>
+        </tr>
+        <tr>
+          <td>Sync panneaux contextuels staff</td>
+          <td>La zone texte <code>.ctx-staff-display</code> dans la palette gauche n'était pas mise à jour lors des appels à <code>refreshStaffChip()</code></td>
+          <td>Ajout du query sur <code>.ctx-staff-display</code> dans <code>refreshStaffChip()</code> ligne 2687</td>
+          <td><span class="badge badge-blue">Mineur</span></td>
+        </tr>
+        <tr>
+          <td>Palette staff — accidentel non réinitialisé</td>
+          <td>Après ajout d'une note, l'accidentel actif (♯/♭) restait sélectionné visuellement mais <code>_spalAcc</code> était réinitialisé, créant une incohérence</td>
+          <td>Appel de <code>querySelectorAll('.acc-sel').forEach(b =&gt; b.classList.remove('acc-sel'))</code> après chaque append (lignes 2954, 2674)</td>
+          <td><span class="badge badge-blue">Mineur</span></td>
+        </tr>
+        <tr>
+          <td>Collision de blocs au drop — fallback silencieux</td>
+          <td>Si toutes les mesures après le point de drop étaient occupées, le bloc était silencieusement placé en overlap</td>
+          <td>Commentaire explicite + <code>m = measure // fallback, allow overlap</code> (ligne 2833) — comportement documenté, non corrigé définitivement</td>
+          <td><span class="badge badge-red">Critique</span></td>
+        </tr>
+        <tr>
+          <td>Ordre des pistes après drag</td>
+          <td>Déplacer une piste libre avant la piste Structure désorganisait l'ordre logique</td>
+          <td>Appel à <code>normalizeTrackOrder()</code> après chaque drop et <code>moveTrack()</code> (lignes 2133, 2819)</td>
+          <td><span class="badge badge-orange">Moyen</span></td>
+        </tr>
+        <tr>
+          <td>Reset ID counters au chargement</td>
+          <td>Charger un projet avec <code>loadState()</code> pouvait créer des ID dupliqués (TID/BID repartaient de 1)</td>
+          <td>Recalcul de <code>TID</code> et <code>BID</code> via <code>reduce()</code> sur les données chargées (lignes 3084–3085)</td>
+          <td><span class="badge badge-red">Critique</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <section id="s4">
+    <h2><span class="section-num">04</span> Audit performance</h2>
+
+    <h3>render() — appelé trop souvent <span class="badge badge-red">Critique</span></h3>
+    <p>
+      La fonction <code>render()</code> (ligne 2046) fait un <strong>innerHTML complet de <code>#tracks-inner</code></strong>, détruisant et recréant la totalité des noeuds DOM. Elle est appelée <strong>20 fois</strong> dans le code, y compris pour des opérations légères :
+    </p>
+    <ul>
+      <li>Ligne 2694 : <code>toggleMute()</code> → mute d'un bloc = reconstruction complète</li>
+      <li>Ligne 2701 : <code>quickDeleteBlock()</code> → idem</li>
+      <li>Ligne 2864 : <code>openBlockDetail()</code> → ouvrir le panneau de droite = reconstruction</li>
+      <li>Ligne 2977 : <code>closePanel()</code> → fermer le panneau = reconstruction</li>
+      <li>Ligne 3207 : <code>newProject()</code> → acceptable</li>
+    </ul>
+    <div class="callout callout-red">
+      <strong>Impact :</strong> Sur un projet avec 10 pistes et 80 blocs, chaque mute force la création de ~800 éléments DOM + re-attachement de 62+ event listeners. Avec des pistes staff (génération SVG), le coût est multiplicatif.
+    </div>
+
+    <pre><code>// Exemple : openBlockDetail() (ligne 2858) déclenche render() AVANT d'ouvrir le panel
+// pour mettre à jour la sélection visuelle du chip.
+// Solution ciblée : ajouter/retirer .selected sur le chip existant sans render()
+function openBlockDetail(id) {
+  // ...
+  render()  // ← inutile si on cible uniquement le chip concerné
+  // ...
+}</code></pre>
+
+    <h3>Accumulation de listeners <span class="badge badge-orange">Moyen</span></h3>
+    <p>
+      Chaque appel à <code>render()</code> recrée les éléments DOM et y attache de nouveaux <code>addEventListener</code>. Comme les anciens éléments sont détruits, il n'y a pas de <em>memory leak</em> au sens strict — mais les listeners dans <code>bindKeys()</code> (ligne 3163) sont ajoutés sur <code>document</code> et ne sont <strong>jamais retirés</strong>. La fonction <code>bindKeys()</code> est appelée une seule fois dans <code>init()</code>, ce qui est correct. Pas de fuite détectée ici.
+    </p>
+
+    <h3>Bloat des snapshots <span class="badge badge-orange">Moyen</span></h3>
+    <p>
+      La fonction <code>snapshotVersion()</code> (ligne 2984) pousse <code>JSON.stringify(S)</code> entier dans <code>S.versions[]</code>. Pour un projet de taille moyenne (50 blocs), chaque snapshot fait ~20–50 Ko. En session longue avec 20 snapshots, <code>S.versions</code> peut dépasser 1 Mo en RAM — et est sérialisé dans le fichier <code>.bmb</code> à chaque sauvegarde.
+    </p>
+    <pre><code>// Ligne 2985
+S.versions.push({ v: S.version, state: JSON.stringify(S), at: Date.now() })
+// Solution : limiter à 10 snapshots max ou ne stocker que le diff</code></pre>
+
+    <h3>getElementById — pas de cache <span class="badge badge-blue">Mineur</span></h3>
+    <p>
+      Le helper <code>$(id)</code> = <code>document.getElementById(id)</code> est appelé de façon répétée avec les mêmes ID dans des fonctions fréquemment invoquées (<code>openBlockDetail</code> appelle <code>$('panel')</code>, <code>$('panel-body')</code>, <code>$('panel-footer')</code>, etc.). Un cache de référence serait bénéfique pour les éléments statiques (panel, toast, ruler).
+    </p>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <section id="s5">
+    <h2><span class="section-num">05</span> Audit qualité code</h2>
+
+    <h3>Code mort — uid() <span class="badge badge-orange">Moyen</span></h3>
+    <p>
+      La fonction <code>uid(prefix)</code> est définie ligne 1816 mais <strong>n'est appelée nulle part</strong>. Les IDs sont générés via <code>'t' + TID++</code> et <code>'b' + BID++</code>. La fonction peut être supprimée.
+    </p>
+    <pre><code>// Ligne 1816 — dead code
+function uid(prefix) { return prefix + '_' + Math.random().toString(36).slice(2,9) }
+// Non utilisé : les IDs réels sont 't1', 't2', 'b1', 'b2'…</code></pre>
+
+    <h3>S.versions — write-only <span class="badge badge-orange">Moyen</span></h3>
+    <p>
+      <code>S.versions</code> est rempli par <code>snapshotVersion()</code> (ligne 2985) mais n'est <strong>jamais lu dans l'UI</strong>. Il n'y a ni bouton "Restaurer le snapshot v2", ni liste déroulante d'historique. La fonctionnalité est donc à moitié implémentée. La donnée est sérialisée dans le <code>.bmb</code> mais silencieusement ignorée au chargement (<code>loadState()</code> ne lit pas <code>data.versions</code>).
+    </p>
+
+    <h3>Duplication CSS gradients dans buildExportHTML() <span class="badge badge-orange">Moyen</span></h3>
+    <p>
+      Les 14 classes <code>.bloc-*</code> avec leurs gradients sont définies deux fois : une fois dans le CSS principal de <code>index.html</code> (lignes 269–284), et une seconde fois intégralement recopiées dans la chaîne template de <code>buildExportHTML()</code> (lignes 3137–3151). Toute modification d'une couleur nécessite deux mises à jour synchronisées.
+    </p>
+    <pre><code>// Ligne 269 (CSS principal)
+.bloc-intro { background: linear-gradient(135deg,#2563eb,#7c3aed); }
+
+// Ligne 3137 (dans buildExportHTML — copie manuelle)
+.bloc-intro{background:linear-gradient(135deg,#2563eb,#7c3aed)}
+// Solution : extraire les gradients dans une constante JS partagée</code></pre>
+
+    <h3>Handlers inline onclick/onchange <span class="badge badge-orange">Moyen</span></h3>
+    <p>
+      26 handlers inline sont utilisés dans le HTML (lignes 1591, 1600, 1607–1608, 1613, 1617–1623, 1650, 1669, 1679–1680, 1690–1691, 1705). Ils créent un couplage fort entre le balisage et le JS, et font échouer toute CSP <code>unsafe-inline</code> future.
+    </p>
+    <pre><code>&lt;!-- Lignes 1591, 1600 — exemples de handlers inline --&gt;
+&lt;select onchange="onKeyChange(this.value)"&gt;
+&lt;select onchange="S.timeSign=$('#time-select').value;toast('Time: '+S.timeSign)"&gt;
+&lt;!-- Le second est particulièrement problématique : logique métier inline --&gt;</code></pre>
+
+    <h3>Escaping inconsistant dans l'export HTML <span class="badge badge-red">Critique</span></h3>
+    <p>
+      Dans <code>buildExportHTML()</code>, <code>b.name</code> et <code>b.chords</code> (lignes 3116–3117) et <code>t.name</code> (ligne 3121) sont injectés directement dans le HTML généré <strong>sans passer par <code>esc()</code></strong>. Si un utilisateur nomme un bloc <code>&lt;script&gt;alert(1)&lt;/script&gt;</code>, le fichier HTML exporté exécutera ce script à l'ouverture.
+    </p>
+    <pre><code>// Ligne 3116 — VULNÉRABLE
+return `&lt;div class="block-chip bloc-${b.type}" ...&gt;
+  ${def.icon} &lt;strong&gt;${b.name}&lt;/strong&gt;   // ← pas de esc()
+  ${b.chords ? `&lt;br&gt;&lt;small&gt;${b.chords}&lt;/small&gt;` : ''}  // ← pas de esc()
+&lt;/div&gt;`
+
+// Ligne 3121 — VULNÉRABLE
+&lt;div class="track-label"&gt;${cfg.icon} ${t.name}&lt;/div&gt;  // ← pas de esc()
+
+// La fonction esc() existe (ligne 3215) et est utilisée ailleurs — incohérence</code></pre>
+
+    <h3>Triple implémentation de la saisie staff <span class="badge badge-blue">Mineur</span></h3>
+    <p>
+      La logique de saisie de notes (durée + accidentel + nom de note + append) est implémentée en trois endroits distincts :
+    </p>
+    <ul>
+      <li><code>buildCtxStaff()</code> + <code>staffAppend()</code> — palette gauche fixe (lignes 3378–3474)</li>
+      <li><code>showStaffPalette()</code> + <code>spalAppend()</code> — palette flottante (lignes 1859–1956)</li>
+      <li><code>showStaffPopup()</code> + <code>staffAppendToBlock()</code> — popup clic droit (lignes 2576–2675)</li>
+    </ul>
+    <p>Ces trois implémentations partagent la même logique mais ont des états séparés (<code>_staffDur/_staffAcc</code>, <code>_spalDur/_spalAcc</code>, <code>_spDur/_spAcc</code>) non synchronisés.</p>
+
+    <h3>Mesure 0-based vs 1-based <span class="badge badge-blue">Mineur</span></h3>
+    <p>
+      Les mesures sont stockées en base 1 (<code>block.measure = 1</code> pour la première mesure). Le calcul de position CSS est <code>(block.measure - 1) * MEASURE_WIDTH</code>. La règle est cohérente dans le rendu, mais le ruler est rendu en base 0 (<code>String(m)</code> pour <code>m = 0..31</code> — ligne 2013), ce qui crée une discordance visuelle : le ruler affiche "0" à la première position alors que les blocs commencent à la mesure "1".
+    </p>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <section id="s6">
+    <h2><span class="section-num">06</span> Audit sécurité</h2>
+
+    <h3>contextBridge <span class="badge badge-green">OK</span></h3>
+    <p>
+      <code>src/preload.js</code> utilise correctement <code>contextBridge.exposeInMainWorld</code>. Seuls 4 channels IPC sont exposés, tous typés. L'objet <code>ipcRenderer</code> lui-même n'est pas accessible depuis le renderer. Pas de <code>nodeIntegration: true</code> nulle part. Aucun <code>enableRemoteModule</code>.
+    </p>
+
+    <h3>innerHTML et XSS potentiel <span class="badge badge-orange">Moyen</span></h3>
+    <p>
+      26 usages de <code>.innerHTML =</code> sont recensés. La plupart utilisent <code>esc()</code> pour les données utilisateur. Exceptions :
+    </p>
+    <ul>
+      <li><strong>Ligne 3116–3117</strong> : <code>b.name</code> et <code>b.chords</code> non échappés dans l'export HTML (XSS dans le fichier exporté)</li>
+      <li><strong>Ligne 3121</strong> : <code>t.name</code> non échappé dans l'export HTML</li>
+      <li><strong>Ligne 2735</strong> : <code>btn.innerHTML = ${cfg.icon} ${cfg.name}</code> — données provenant de constantes internes, non utilisateur — risque nul en pratique</li>
+      <li><strong>Ligne 1804</strong> : <code>el()</code> prend un paramètre <code>inner</code> assigné en innerHTML sans échappement — interne uniquement, mais pattern risqué si étendu</li>
+    </ul>
+
+    <div class="callout callout-orange">
+      <strong>Portée du risque :</strong> Le XSS dans l'export HTML n'est pas exploitable dans l'app Electron elle-même (le fichier exporté est ouvert dans un navigateur séparé). En revanche, un utilisateur pourrait créer un projet malveillant et envoyer le fichier <code>.html</code> exporté à une victime. Risque modéré dans un contexte collaboratif.
+    </div>
+
+    <h3>CSP <span class="badge badge-orange">Moyen</span></h3>
+    <p>
+      Aucune Content Security Policy n'est définie via <code>&lt;meta http-equiv="Content-Security-Policy"&gt;</code> dans <code>index.html</code>. Les handlers <code>onclick</code> inline requièrent <code>unsafe-inline</code>, ce qui rendrait une CSP stricte incompatible avec l'état actuel du code. Electron 31 applique une CSP par défaut permissive.
+    </p>
+    <p>
+      De plus, la balise <code>&lt;link&gt;</code> vers Google Fonts (ligne 8) est une requête externe. Elle est bloquée par Electron en production (pas de réseau par défaut pour les fichiers locaux), ce qui est acceptable, mais elle échoue silencieusement en mode offline.
+    </p>
+
+    <h3>Validation du schéma à l'ouverture <span class="badge badge-blue">Mineur</span></h3>
+    <p>
+      <code>loadState()</code> (ligne 3069) ne valide pas la structure du JSON chargé. Un fichier malformé avec un champ <code>tracks</code> qui n'est pas un tableau provoquera une erreur silencieuse ou un état incohérent. Le commentaire indique "still try to load for forward-compat" mais aucune validation n'est faite.
+    </p>
+    <pre><code>// Ligne 3070–3072 — validation absente
+if (data.app && data.app !== 'BertinoMusicBlocs') {
+  // still try to load for forward-compat  ← aucune action, commentaire mort
+}
+S.tracks = data.tracks || []  // data.tracks pourrait être un string ou un objet</code></pre>
+
+    <h3>ipcRenderer — canaux supplémentaires <span class="badge badge-green">OK</span></h3>
+    <p>
+      L'exposition IPC est minimale. Les listeners <code>onMenuAction</code> et <code>onLoadRecent</code> utilisent <code>ipcRenderer.on()</code> sans <code>removeListener</code> — ce qui crée techniquement des listeners permanents, mais dans le contexte d'une application à fenêtre unique, c'est sans conséquence.
+    </p>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <section id="s7">
+    <h2><span class="section-num">07</span> Audit stabilité</h2>
+
+    <h3>Collision de blocs — détection incomplète <span class="badge badge-red">Critique</span></h3>
+    <p>
+      La détection de collision dans <code>dropBlock()</code> (lignes 2828–2833) ne vérifie que si le <em>point de départ</em> est occupé, pas si le bloc de 4 mesures chevauche un bloc existant. De plus, si toutes les positions suivantes sont occupées, le bloc est quand même placé en overlap (commentaire "allow overlap").
+    </p>
+    <pre><code>// Lignes 2828–2833
+const occupied = S.blocks
+  .filter(b => b.trackId === trackId)
+  .map(b => b.measure)  // ← ne capture que le point de départ, pas la largeur
+let m = measure
+while (occupied.includes(m)) m++
+if (m > MEASURES) m = measure  // fallback, allow overlap ← collision silencieuse</code></pre>
+    <div class="callout callout-red">
+      La détection correcte nécessite de vérifier les plages <code>[b.measure, b.measure + b.measures - 1]</code> pour chaque bloc existant, pas seulement <code>b.measure</code>.
+    </div>
+
+    <h3>_spalBlock peut devenir stale <span class="badge badge-orange">Moyen</span></h3>
+    <p>
+      La variable globale <code>_spalBlock</code> (ligne 1836) pointe vers un objet block. Si l'utilisateur supprime ce bloc via le bouton ✕ ou via le panneau de détail pendant que la palette staff flottante est ouverte, <code>_spalBlock</code> pointe vers un objet orphelin (non présent dans <code>S.blocks</code>). Les appels suivants à <code>spalAppend()</code> modifient un objet hors du state, sans effet visible puis sans erreur explicite.
+    </p>
+    <pre><code>// Ligne 1943 — _spalBlock peut être orphelin
+function spalAppend(noteName) {
+  if (!_spalBlock) return  // guard insuffisant : vérifie null mais pas orphelin
+  // ...
+  _spalBlock.staffNotes = ...  // mutation d'un objet non dans S.blocks
+}</code></pre>
+
+    <h3>refreshStaffChip — fallback render() <span class="badge badge-orange">Moyen</span></h3>
+    <p>
+      Dans <code>refreshStaffChip()</code> (ligne 2677), si le chip n'est pas trouvé dans le DOM, la fonction appelle <code>render()</code> complet :
+    </p>
+    <pre><code>// Ligne 2677–2679
+function refreshStaffChip(block) {
+  const chip = document.querySelector(`.block-chip[data-block-id="${block.id}"]`)
+  if (!chip) { render(); return }  // ← render() complet si chip absent
+}</code></pre>
+    <p>Ce cas se produit quand la piste est collapsed ou group-hidden. Un <code>render()</code> complet est alors déclenché depuis un handler de saisie de note — coûteux et inattendu.</p>
+
+    <h3>normalizeTrackOrder — logique de rang discutable <span class="badge badge-blue">Mineur</span></h3>
+    <p>
+      <code>normalizeTrackOrder()</code> (ligne 2786) assigne le rang 0 aux pistes "free" (lyrics, fretboard), le rang 1 à "main" (structure), le rang 2 aux "sub", et le rang 3 à "staff". Cela signifie que les pistes Lyrics et Fretboard sont <strong>toujours</strong> placées avant Structure, quelle que soit la position choisie par l'utilisateur via drag-and-drop. L'utilisateur perd le contrôle de l'ordre des pistes libres par rapport à Structure.
+    </p>
+
+    <h3>Ruler — base 0 vs blocs base 1 <span class="badge badge-blue">Mineur</span></h3>
+    <p>
+      Le ruler (ligne 2013) affiche les mesures de "0" à "31", mais les blocs sont positionnés à partir de la mesure "1". La mesure "0" du ruler correspond visuellement à la position de départ de la mesure "1" des blocs. Confusion pour un développeur qui relit le code, et potentiellement pour l'utilisateur.
+    </p>
+
+    <h3>MIDI import — stub fonctionnel <span class="badge badge-blue">Mineur</span></h3>
+    <p>
+      L'import MIDI dans le renderer (<code>showMidiImport()</code> ligne 3696) reçoit les données base64 du fichier MIDI mais affiche seulement un toast "MIDI imported (simulation)". Les données ne sont pas parsées ni intégrées à l'état. C'est un placeholder — acceptable en v1.0 mais à documenter clairement dans l'UI.
+    </p>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <section id="s8">
+    <h2><span class="section-num">08</span> Quick Wins</h2>
+
+    <p>Corrections triées par ratio Priorité/Effort. Toutes applicables dans <code>src/index.html</code> sans modifier l'architecture.</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Priorité</th>
+          <th>Effort</th>
+          <th>Description</th>
+          <th>Fichier:ligne</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="badge badge-red">Critique</span></td>
+          <td>15 min</td>
+          <td>Ajouter <code>esc()</code> sur <code>b.name</code>, <code>b.chords</code> et <code>t.name</code> dans <code>buildExportHTML()</code> pour éliminer le XSS dans les exports HTML</td>
+          <td><code>index.html:3116–3121</code></td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-red">Critique</span></td>
+          <td>30 min</td>
+          <td>Corriger la détection de collision dans <code>dropBlock()</code> pour vérifier les intervalles <code>[measure, measure+measures-1]</code> et non juste le point de départ</td>
+          <td><code>index.html:2828</code></td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-orange">Moyen</span></td>
+          <td>20 min</td>
+          <td>Dans <code>openBlockDetail()</code>, remplacer <code>render()</code> par un ciblage DOM : retirer <code>.selected</code> de l'ancien chip, ajouter sur le nouveau</td>
+          <td><code>index.html:2864</code></td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-orange">Moyen</span></td>
+          <td>10 min</td>
+          <td>Dans <code>closePanel()</code>, remplacer <code>render()</code> par suppression ciblée de <code>.selected</code> sur le chip actif</td>
+          <td><code>index.html:2977</code></td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-orange">Moyen</span></td>
+          <td>10 min</td>
+          <td>Ajouter un guard <code>S.blocks.some(b => b.id === _spalBlock.id)</code> dans <code>spalAppend()</code> pour éviter la mutation d'un bloc orphelin</td>
+          <td><code>index.html:1943</code></td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-orange">Moyen</span></td>
+          <td>10 min</td>
+          <td>Limiter <code>S.versions</code> à 10 entrées maximum dans <code>snapshotVersion()</code> pour éviter le bloat mémoire</td>
+          <td><code>index.html:2985</code></td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-orange">Moyen</span></td>
+          <td>15 min</td>
+          <td>Supprimer la fonction <code>uid()</code> inutilisée et commenter pourquoi TID/BID sont utilisés à la place</td>
+          <td><code>index.html:1816</code></td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-orange">Moyen</span></td>
+          <td>25 min</td>
+          <td>Extraire les couleurs de blocs dans une constante <code>BLOCK_GRADIENTS</code> et la référencer dans <code>buildExportHTML()</code> pour éliminer la duplication</td>
+          <td><code>index.html:269–284, 3137–3151</code></td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-blue">Mineur</span></td>
+          <td>10 min</td>
+          <td>Corriger le ruler pour afficher les mesures en base 1 (afficher "1" à la place de "0") pour cohérence avec les blocs</td>
+          <td><code>index.html:2013</code></td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-blue">Mineur</span></td>
+          <td>15 min</td>
+          <td>Ajouter une validation de type dans <code>loadState()</code> : <code>Array.isArray(data.tracks)</code>, <code>Array.isArray(data.blocks)</code>, plages valides pour <code>tempo</code> et <code>version</code></td>
+          <td><code>index.html:3069</code></td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-blue">Mineur</span></td>
+          <td>20 min</td>
+          <td>Déplacer la logique métier du handler <code>onchange</code> inline de <code>#time-select</code> vers une fonction nommée <code>onTimeSignChange()</code></td>
+          <td><code>index.html:1600</code></td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-blue">Mineur</span></td>
+          <td>5 min</td>
+          <td>Implémenter <code>S.versions</code> read : ajouter un bouton "Restaurer" dans la liste des snapshots ou supprimer la fonctionnalité si non prévue</td>
+          <td><code>index.html:2984</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <section id="s9">
+    <h2><span class="section-num">09</span> Roadmap améliorations</h2>
+
+    <h3>1. Undo / Redo <span class="badge badge-orange">Impact élevé</span></h3>
+    <p>
+      Actuellement il n'existe pas de <em>Ctrl+Z</em> fonctionnel. Le menu Electron expose <code>{ role: 'undo' }</code> (ligne 155 de <code>main.js</code>) qui utilise l'undo natif WebKit (utile uniquement pour les champs texte). Pour l'état de l'application, il faudrait un stack d'états immuables ou une approche Command Pattern.
+    </p>
+    <p><strong>Approche recommandée :</strong> stocker une copie JSON de <code>{tracks, blocks}</code> avant chaque mutation dans un tableau <code>_history[]</code> limité à 50 entrées. Undo = pop + <code>loadState()</code>. Coût : ~5 Ko par état, négligeable.</p>
+
+    <h3>2. Mises à jour DOM ciblées <span class="badge badge-orange">Impact élevé</span></h3>
+    <p>
+      Remplacer les <code>render()</code> appelés pour des micro-changements par des updates DOM ciblées :
+    </p>
+    <ul>
+      <li><strong>Mute</strong> : ajouter/retirer <code>.muted</code> sur le chip + mettre à jour le texte du bouton</li>
+      <li><strong>Sélection</strong> : ajouter/retirer <code>.selected</code> sur les chips concernés</li>
+      <li><strong>Move de bloc</strong> : mettre à jour <code>style.left</code> et <code>style.width</code> du chip</li>
+    </ul>
+    <p>Gain estimé : réduction de 70% des reconstructions DOM en session normale.</p>
+
+    <h3>3. Détection de collision complète <span class="badge badge-red">Priorité haute</span></h3>
+    <p>
+      Implémenter une détection correcte des intervalles. Lors d'un drop ou d'un move, vérifier que la plage <code>[targetMeasure, targetMeasure + block.measures - 1]</code> n'intersecte aucun bloc existant sur la même piste.
+    </p>
+    <pre><code>// Logique correcte
+function isFreeRange(trackId, startMeasure, numMeasures, excludeBlockId) {
+  return !S.blocks.some(b =>
+    b.trackId === trackId &&
+    b.id !== excludeBlockId &&
+    b.measure < startMeasure + numMeasures &&
+    b.measure + b.measures > startMeasure
+  )
+}</code></pre>
+
+    <h3>4. Import MIDI réel <span class="badge badge-blue">Impact moyen</span></h3>
+    <p>
+      La plomberie Electron est en place (main.js reçoit les bytes base64). Il faut un parser MIDI léger dans le renderer pour extraire les tempo events, time signature et notes, et créer automatiquement des blocs. Une librairie comme <code>midi-parser-js</code> (~10 Ko) peut être copiée inline pour respecter la contrainte "zero npm dependencies runtime".
+    </p>
+
+    <h3>5. Validation du schéma à l'ouverture <span class="badge badge-blue">Impact moyen</span></h3>
+    <p>
+      Ajouter une validation légère de <code>data</code> dans <code>loadState()</code> : vérification des types, des plages, et des références (un <code>block.trackId</code> qui pointe vers une track inexistante). Afficher une alerte structurée plutôt que de laisser l'app dans un état incohérent.
+    </p>
+
+    <h3>6. Résolution du ruler 0-based vs blocs 1-based</h3>
+    <p>
+      Soit afficher le ruler de 1 à 32, soit stocker les mesures en base 0 partout et afficher <code>m+1</code> dans l'UI. La seconde approche est plus courante en programmation musicale (MIDI utilise la base 0).
+    </p>
+
+    <h3>7. Unification de la saisie staff</h3>
+    <p>
+      Fusionner les trois implémentations de saisie de notes staff en un seul module avec état partagé. Proposer une seule interaction (la palette flottante) et supprimer le popup clic droit ou l'équivalent dans la palette fixe.
+    </p>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <section id="s10">
+    <h2><span class="section-num">10</span> Métriques</h2>
+
+    <div class="dashboard">
+      <div class="metric-card">
+        <div class="metric-value">3 729</div>
+        <div class="metric-label">Lignes totales (index.html)</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">~1 577</div>
+        <div class="metric-label">Lignes CSS</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">~2 014</div>
+        <div class="metric-label">Lignes JS</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">~138</div>
+        <div class="metric-label">Lignes HTML</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">257</div>
+        <div class="metric-label">Lignes main.js</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">29</div>
+        <div class="metric-label">Lignes preload.js</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">69</div>
+        <div class="metric-label">Fonctions JS</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">62</div>
+        <div class="metric-label">addEventListener</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">26</div>
+        <div class="metric-label">Handlers inline</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">26</div>
+        <div class="metric-label">Usages innerHTML</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">20</div>
+        <div class="metric-label">Appels render()</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">15</div>
+        <div class="metric-label">Usages esc()</div>
+      </div>
+    </div>
+
+    <h3>Types de blocs</h3>
+    <table>
+      <thead>
+        <tr><th>Clé</th><th>Label</th><th>Catégorie</th><th>Couleur dominante</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>intro</td><td>Intro</td><td>Structure</td><td>#2563eb → #7c3aed</td></tr>
+        <tr><td>verse</td><td>Verse</td><td>Structure</td><td>#0d9488 → #0891b2</td></tr>
+        <tr><td>pre-chorus</td><td>Pre-Chorus</td><td>Structure</td><td>#d97706 → #ea580c</td></tr>
+        <tr><td>chorus</td><td>Chorus</td><td>Structure</td><td>#dc2626 → #db2777</td></tr>
+        <tr><td>bridge</td><td>Bridge</td><td>Structure</td><td>#16a34a → #0d9488</td></tr>
+        <tr><td>break</td><td>Break</td><td>Structure</td><td>#475569 → #64748b</td></tr>
+        <tr><td>outro</td><td>Outro</td><td>Structure</td><td>#7c3aed → #2563eb</td></tr>
+        <tr><td>solo</td><td>Solo</td><td>Structure</td><td>#ca8a04 → #d97706</td></tr>
+        <tr><td>coda</td><td>Coda</td><td>Structure</td><td>#be185d → #7c3aed</td></tr>
+        <tr><td>lyrics</td><td>Lyrics</td><td>Structure</td><td>#374151 → #4b5563</td></tr>
+        <tr><td>yes</td><td>YES</td><td>Action</td><td>#166534 → #15803d</td></tr>
+        <tr><td>no</td><td>NO</td><td>Action</td><td>#7f1d1d → #991b1b</td></tr>
+        <tr><td>on</td><td>ON</td><td>Action</td><td>#0369a1 → #0284c7</td></tr>
+        <tr><td>stop</td><td>STOP</td><td>Action</td><td>#1c1c28 → #374151</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Types de pistes</h3>
+    <table>
+      <thead>
+        <tr><th>Clé</th><th>Groupe</th><th>Badge</th><th>Rendu spécial</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>structure</td><td>main</td><td>STRUCTURE</td><td>Couleur accent, group-toggle</td></tr>
+        <tr><td>loops</td><td>sub</td><td>LOOP</td><td>Indentation + group-hidden si collapsed</td></tr>
+        <tr><td>solo</td><td>sub</td><td>SOLO</td><td>idem</td></tr>
+        <tr><td>vocals</td><td>sub</td><td>VOIX</td><td>idem</td></tr>
+        <tr><td>arpeggio</td><td>sub</td><td>ARPEGGIO</td><td>idem</td></tr>
+        <tr><td>drums</td><td>sub</td><td>DRUMS</td><td>idem</td></tr>
+        <tr><td>bass</td><td>sub</td><td>BASS</td><td>idem</td></tr>
+        <tr><td>keyboard</td><td>sub</td><td>KEYS</td><td>idem</td></tr>
+        <tr><td>sample</td><td>sub</td><td>SAMPLE</td><td>idem</td></tr>
+        <tr><td>beat</td><td>sub</td><td>BEAT</td><td>idem</td></tr>
+        <tr><td>lyrics</td><td>free</td><td>LYRICS</td><td>Hauteur 84px, chip lyrics avec texte</td></tr>
+        <tr><td>fretboard</td><td>free</td><td>FRET</td><td>Hauteur 136px, diagram d'accord SVG mini</td></tr>
+        <tr><td>staff</td><td>free</td><td>STAFF</td><td>Hauteur 104px, portée + notes SVG inline</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Fonctions clés par rôle</h3>
+    <table>
+      <thead>
+        <tr><th>Fonction</th><th>Ligne</th><th>Rôle</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>init()</td><td>1821</td><td>Point d'entrée : buildPalette, buildRuler, ensureDefaultTracks, render, wireElectron</td></tr>
+        <tr><td>render()</td><td>2046</td><td>Reconstrution complète de #tracks-inner</td></tr>
+        <tr><td>buildTrackRow()</td><td>2063</td><td>Crée le DOM d'une piste (label + zone blocs + drag handlers)</td></tr>
+        <tr><td>buildBlockChip()</td><td>2229</td><td>Dispatch vers buildLyricsChip / buildFretboardChip / buildStaffChip</td></tr>
+        <tr><td>dropBlock()</td><td>2825</td><td>Crée un nouveau bloc depuis un drag palette → track</td></tr>
+        <tr><td>openBlockDetail()</td><td>2858</td><td>Remplit et ouvre le panneau de droite</td></tr>
+        <tr><td>saveBlockDetail()</td><td>2952</td><td>Lit les champs du panneau et met à jour S.blocks</td></tr>
+        <tr><td>normalizeTrackOrder()</td><td>2786</td><td>Réordonne les pistes selon leur groupe (free < main < sub < staff)</td></tr>
+        <tr><td>serializeState()</td><td>3052</td><td>Produit l'objet JSON du projet</td></tr>
+        <tr><td>loadState()</td><td>3069</td><td>Charge un projet depuis un objet JSON</td></tr>
+        <tr><td>buildExportHTML()</td><td>3104</td><td>Génère le HTML standalone exporté</td></tr>
+        <tr><td>wireElectron()</td><td>3668</td><td>Override les fonctions browser par les versions natives Electron</td></tr>
+        <tr><td>refreshStaffChip()</td><td>2677</td><td>Met à jour le SVG d'un chip staff sans render() complet (si chip présent)</td></tr>
+        <tr><td>snapshotVersion()</td><td>2984</td><td>Pousse l'état courant dans S.versions[]</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+</main>
+
+</body>
+</html>

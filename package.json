@@ -10,7 +10,6 @@
     "build":         "electron-builder --mac --universal",
     "build:arm":     "electron-builder --mac --arm64",
     "build:intel":   "electron-builder --mac --x64",
-    "build:win":     "electron-builder --win --x64",
     "build:dir":     "electron-builder --dir",
     "make-icon":     "node scripts/make-icon.js"
   },
@@ -32,7 +31,6 @@
       "!**/*.map"
     ],
     "asar": true,
-
     "mac": {
       "category": "public.app-category.music",
       "hardenedRuntime": false,
@@ -53,20 +51,6 @@
         { "x": 410, "y": 220, "type": "link", "path": "/Applications" }
       ],
       "window": { "width": 540, "height": 380 }
-    },
-
-    "win": {
-      "icon": "assets/icon.png",
-      "target": [
-        { "target": "nsis", "arch": ["x64"] }
-      ]
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true,
-      "shortcutName": "BertinoMusicBlocs"
     }
   }
 }

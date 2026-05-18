@@ -274,8 +274,8 @@
     .bloc-break       { background: linear-gradient(135deg,#475569,#64748b); }
     .bloc-outro       { background: linear-gradient(135deg,#7c3aed,#2563eb); }
     .bloc-solo        { background: linear-gradient(135deg,#ca8a04,#d97706); }
-    .bloc-interlude   { background: linear-gradient(135deg,#0891b2,#6d28d9); }
     .bloc-coda        { background: linear-gradient(135deg,#be185d,#7c3aed); }
+    .bloc-lyrics      { background: linear-gradient(135deg,#374151,#4b5563); }
 
     /* Action bloc colours */
     .bloc-yes  { background: linear-gradient(135deg,#166534,#15803d); }
@@ -322,7 +322,7 @@
       position: relative;
     }
 
-    /* Ruler */
+    /* Ruler — inside tracks-scroll, sticky to top so it never leaves view on vertical scroll */
     #ruler {
       height: 26px;
       min-height: 26px;
@@ -330,8 +330,10 @@
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: stretch;
-      overflow: hidden;
       flex-shrink: 0;
+      position: sticky;
+      top: 0;
+      z-index: 10;
     }
 
     .ruler-label-spacer {
@@ -340,12 +342,13 @@
       border-right: 1px solid var(--border2);
       background: var(--surface2);
       flex-shrink: 0;
+      position: sticky;
+      left: 0;
+      z-index: 11;
     }
 
     .ruler-measures {
-      flex: 1;
       display: flex;
-      overflow: hidden;
     }
 
     .ruler-measure {
@@ -439,6 +442,409 @@
     }
     .track-btn:hover { color: var(--text); background: var(--border2); }
     .track-btn.danger:hover { color: #f87171; }
+
+    /* Track drag handle */
+    .track-drag-handle {
+      background: none;
+      border: none;
+      color: var(--text3);
+      cursor: grab;
+      font-size: 13px;
+      padding: 0 2px;
+      flex-shrink: 0;
+      opacity: 0;
+      transition: opacity 0.15s, color 0.15s;
+      line-height: 1;
+    }
+    .track-row:hover .track-drag-handle { opacity: 0.6; }
+    .track-drag-handle:hover { color: var(--accent2); opacity: 1 !important; }
+    .track-drag-handle:active { cursor: grabbing; }
+    .track-row.track-dragging { opacity: 0.35; }
+    .track-row.track-drop-target .track-label { box-shadow: inset 0 -3px 0 var(--accent); }
+
+    /* Per-track collapse toggle (▼ → rotates ▶ when collapsed) */
+    .track-toggle {
+      background: none;
+      border: none;
+      color: var(--text3);
+      cursor: pointer;
+      font-size: 9px;
+      padding: 2px 4px;
+      border-radius: 3px;
+      transition: color 0.15s, transform 0.2s;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .track-toggle:hover { color: var(--accent2); }
+    .track-row.collapsed .track-toggle { transform: rotate(-90deg); }
+    .track-row.collapsed { min-height: 30px; }
+    .track-row.collapsed .track-blocks { display: none; }
+
+    /* Group toggle on STRUCTURE track */
+    .group-toggle {
+      background: none;
+      border: none;
+      color: var(--accent2);
+      cursor: pointer;
+      font-size: 12px;
+      padding: 2px 5px;
+      border-radius: 4px;
+      transition: color 0.15s, background 0.15s, transform 0.2s;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .group-toggle:hover { background: rgba(124,91,240,0.18); }
+    .group-toggle.closed { transform: rotate(-90deg); }
+
+    /* Tracks hidden by group collapse */
+    .track-row.group-hidden { display: none; }
+
+    /* STRUCTURE track — main, prominent */
+    .track-row.is-structure .track-label {
+      background: rgba(124,91,240,0.13);
+      border-right: 2px solid var(--accent);
+    }
+    .track-row.is-structure .track-name { color: var(--accent2); font-size: 13px; }
+
+    /* SUB-TRACKS — indented under Structure */
+    .track-row.is-sub-track .track-label {
+      padding-left: 22px;
+      background: var(--surface3);
+      border-left: 3px solid rgba(124,91,240,0.25);
+    }
+    .track-row.is-sub-track .track-name  { font-size: 11px; }
+    .track-row.is-sub-track .track-type-badge { opacity: 0.65; }
+
+    /* FREE TRACKS — neutral, always visible */
+    .track-row.is-free-track .track-label {
+      background: var(--surface2);
+      border-left: 3px solid rgba(255,255,255,0.05);
+    }
+
+    /* Add Track modal — grouped sections */
+    .track-type-section { margin-bottom: 14px; }
+    .track-type-section-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--text3);
+      margin-bottom: 6px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid var(--border);
+    }
+    .track-type-subgrid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+    .track-type-subgrid .track-type-btn { font-size: 12px; padding: 8px 10px; }
+
+    /* Floating staff palette */
+    #staff-palette-float {
+      position: fixed;
+      z-index: 600;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      min-width: 236px;
+      display: none;
+    }
+    #staff-palette-float.open { display: block; }
+    .spal-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      background: var(--surface3);
+      border-bottom: 1px solid var(--border);
+      border-radius: var(--radius) var(--radius) 0 0;
+      cursor: default;
+    }
+    .spal-drag-handle {
+      cursor: grab;
+      font-size: 15px;
+      color: var(--text3);
+      flex-shrink: 0;
+    }
+    .spal-drag-handle:active { cursor: grabbing; }
+    .spal-title {
+      flex: 1;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text2);
+    }
+    .spal-block-name {
+      font-size: 10px;
+      font-family: 'Space Mono', monospace;
+      color: var(--accent2);
+      max-width: 90px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .spal-body { padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+
+    /* ── STAFF track — continuous treble-clef staff ── */
+    .track-row.is-staff { min-height: 104px; }
+    .track-row.is-staff .track-blocks { min-height: 104px; }
+    .track-row.is-staff .track-label  { align-items: flex-start; padding-top: 10px; }
+
+    /* 5 staff lines drawn as ::after overlay */
+    .track-row.is-staff .track-blocks::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(
+        transparent 0, transparent 24px,
+        rgba(160,165,210,0.22) 24px, rgba(160,165,210,0.22) 25px,
+        transparent 25px, transparent 35px,
+        rgba(160,165,210,0.22) 35px, rgba(160,165,210,0.22) 36px,
+        transparent 36px, transparent 46px,
+        rgba(160,165,210,0.22) 46px, rgba(160,165,210,0.22) 47px,
+        transparent 47px, transparent 57px,
+        rgba(160,165,210,0.22) 57px, rgba(160,165,210,0.22) 58px,
+        transparent 58px, transparent 68px,
+        rgba(160,165,210,0.22) 68px, rgba(160,165,210,0.22) 69px,
+        transparent 69px
+      );
+    }
+
+    /* Staff block chip */
+    .staff-chip {
+      height: 92px !important;
+      display: flex !important;
+      flex-direction: column !important;
+      overflow: hidden;
+    }
+    .staff-chip svg { display: block; }
+
+    /* Floating note-entry popup (right-click on staff) */
+    #staff-popup {
+      position: fixed;
+      z-index: 800;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      padding: 10px;
+      box-shadow: var(--shadow);
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 220px;
+    }
+    #staff-popup.open { display: flex; }
+    .sp-title {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--text3);
+      margin-bottom: 2px;
+    }
+
+    /* ── LYRICS track — taller row, shows lyrics text in chips ── */
+    .track-row.is-lyrics { min-height: 84px; }
+    .track-row.is-lyrics .track-blocks { min-height: 84px; }
+    .track-row.is-lyrics .track-label  { align-items: flex-start; padding-top: 10px; }
+
+    .lyrics-chip { height: 72px !important; display:flex !important; flex-direction:column !important; }
+    .lyrics-chip-body {
+      flex: 1;
+      padding: 3px 8px 5px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      min-height: 0;
+    }
+    .lyrics-chip-name {
+      font-size: 8px;
+      font-family: 'Space Mono', monospace;
+      opacity: 0.6;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex-shrink: 0;
+    }
+    .lyrics-chip-text {
+      font-size: 10px;
+      font-family: 'Space Mono', monospace;
+      line-height: 1.45;
+      overflow: hidden;
+      flex: 1;
+      white-space: pre-wrap;
+      word-break: break-word;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      opacity: 0.88;
+    }
+    .lyrics-chip-empty {
+      font-size: 10px;
+      font-style: italic;
+      opacity: 0.35;
+    }
+
+    /* ── FRETBOARD track — taller row for inline chord diagrams ── */
+    .track-row.is-fretboard { min-height: 136px; }
+    .track-row.is-fretboard .track-blocks { min-height: 136px; }
+    .track-row.is-fretboard .track-label  { align-items: flex-start; padding-top: 10px; }
+
+    /* Fretboard chip — horizontal 3-column layout */
+    .fret-chip {
+      height: 124px !important;
+      display: flex !important;
+      flex-direction: column !important;
+    }
+    .fret-chip-body {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+      min-height: 0;
+    }
+    /* Left col: block type name, vertical */
+    .fret-chip-type-col {
+      width: 26px;
+      min-width: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-right: 1px solid rgba(255,255,255,0.14);
+      padding: 4px 2px;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+    .fret-chip-type-text {
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      transform: rotate(180deg);
+      font-size: 8px;
+      font-weight: 700;
+      font-family: 'Space Mono', monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: rgba(255,255,255,0.75);
+      white-space: nowrap;
+      overflow: hidden;
+    }
+    /* Center: chord diagram */
+    .fret-chip-center {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      padding: 3px 2px;
+      min-width: 0;
+    }
+    /* Right col: chord name, vertical */
+    .fret-chip-chord-col {
+      width: 32px;
+      min-width: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-left: 1px solid rgba(255,255,255,0.14);
+      padding: 4px 2px;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+    .fret-chip-chord-name {
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      font-size: 13px;
+      font-weight: 800;
+      font-family: 'Space Mono', monospace;
+      white-space: nowrap;
+      overflow: hidden;
+      color: rgba(255,255,255,0.97);
+      letter-spacing: 0.5px;
+      max-height: 100%;
+    }
+
+    /* Mini chord diagram */
+    .mini-chord-diag {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      flex-shrink: 0;
+    }
+    .mini-chord-head {
+      display: flex;
+      gap: 1px;
+      margin-bottom: 1px;
+    }
+    .mini-chord-str-hdr {
+      text-align: center;
+      font-size: 7px;
+      font-family: 'Space Mono', monospace;
+      color: rgba(255,255,255,0.5);
+      flex-shrink: 0;
+      line-height: 1;
+    }
+    .mini-chord-frow {
+      display: flex;
+      gap: 1px;
+      position: relative;
+    }
+    .mini-chord-cell {
+      border-bottom: 1px solid rgba(255,255,255,0.14);
+      border-right: 1px solid rgba(255,255,255,0.14);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .mini-chord-dot {
+      border-radius: 50%;
+      background: rgba(255,255,255,0.93);
+      box-shadow: 0 0 5px rgba(255,255,255,0.55);
+      flex-shrink: 0;
+    }
+    .mini-chord-fnum {
+      font-size: 7px;
+      font-family: 'Space Mono', monospace;
+      color: rgba(255,255,255,0.45);
+      position: absolute;
+      right: -14px;
+      top: 2px;
+      white-space: nowrap;
+    }
+
+    /* Left panel — chord name input (prominent) */
+    .ctx-chord-wrap { margin-bottom: 8px; }
+    .ctx-chord-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--text3);
+      margin-bottom: 4px;
+    }
+    .ctx-chord-input-big {
+      width: 100%;
+      background: var(--surface2);
+      border: 2px solid var(--accent);
+      color: var(--text);
+      border-radius: var(--radius-sm);
+      padding: 8px 12px;
+      font-size: 18px;
+      font-weight: 800;
+      font-family: 'Space Mono', monospace;
+      letter-spacing: 1px;
+      outline: none;
+      box-sizing: border-box;
+      -webkit-user-select: text;
+      user-select: text;
+      transition: border-color 0.15s;
+    }
+    .ctx-chord-input-big:focus { border-color: var(--neon); }
+    .ctx-chord-input-big::placeholder { color: var(--text3); font-size: 13px; font-weight: 400; }
 
     .track-blocks {
       flex: 1;
@@ -1021,29 +1427,60 @@
       flex: 1;
       overflow-y: auto;
       overflow-x: auto;
-      padding: 28px 32px;
       display: flex;
       flex-direction: column;
-      gap: 28px;
     }
 
-    /* One track row in railroad */
-    .rr-track {
+    /* Sticky measure ruler */
+    .rr-ruler {
       display: flex;
       align-items: center;
-      gap: 0;
-      min-height: 64px;
+      background: var(--surface2);
+      border-bottom: 2px solid var(--border2);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      flex-shrink: 0;
+      height: 22px;
+    }
+    .rr-ruler-spacer {
+      width: 140px;
+      min-width: 140px;
+      border-right: 1px solid var(--border2);
+      flex-shrink: 0;
+    }
+    .rr-ruler-mark {
+      min-width: 48px;
+      width: 48px;
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      color: var(--text3);
+      padding-left: 4px;
+      flex-shrink: 0;
+      border-right: 1px solid var(--border);
+      height: 100%;
+      display: flex;
+      align-items: center;
     }
 
+    /* Track row */
+    .rr-track {
+      display: flex;
+      align-items: stretch;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
     .rr-track-label {
-      width: 130px;
-      min-width: 130px;
+      width: 140px;
+      min-width: 140px;
       display: flex;
       flex-direction: column;
       align-items: flex-start;
       justify-content: center;
-      padding-right: 16px;
+      padding: 6px 10px;
       flex-shrink: 0;
+      border-right: 1px solid var(--border2);
+      background: var(--surface2);
     }
     .rr-track-name {
       font-size: 12px;
@@ -1063,141 +1500,46 @@
       margin-top: 2px;
     }
 
-    /* The rail line + cars wrapper */
-    .rr-rail-wrap {
-      flex: 1;
-      display: flex;
-      align-items: center;
+    /* Timeline — blocks are absolutely positioned inside */
+    .rr-track-timeline {
       position: relative;
-      min-height: 64px;
-    }
-
-    /* The continuous rail line behind the cars */
-    .rr-rail-line {
-      position: absolute;
-      top: 50%;
-      left: 0;
-      right: 0;
-      height: 4px;
-      transform: translateY(-50%);
-      background: repeating-linear-gradient(
+      height: 56px;
+      flex-shrink: 0;
+      background-image: repeating-linear-gradient(
         90deg,
-        var(--border2) 0px,
-        var(--border2) 18px,
-        transparent 18px,
-        transparent 28px
+        var(--border) 0px, var(--border) 1px,
+        transparent 1px, transparent 48px
       );
-      border-radius: 2px;
     }
 
-    /* Start cap of rail */
-    .rr-rail-cap {
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: var(--accent);
-      border: 2px solid var(--bg);
-      z-index: 2;
-      flex-shrink: 0;
-    }
-    .rr-rail-cap.left  { left: 0; }
-    .rr-rail-cap.right { right: 0; }
-
-    /* Cars container */
-    .rr-cars {
-      display: flex;
-      align-items: center;
-      gap: 0;
-      position: relative;
-      z-index: 1;
-      flex-wrap: nowrap;
-      padding: 0 16px;
-      width: 100%;
-    }
-
-    /* Connector between cars */
-    .rr-connector {
-      width: 24px;
-      min-width: 24px;
-      height: 4px;
-      background: var(--border2);
-      flex-shrink: 0;
-      position: relative;
-    }
-    .rr-connector::before,
-    .rr-connector::after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--text3);
-    }
-    .rr-connector::before { left: 2px; }
-    .rr-connector::after  { right: 2px; }
-
-    /* Individual block car */
+    /* Block car — absolutely positioned */
     .rr-car {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 8px 14px;
-      border-radius: 10px;
-      border: 2px solid rgba(255,255,255,0.12);
-      min-width: 80px;
-      max-width: 160px;
-      cursor: default;
-      position: relative;
-      color: #fff;
-      text-shadow: 0 1px 3px rgba(0,0,0,0.5);
-      box-shadow: 0 4px 14px rgba(0,0,0,0.35);
-      flex-shrink: 0;
-    }
-
-    /* Car wheel bumps at bottom */
-    .rr-car::after {
-      content: '';
       position: absolute;
-      bottom: -8px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 60%;
-      height: 6px;
-      background: rgba(0,0,0,0.25);
-      border-radius: 0 0 6px 6px;
+      height: 44px;
+      top: 6px;
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      padding: 0 8px;
+      gap: 5px;
+      overflow: hidden;
+      color: #fff;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      cursor: default;
+      border: 1px solid rgba(255,255,255,0.12);
     }
-
-    .rr-car-icon  { font-size: 18px; line-height: 1; }
-    .rr-car-name  { font-size: 11px; font-weight: 700; margin-top: 3px; white-space: nowrap; }
-    .rr-car-meta  { font-size: 9px;  font-family: 'Space Mono', monospace; opacity: 0.8; margin-top: 1px; }
+    .rr-car-icon   { font-size: 13px; flex-shrink: 0; }
+    .rr-car-name   { font-size: 11px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .rr-car-chords {
       font-size: 9px;
       font-family: 'Space Mono', monospace;
-      opacity: 0.75;
-      margin-top: 3px;
+      opacity: 0.85;
       white-space: nowrap;
-      max-width: 130px;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      flex-shrink: 0;
     }
 
-    /* Empty track in railroad */
-    .rr-empty-track {
-      font-size: 11px;
-      color: var(--text3);
-      font-style: italic;
-      padding: 0 16px;
-      position: relative;
-      z-index: 1;
-    }
-
-    /* No tracks at all */
+    /* No tracks */
     .rr-no-tracks {
       display: flex;
       flex-direction: column;
@@ -1296,14 +1638,13 @@
 
     <!-- Center: timeline -->
     <div id="timeline">
-      <!-- Ruler -->
-      <div id="ruler">
-        <div class="ruler-label-spacer"></div>
-        <div class="ruler-measures" id="ruler-measures"></div>
-      </div>
-      <!-- Tracks -->
       <div id="tracks-scroll">
         <div id="tracks-inner">
+          <!-- Ruler — sticky top so it follows vertical scroll; inside scroll so it follows horizontal scroll -->
+          <div id="ruler">
+            <div class="ruler-label-spacer"></div>
+            <div class="ruler-measures" id="ruler-measures"></div>
+          </div>
           <!-- Tracks injected here -->
           <div id="add-track-row">
             <button class="btn" onclick="showAddTrack()">＋ Add Track</button>
@@ -1329,6 +1670,11 @@
     <div class="modal">
       <div class="modal-title">Add a Track</div>
       <div class="track-type-grid" id="track-type-grid"></div>
+      <div class="field-group" style="margin-bottom:18px">
+        <div class="field-label">Track Name</div>
+        <input type="text" id="add-track-name" class="field-input" placeholder="Enter track name…"
+               style="-webkit-user-select:text;user-select:text">
+      </div>
       <div class="modal-actions">
         <button class="btn" onclick="closeAddTrack()">Cancel</button>
         <button class="btn primary" onclick="confirmAddTrack()">Add Track</button>
@@ -1345,6 +1691,20 @@
       <button class="btn" onclick="closeRailroad()" title="Close (Esc)">✕ Close</button>
     </div>
     <div id="railroad-scroll"></div>
+  </div>
+
+  <!-- ═══════════ STAFF NOTE POPUP (right-click) ═══════════ -->
+  <div id="staff-popup"></div>
+
+  <!-- ═══════════ STAFF FLOATING PALETTE ═══════════ -->
+  <div id="staff-palette-float">
+    <div class="spal-header">
+      <span class="spal-drag-handle" title="Déplacer">⠿</span>
+      <span class="spal-title">Portée · Saisie</span>
+      <span class="spal-block-name" id="spal-block-name">—</span>
+      <button class="btn icon-only" style="height:22px;padding:0 6px;font-size:12px" onclick="hideStaffPalette()" title="Fermer">✕</button>
+    </div>
+    <div class="spal-body" id="spal-body"></div>
   </div>
 
   <!-- ═══════════ TOAST ═══════════ -->
@@ -1364,8 +1724,8 @@
     break:      { label:'Break',      icon:'⏸', color:'#475569' },
     outro:      { label:'Outro',      icon:'⏹', color:'#7c3aed' },
     solo:       { label:'Solo',       icon:'🎸', color:'#ca8a04' },
-    interlude:  { label:'Interlude',  icon:'🎵', color:'#0891b2' },
     coda:       { label:'Coda',       icon:'🔚', color:'#be185d' },
+    lyrics:     { label:'Lyrics',     icon:'🎤', color:'#4b5563' },
     // ── Action blocs ──
     yes:  { label:'YES',  icon:'✔', color:'#166534' },
     no:   { label:'NO',   icon:'✖', color:'#7f1d1d' },
@@ -1377,17 +1737,26 @@
   const ACTION_TYPES = new Set(['yes','no','on','stop'])
 
   const TRACK_CONFIGS = {
-    chords:    { icon:'🎵', badge:'CHORDS',    name:'Chords',     defaultName:'Chords' },
-    melody:    { icon:'🎶', badge:'MELODY',    name:'Melody',     defaultName:'Melody' },
-    bass:      { icon:'🎸', badge:'BASS',      name:'Bass',       defaultName:'Bass' },
-    percussion:{ icon:'🥁', badge:'DRUM',      name:'Percussion', defaultName:'Drums' },
-    loops:     { icon:'🔄', badge:'LOOP',      name:'Loops',      defaultName:'Loop' },
-    'guitar-tab':{ icon:'🎼',badge:'TAB',      name:'Guitar Tab', defaultName:'Guitar Tab' },
-    fretboard: { icon:'🎸', badge:'FRET',      name:'Fretboard',  defaultName:'Fretboard' },
-    staff:     { icon:'🎵', badge:'STAFF',     name:'Staff',      defaultName:'Staff' },
-    lyrics:    { icon:'🎤', badge:'LYRICS',    name:'Lyrics',     defaultName:'Lyrics' },
-    arpeggio:  { icon:'🌊', badge:'ARPEGGIO',  name:'Arpeggio',   defaultName:'Arpeggio' },
+    // ── MAIN ──────────────────────────────────────────────────
+    structure: { icon:'🧱', badge:'STRUCTURE', name:'Structure',      defaultName:'Structure',  group:'main' },
+
+    // ── SUB-TRACKS (enfants de Structure) ─────────────────────
+    loops:     { icon:'🔄', badge:'LOOP',      name:'Loops',          defaultName:'Loops',      group:'sub' },
+    solo:      { icon:'🎷', badge:'SOLO',      name:'Solo',           defaultName:'Solo',       group:'sub' },
+    vocals:    { icon:'🎙', badge:'VOIX',      name:'Choeurs / Voix', defaultName:'Choeurs',    group:'sub' },
+    arpeggio:  { icon:'🌊', badge:'ARPEGGIO',  name:'Arpeggio',       defaultName:'Arpeggio',   group:'sub' },
+    drums:     { icon:'🥁', badge:'DRUMS',     name:'Drums / Perc.',  defaultName:'Drums',      group:'sub' },
+    bass:      { icon:'🎸', badge:'BASS',      name:'Bass',           defaultName:'Bass',       group:'sub' },
+    keyboard:  { icon:'🎹', badge:'KEYS',      name:'Keyboard',       defaultName:'Keyboard',   group:'sub' },
+    sample:    { icon:'🎛', badge:'SAMPLE',    name:'Sample',         defaultName:'Sample',     group:'sub' },
+    beat:      { icon:'🎚', badge:'BEAT',      name:'Beat',           defaultName:'Beat',       group:'sub' },
+
+    // ── FREE TRACKS (indépendantes) ────────────────────────────
+    lyrics:    { icon:'📝', badge:'LYRICS',    name:'Lyrics',         defaultName:'Lyrics',     group:'free' },
+    fretboard: { icon:'🎸', badge:'FRET',      name:'Fretboard',      defaultName:'Fretboard',  group:'free' },
+    staff:     { icon:'🎼', badge:'STAFF',     name:'Staff',          defaultName:'Staff',      group:'free' },
   }
+  const FREE_TRACK_TYPES = new Set(['lyrics','fretboard','staff'])
 
   // Major scale degrees (roman numeral + color)
   const SCALE_DEGREES = [
@@ -1418,6 +1787,7 @@
     versions: [],
     version: 1,
     projectName: 'Untitled Project',
+    groupCollapsed: false,
   }
 
   let TID = 1   // track id counter
@@ -1456,7 +1826,138 @@
     render()
     updateContextPanels(null)
     bindKeys()
+    initStaffPaletteDrag()
     wireElectron()
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     FLOATING STAFF PALETTE
+  ═══════════════════════════════════════════════════════════ */
+  let _spalBlock = null
+  let _spalDur   = 'q'
+  let _spalAcc   = ''
+
+  function initStaffPaletteDrag() {
+    const panel  = $('staff-palette-float')
+    const handle = panel && panel.querySelector('.spal-drag-handle')
+    if (!handle) return
+    let ox, oy, ol, ot
+    handle.addEventListener('pointerdown', e => {
+      ol = parseInt(panel.style.left) || 260
+      ot = parseInt(panel.style.top)  || 80
+      ox = e.clientX; oy = e.clientY
+      handle.setPointerCapture(e.pointerId)
+      e.preventDefault()
+    })
+    handle.addEventListener('pointermove', e => {
+      if (!handle.hasPointerCapture(e.pointerId)) return
+      panel.style.left = Math.max(0, ol + e.clientX - ox) + 'px'
+      panel.style.top  = Math.max(0, ot + e.clientY - oy) + 'px'
+    })
+  }
+
+  function showStaffPalette(block) {
+    _spalBlock = block
+    _spalDur   = 'q'
+    _spalAcc   = ''
+    const panel = $('staff-palette-float')
+    const body  = $('spal-body')
+    const nameEl = $('spal-block-name')
+    if (nameEl) nameEl.textContent = block ? (block.name || '—') : '—'
+    body.innerHTML = ''
+    if (!block) { body.innerHTML = '<div style="color:var(--text3);font-size:11px;padding:4px">Sélectionner un bloc staff</div>'; return }
+
+    // Duration row
+    const durRow = el('div', 'ctx-staff-row')
+    const durBtns = {}
+    DURATIONS.forEach(({ k, sym, tip }) => {
+      const btn = el('button', 'ctx-staff-btn' + (k === _spalDur ? ' sel' : ''), sym)
+      btn.title = tip
+      btn.addEventListener('click', () => {
+        _spalDur = k
+        Object.values(durBtns).forEach(b => b.classList.remove('sel'))
+        btn.classList.add('sel')
+      })
+      durBtns[k] = btn; durRow.appendChild(btn)
+    })
+    const rBtn = el('button', 'ctx-staff-btn', NOTE_SVG.rest); rBtn.title = 'Silence'
+    rBtn.addEventListener('click', () => spalAppend('Rest'))
+    durRow.appendChild(rBtn)
+    body.appendChild(durRow)
+
+    // Accidentals
+    const accRow = el('div', 'ctx-staff-row')
+    const accBtns = {}
+    ;[{ k:'#', sym:'♯' },{ k:'b', sym:'♭' },{ k:'', sym:'♮' }].forEach(({ k, sym }) => {
+      const btn = el('button', 'ctx-staff-btn' + (k === _spalAcc ? ' acc-sel' : ''), sym)
+      btn.addEventListener('click', () => {
+        _spalAcc = k
+        Object.values(accBtns).forEach(b => b.classList.remove('acc-sel'))
+        btn.classList.add('acc-sel')
+      })
+      accBtns[k] = btn; accRow.appendChild(btn)
+    })
+    body.appendChild(accRow)
+
+    // Note buttons
+    const noteRow = el('div', 'ctx-staff-row')
+    ;['C','D','E','F','G','A','B'].forEach(n => {
+      const btn = el('button', 'ctx-staff-btn', n)
+      btn.addEventListener('click', () => spalAppend(n))
+      noteRow.appendChild(btn)
+    })
+    body.appendChild(noteRow)
+
+    // Controls
+    const ctrlRow = el('div', 'ctx-staff-row')
+    const bk = el('button', 'ctx-staff-btn', '⌫'); bk.title = 'Supprimer dernière note'
+    bk.addEventListener('click', () => {
+      const tokens = (_spalBlock.staffNotes || '').trim().split(/\s+/).filter(Boolean)
+      tokens.pop(); _spalBlock.staffNotes = tokens.join(' ')
+      refreshStaffChip(_spalBlock)
+      const d = body.querySelector('.ctx-staff-display')
+      if (d) d.textContent = staffFormat(_spalBlock.staffNotes)
+    })
+    const clr = el('button', 'ctx-staff-btn', '✕'); clr.title = 'Effacer tout'
+    clr.addEventListener('click', () => {
+      _spalBlock.staffNotes = ''
+      refreshStaffChip(_spalBlock)
+      const d = body.querySelector('.ctx-staff-display')
+      if (d) d.textContent = '—'
+    })
+    ctrlRow.appendChild(bk); ctrlRow.appendChild(clr)
+    body.appendChild(ctrlRow)
+
+    // Display
+    const display = el('div', 'ctx-staff-display')
+    display.textContent = staffFormat(block.staffNotes)
+    body.appendChild(display)
+
+    if (!panel.classList.contains('open')) {
+      panel.style.left = '260px'
+      panel.style.top  = '90px'
+      panel.classList.add('open')
+    }
+  }
+
+  function spalAppend(noteName) {
+    if (!_spalBlock) return
+    const token = noteName === 'Rest'
+      ? `${_spalDur}:Rest`
+      : `${_spalDur}:${noteName}${_spalAcc}4`
+    _spalAcc = ''
+    _spalBlock.staffNotes = _spalBlock.staffNotes ? _spalBlock.staffNotes + ' ' + token : token
+    refreshStaffChip(_spalBlock)
+    const display = $('spal-body') && $('spal-body').querySelector('.ctx-staff-display')
+    if (display) display.textContent = staffFormat(_spalBlock.staffNotes)
+    // Reset acc buttons
+    $('spal-body').querySelectorAll('.ctx-staff-btn.acc-sel').forEach(b => b.classList.remove('acc-sel'))
+    _spalAcc = ''
+  }
+
+  function hideStaffPalette() {
+    $('staff-palette-float').classList.remove('open')
+    _spalBlock = null
   }
 
   /* ═══════════════════════════════════════════════════════════
@@ -1508,7 +2009,7 @@
   function buildRuler() {
     const rm = $('ruler-measures')
     rm.innerHTML = ''
-    for (let m = 1; m <= MEASURES; m++) {
+    for (let m = 0; m < MEASURES; m++) {
       const d = el('div', 'ruler-measure', String(m))
       rm.appendChild(d)
     }
@@ -1544,9 +2045,12 @@
   ═══════════════════════════════════════════════════════════ */
   function render() {
     const inner = $('tracks-inner')
-    // Preserve #add-track-row
+    // Preserve sticky elements before clearing
+    const ruler  = $('ruler')
     const addRow = $('add-track-row')
     inner.innerHTML = ''
+
+    inner.appendChild(ruler)   // ruler must be first (sticky top)
 
     if (S.tracks.length === 0) {
       const es = el('div', 'empty-state')
@@ -1561,23 +2065,79 @@
 
   function buildTrackRow(track) {
     const cfg = TRACK_CONFIGS[track.type] || { icon:'🎵', badge:'TRACK', name:'Track' }
+    const isStructure = track.type === 'structure'
+    const isSubTrack  = cfg.group === 'sub'
+    const isFreeTrack = cfg.group === 'free'
+
     const row = el('div', 'track-row')
     row.dataset.trackId = track.id
+    if (isStructure)              row.classList.add('is-structure')
+    if (isSubTrack)               row.classList.add('is-sub-track')
+    if (isFreeTrack)              row.classList.add('is-free-track')
+    if (track.type==='lyrics')    row.classList.add('is-lyrics')
+    if (track.type==='fretboard') row.classList.add('is-fretboard')
+    if (track.type==='staff')     row.classList.add('is-staff')
+    if (track.collapsed)          row.classList.add('collapsed')
+    if (isSubTrack && S.groupCollapsed) row.classList.add('group-hidden')
 
-    // Label
+    // Toggle button — STRUCTURE gets group-toggle; sub-tracks get collapse toggle; FREE TRACKS get nothing
+    const toggleBtn = isStructure
+      ? `<button draggable="false" class="group-toggle${S.groupCollapsed?' closed':''}" onclick="toggleGroupCollapse()" title="Afficher/masquer les sous-pistes">▼</button>`
+      : isSubTrack
+        ? `<button draggable="false" class="track-toggle" onclick="toggleTrackCollapse('${track.id}')" title="Réduire/agrandir">▼</button>`
+        : ''
+
+    // Label — entire label is draggable; buttons carry draggable="false"
     const label = el('div', 'track-label')
+    label.draggable = true
     label.innerHTML = `
-      <span class="track-icon">${cfg.icon}</span>
-      <div class="track-info">
-        <div class="track-name">${track.name}</div>
+      ${toggleBtn}
+      <span class="track-icon" style="pointer-events:none">${cfg.icon}</span>
+      <div class="track-info" style="pointer-events:none">
+        <div class="track-name">${esc(track.name)}</div>
         <div class="track-type-badge">${cfg.badge}</div>
       </div>
       <div class="track-actions">
-        <button class="track-btn" onclick="moveTrack('${track.id}',-1)" title="Move up">▲</button>
-        <button class="track-btn danger" onclick="removeTrack('${track.id}')" title="Delete track">✕</button>
-        <button class="track-btn" onclick="moveTrack('${track.id}',1)" title="Move down">▼</button>
+        <button draggable="false" class="track-btn" onclick="moveTrack('${track.id}',-1)" title="Monter">▲</button>
+        <button draggable="false" class="track-btn danger" onclick="removeTrack('${track.id}')" title="Supprimer">✕</button>
+        <button draggable="false" class="track-btn" onclick="moveTrack('${track.id}',1)" title="Descendre">▼</button>
       </div>
     `
+
+    // Track drag-to-reorder
+    label.addEventListener('dragstart', e => {
+      if (e.target.closest('button')) { e.preventDefault(); return }
+      _dragTrackId = track.id
+      e.dataTransfer.effectAllowed = 'move'
+      e.dataTransfer.setData('application/track-id', track.id)
+      row.classList.add('track-dragging')
+    })
+    label.addEventListener('dragend', () => {
+      _dragTrackId = null
+      row.classList.remove('track-dragging')
+      document.querySelectorAll('.track-drop-target').forEach(r => r.classList.remove('track-drop-target'))
+    })
+    row.addEventListener('dragover', e => {
+      if (!_dragTrackId || _dragTrackId === track.id) return
+      e.preventDefault()
+      e.dataTransfer.dropEffect = 'move'
+      document.querySelectorAll('.track-drop-target').forEach(r => r.classList.remove('track-drop-target'))
+      row.classList.add('track-drop-target')
+    })
+    row.addEventListener('drop', e => {
+      if (!_dragTrackId || _dragTrackId === track.id) return
+      e.preventDefault()
+      const fromIdx = S.tracks.findIndex(t => t.id === _dragTrackId)
+      const toIdx   = S.tracks.findIndex(t => t.id === track.id)
+      if (fromIdx >= 0 && toIdx >= 0) {
+        const [moved] = S.tracks.splice(fromIdx, 1)
+        S.tracks.splice(toIdx, 0, moved)
+      }
+      normalizeTrackOrder()
+      _dragTrackId = null
+      render()
+    })
+
     row.appendChild(label)
 
     // Blocks area
@@ -1587,6 +2147,7 @@
     // Drag-and-drop onto track (palette → new block, chip → move/switch block)
     let _dragEnterCount = 0
     blocksEl.addEventListener('dragenter', e => {
+      if (_dragTrackId) return
       e.preventDefault()
       _dragEnterCount++
       row.classList.add('drag-over')
@@ -1622,10 +2183,38 @@
       dropBlock(type, track.id, measure)
     })
 
+    // Right-click on STAFF track → floating note-entry popup
+    if (track.type === 'staff') {
+      blocksEl.addEventListener('contextmenu', e => {
+        e.preventDefault()
+        const rect = blocksEl.getBoundingClientRect()
+        const relX = e.clientX - rect.left
+        const measure = Math.max(1, Math.floor(relX / MEASURE_WIDTH) + 1)
+        // Find existing block at this measure, or create one
+        let block = S.blocks.find(b =>
+          b.trackId === track.id && b.measure <= measure && (b.measure + b.measures - 1) >= measure
+        )
+        if (!block) {
+          block = {
+            id: 'b' + BID++, type: 'verse', trackId: track.id,
+            measure, measures: 4, name: 'Verse', notes: '', chords: '',
+            lyrics: '', tempo: S.tempo, key: S.key, muted: false,
+            fretDots: [], staffNotes: '',
+          }
+          S.blocks.push(block)
+          render()
+        }
+        // Determine pitch from Y position on staff
+        const relY = e.clientY - rect.top
+        const pitchHint = staffYToPitch(relY)
+        showStaffPopup(block, e.clientX, e.clientY, pitchHint)
+      })
+    }
+
     // Render blocks on this track
     const trackBlocks = S.blocks.filter(b => b.trackId === track.id)
     trackBlocks.forEach(block => {
-      const chip = buildBlockChip(block)
+      const chip = buildBlockChip(block, track)
       blocksEl.appendChild(chip)
     })
 
@@ -1638,8 +2227,12 @@
   ═══════════════════════════════════════════════════════════ */
   let _dragBlockId  = null   // id of block chip being dragged
   let _chipDragging = false  // guard to suppress click after drag
+  let _dragTrackId  = null   // id of track row being reordered
 
-  function buildBlockChip(block) {
+  function buildBlockChip(block, track) {
+    if (track && track.type === 'lyrics')    return buildLyricsChip(block)
+    if (track && track.type === 'fretboard') return buildFretboardChip(block)
+    if (track && track.type === 'staff')     return buildStaffChip(block)
     const def = BLOCK_DEFS[block.type] || { label: block.type, icon:'◼', color:'#475569' }
     const chip = el('div', 'block-chip')
     chip.dataset.blockId = block.id
@@ -1702,6 +2295,401 @@
     return chip
   }
 
+  function buildLyricsChip(block) {
+    const def = BLOCK_DEFS[block.type] || { label: block.type, icon:'🎤', color:'#4b5563' }
+    const chip = el('div', 'block-chip lyrics-chip')
+    chip.dataset.blockId = block.id
+    chip.draggable = true
+    if (block.id === S.selectedBlockId) chip.classList.add('selected')
+    if (block.muted) chip.classList.add('muted')
+    chip.style.left  = ((block.measure - 1) * MEASURE_WIDTH) + 'px'
+    chip.style.width = (block.measures * MEASURE_WIDTH - 4) + 'px'
+    chip.classList.add(`bloc-${block.type}`)
+
+    const muteLabel = block.muted ? '🔇 MUTED' : '🔇 Mute'
+    const lyricText = (block.lyrics || '').trim()
+    const bodyHTML = lyricText
+      ? `<div class="lyrics-chip-name">${esc(block.name || def.label)}</div><div class="lyrics-chip-text">${esc(lyricText)}</div>`
+      : `<div class="lyrics-chip-name">${esc(block.name || def.label)}</div><div class="lyrics-chip-empty">Paroles…</div>`
+
+    chip.innerHTML = `
+      <div class="bchip-top">
+        <button class="bchip-mute" title="Mute">${muteLabel}</button>
+        <button class="bchip-del"  title="Delete">✕</button>
+      </div>
+      <div class="lyrics-chip-body">${bodyHTML}</div>
+    `
+
+    chip.querySelector('.bchip-mute').addEventListener('click', e => { e.stopPropagation(); toggleMute(block.id) })
+    chip.querySelector('.bchip-del').addEventListener('click',  e => { e.stopPropagation(); quickDeleteBlock(block.id) })
+    chip.addEventListener('dragstart', e => {
+      _dragBlockId = block.id; _chipDragging = true
+      e.dataTransfer.effectAllowed = 'move'
+      e.dataTransfer.setData('application/block-id', block.id)
+      e.dataTransfer.setData('text/plain', '')
+      chip.classList.add('dragging')
+    })
+    chip.addEventListener('dragend', () => {
+      chip.classList.remove('dragging'); _dragBlockId = null
+      setTimeout(() => { _chipDragging = false }, 0)
+    })
+    chip.addEventListener('click', () => { if (_chipDragging) return; openBlockDetail(block.id) })
+    return chip
+  }
+
+  function buildFretboardChip(block) {
+    const def = BLOCK_DEFS[block.type] || { label: block.type, icon:'◼', color:'#475569' }
+    const chip = el('div', 'block-chip fret-chip')
+    chip.dataset.blockId = block.id
+    chip.draggable = true
+    if (block.id === S.selectedBlockId) chip.classList.add('selected')
+    if (block.muted) chip.classList.add('muted')
+    chip.style.left  = ((block.measure - 1) * MEASURE_WIDTH) + 'px'
+    chip.style.width = (block.measures * MEASURE_WIDTH - 4) + 'px'
+    chip.classList.add(`bloc-${block.type}`)
+
+    const muteLabel = block.muted ? '🔇 MUTED' : '🔇 Mute'
+    chip.innerHTML = `
+      <div class="bchip-top">
+        <button class="bchip-mute" title="Mute / Unmute">${muteLabel}</button>
+        <button class="bchip-del"  title="Delete">✕</button>
+      </div>
+      <div class="fret-chip-body">
+        <div class="fret-chip-type-col">
+          <span class="fret-chip-type-text">${esc(block.name || def.label)}</span>
+        </div>
+        <div class="fret-chip-center"></div>
+        <div class="fret-chip-chord-col">
+          <span class="fret-chip-chord-name">${esc(block.chords) || '—'}</span>
+        </div>
+      </div>
+    `
+    chip.querySelector('.fret-chip-center').appendChild(buildMiniChordDiagram(block, 15, 5))
+
+    chip.querySelector('.bchip-mute').addEventListener('click', e => { e.stopPropagation(); toggleMute(block.id) })
+    chip.querySelector('.bchip-del').addEventListener('click',  e => { e.stopPropagation(); quickDeleteBlock(block.id) })
+    chip.addEventListener('dragstart', e => {
+      _dragBlockId = block.id; _chipDragging = true
+      e.dataTransfer.effectAllowed = 'move'
+      e.dataTransfer.setData('application/block-id', block.id)
+      e.dataTransfer.setData('text/plain', '')
+      chip.classList.add('dragging')
+    })
+    chip.addEventListener('dragend', () => {
+      chip.classList.remove('dragging')
+      _dragBlockId = null
+      setTimeout(() => { _chipDragging = false }, 0)
+    })
+    chip.addEventListener('click', () => { if (_chipDragging) return; openBlockDetail(block.id) })
+    return chip
+  }
+
+  // cellSize: px per cell (default 13 for compact, 15 for center display)
+  // rows: fret rows to show
+  function buildMiniChordDiagram(block, cellSize = 13, rows = 4) {
+    const dots = block.fretDots || []
+    const STRINGS = ['E','A','D','G','B','e']
+    const activeFrets = dots.map(d => d.f)
+    const startFret = activeFrets.length ? Math.max(1, Math.min(...activeFrets)) : 1
+
+    const diag = el('div', 'mini-chord-diag')
+
+    // String-name header
+    const head = el('div', 'mini-chord-head')
+    STRINGS.forEach(s => {
+      const h = el('span', 'mini-chord-str-hdr', s)
+      h.style.width = cellSize + 'px'
+      head.appendChild(h)
+    })
+    diag.appendChild(head)
+
+    // Fret rows
+    for (let f = startFret; f < startFret + rows; f++) {
+      const frow = el('div', 'mini-chord-frow')
+      for (let s = 1; s <= 6; s++) {
+        const cell = el('span', 'mini-chord-cell')
+        cell.style.width  = cellSize + 'px'
+        cell.style.height = (cellSize - 2) + 'px'
+        if (dots.some(d => d.f === f && d.s === s)) {
+          const dot = el('span', 'mini-chord-dot')
+          const ds = Math.round(cellSize * 0.55)
+          dot.style.width = ds + 'px'; dot.style.height = ds + 'px'
+          cell.appendChild(dot)
+        }
+        frow.appendChild(cell)
+      }
+      if (f === startFret && startFret > 1) {
+        const fn = el('span', 'mini-chord-fnum', String(startFret))
+        frow.appendChild(fn)
+      }
+      diag.appendChild(frow)
+    }
+    return diag
+  }
+
+  /* ── STAFF CHIP ──────────────────────────────────────────── */
+  function buildStaffChip(block) {
+    const def = BLOCK_DEFS[block.type] || { label: block.type, icon:'◼', color:'#475569' }
+    const chip = el('div', 'block-chip staff-chip')
+    chip.dataset.blockId = block.id
+    chip.draggable = true
+    if (block.id === S.selectedBlockId) chip.classList.add('selected')
+    if (block.muted) chip.classList.add('muted')
+    chip.style.left  = ((block.measure - 1) * MEASURE_WIDTH) + 'px'
+    chip.style.width = (block.measures * MEASURE_WIDTH - 4) + 'px'
+    chip.classList.add(`bloc-${block.type}`)
+
+    const muteLabel = block.muted ? '🔇 MUTED' : '🔇 Mute'
+    chip.innerHTML = `
+      <div class="bchip-top">
+        <button class="bchip-mute" title="Mute">${muteLabel}</button>
+        <button class="bchip-del" title="Delete">✕</button>
+      </div>
+    `
+    const chipW = block.measures * MEASURE_WIDTH - 6
+    chip.appendChild(buildStaffSVG(block, chipW, 74))
+
+    chip.querySelector('.bchip-mute').addEventListener('click', e => { e.stopPropagation(); toggleMute(block.id) })
+    chip.querySelector('.bchip-del').addEventListener('click',  e => { e.stopPropagation(); quickDeleteBlock(block.id) })
+    chip.addEventListener('dragstart', e => {
+      _dragBlockId = block.id; _chipDragging = true
+      e.dataTransfer.effectAllowed = 'move'
+      e.dataTransfer.setData('application/block-id', block.id)
+      e.dataTransfer.setData('text/plain', '')
+      chip.classList.add('dragging')
+    })
+    chip.addEventListener('dragend', () => {
+      chip.classList.remove('dragging'); _dragBlockId = null
+      setTimeout(() => { _chipDragging = false }, 0)
+    })
+    chip.addEventListener('click', () => { if (_chipDragging) return; openBlockDetail(block.id) })
+    return chip
+  }
+
+  function buildStaffSVG(block, w, h) {
+    // Line Y positions (centred in h, 5 lines × 10px spacing)
+    const LINE_Y = [14, 24, 34, 44, 54]   // E4→F5 treble clef lines
+    const tokens = (block.staffNotes || '').trim().split(/\s+/).filter(Boolean)
+
+    const NS = 'http://www.w3.org/2000/svg'
+    const svg = document.createElementNS(NS, 'svg')
+    svg.setAttribute('width', w)
+    svg.setAttribute('height', h)
+    svg.setAttribute('viewBox', `0 0 ${w} ${h}`)
+
+    const line = (x1,y1,x2,y2,op=0.22) => {
+      const l = document.createElementNS(NS,'line')
+      l.setAttribute('x1',x1); l.setAttribute('y1',y1)
+      l.setAttribute('x2',x2); l.setAttribute('y2',y2)
+      l.setAttribute('stroke',`rgba(255,255,255,${op})`); l.setAttribute('stroke-width','1')
+      svg.appendChild(l); return l
+    }
+
+    // Staff lines
+    LINE_Y.forEach(y => line(0, y, w, y))
+
+    // Treble clef
+    const clef = document.createElementNS(NS,'text')
+    clef.setAttribute('x','1'); clef.setAttribute('y','62')
+    clef.setAttribute('font-size','54')
+    clef.setAttribute('fill','rgba(255,255,255,0.5)')
+    clef.setAttribute('font-family','serif')
+    clef.textContent = '𝄞'
+    svg.appendChild(clef)
+
+    if (!tokens.length) return svg
+
+    const noteStartX = 22
+    const step = Math.min(18, Math.max(10, (w - noteStartX - 4) / tokens.length))
+
+    tokens.forEach((token, i) => {
+      const [dur, note] = token.split(':')
+      if (!note) return
+      const cx = noteStartX + i * step + 8
+      const isRest = note === 'Rest'
+
+      if (isRest) {
+        // Quarter rest: Z shape
+        const zx = cx - 4
+        const rpath = document.createElementNS(NS,'path')
+        rpath.setAttribute('d',`M${zx},28 L${zx+8},28 L${zx},36 L${zx+8},36`)
+        rpath.setAttribute('stroke','rgba(255,255,255,0.8)'); rpath.setAttribute('stroke-width','1.5')
+        rpath.setAttribute('fill','none'); rpath.setAttribute('stroke-linecap','round')
+        svg.appendChild(rpath)
+        return
+      }
+
+      const cy = STAFF_PITCH_Y[note] ?? 34  // default to B4
+      const filled = dur !== 'w' && dur !== 'h'
+
+      // Ledger line for C4
+      if (cy >= 64) line(cx-7, 64, cx+7, 64, 0.5)
+
+      // Notehead
+      const ell = document.createElementNS(NS,'ellipse')
+      ell.setAttribute('cx', cx); ell.setAttribute('cy', cy)
+      ell.setAttribute('rx','5'); ell.setAttribute('ry','3.5')
+      ell.setAttribute('transform',`rotate(-15,${cx},${cy})`)
+      if (filled) {
+        ell.setAttribute('fill','rgba(255,255,255,0.88)')
+      } else {
+        ell.setAttribute('fill','none')
+        ell.setAttribute('stroke','rgba(255,255,255,0.88)'); ell.setAttribute('stroke-width','1.5')
+      }
+      svg.appendChild(ell)
+
+      // Stem (not for whole)
+      if (dur !== 'w') {
+        line(cx+5, cy, cx+5, cy-20, 0.88)
+        // Flag(s)
+        if (dur === 'e' || dur === 's') {
+          const fp = document.createElementNS(NS,'path')
+          const fy = cy - 20
+          fp.setAttribute('d',`M${cx+5},${fy} Q${cx+13},${fy+4} ${cx+5},${fy+9}`)
+          fp.setAttribute('stroke','rgba(255,255,255,0.88)'); fp.setAttribute('stroke-width','1.5')
+          fp.setAttribute('fill','none'); svg.appendChild(fp)
+        }
+        if (dur === 's') {
+          const fp2 = document.createElementNS(NS,'path')
+          const fy = cy - 20
+          fp2.setAttribute('d',`M${cx+5},${fy+5} Q${cx+13},${fy+9} ${cx+5},${fy+14}`)
+          fp2.setAttribute('stroke','rgba(255,255,255,0.88)'); fp2.setAttribute('stroke-width','1.5')
+          fp2.setAttribute('fill','none'); svg.appendChild(fp2)
+        }
+      }
+    })
+    return svg
+  }
+
+  // Convert Y pixel in staff track-blocks to nearest pitch name
+  function staffYToPitch(relY) {
+    // Lines at CSS y=24,35,46,57,68 (from ::after) → pitch E4..F5
+    // step ≈ 5.5px per half-step
+    const pitches = ['F5','E5','D5','C5','B4','A4','G4','F4','E4','D4','C4']
+    const topY = 24, bottomY = 68
+    const frac = Math.max(0, Math.min(1, (relY - topY) / (bottomY - topY)))
+    return pitches[Math.round(frac * (pitches.length - 1))]
+  }
+
+  /* ── STAFF NOTE POPUP ────────────────────────────────────── */
+  let _spBlock = null
+  let _spDur   = 'q'
+  let _spAcc   = ''
+
+  function showStaffPopup(block, x, y, pitchHint) {
+    _spBlock = block
+    _spDur   = 'q'
+    _spAcc   = ''
+    const popup = $('staff-popup')
+
+    popup.innerHTML = `
+      <div class="sp-title">Saisie note — clic droit portée</div>
+      <div id="sp-dur-row"  class="ctx-staff-row"></div>
+      <div id="sp-acc-row"  class="ctx-staff-row"></div>
+      <div id="sp-note-row" class="ctx-staff-row"></div>
+      <div class="ctx-staff-row" style="justify-content:space-between">
+        <button class="ctx-staff-btn" id="sp-rest-btn" title="Silence"></button>
+        <button class="ctx-staff-btn" id="sp-bk-btn" title="Supprimer dernière note">⌫</button>
+        <button class="btn danger" onclick="hideStaffPopup()" style="padding:2px 8px;font-size:11px">✕</button>
+      </div>
+    `
+    // Inject rest SVG
+    $('sp-rest-btn').innerHTML = NOTE_SVG.rest
+
+    // Duration buttons
+    const durRow = $('sp-dur-row')
+    const durBtns = {}
+    DURATIONS.forEach(({ k, sym, tip }) => {
+      const btn = el('button', 'ctx-staff-btn' + (k === _spDur ? ' sel' : ''), sym)
+      btn.title = tip
+      btn.addEventListener('click', () => {
+        _spDur = k
+        Object.values(durBtns).forEach(b => b.classList.remove('sel'))
+        btn.classList.add('sel')
+      })
+      durBtns[k] = btn
+      durRow.appendChild(btn)
+    })
+
+    // Accidental buttons
+    const accRow = $('sp-acc-row')
+    const accBtns = {}
+    const ACC = [{ k:'#', sym:'♯' },{ k:'b', sym:'♭' },{ k:'', sym:'♮' }]
+    ACC.forEach(({ k, sym }) => {
+      const btn = el('button', 'ctx-staff-btn' + (k === _spAcc ? ' acc-sel' : ''), sym)
+      btn.addEventListener('click', () => {
+        _spAcc = k
+        Object.values(accBtns).forEach(b => b.classList.remove('acc-sel'))
+        btn.classList.add('acc-sel')
+      })
+      accBtns[k] = btn
+      accRow.appendChild(btn)
+    })
+
+    // Note buttons  (pitch hint pre-selects the note row context)
+    const noteRow = $('sp-note-row')
+    ;['C','D','E','F','G','A','B'].forEach(n => {
+      const btn = el('button', 'ctx-staff-btn', n)
+      if (pitchHint && pitchHint.startsWith(n)) btn.classList.add('sel')
+      btn.addEventListener('click', () => {
+        staffAppendToBlock(_spBlock, n)
+        noteRow.querySelectorAll('.ctx-staff-btn').forEach(b => b.classList.remove('sel'))
+        btn.classList.add('sel')
+      })
+      noteRow.appendChild(btn)
+    })
+
+    // Backspace
+    $('sp-bk-btn').addEventListener('click', () => {
+      const tokens = (_spBlock.staffNotes || '').trim().split(/\s+/).filter(Boolean)
+      tokens.pop()
+      _spBlock.staffNotes = tokens.join(' ')
+      refreshStaffChip(_spBlock)
+    })
+
+    // Rest
+    $('sp-rest-btn').addEventListener('click', () => {
+      staffAppendToBlock(_spBlock, 'Rest')
+    })
+
+    // Position popup near click but keep on screen
+    const pw = 230, ph = 160
+    popup.style.left = Math.min(x, window.innerWidth  - pw - 8) + 'px'
+    popup.style.top  = Math.min(y, window.innerHeight - ph - 8) + 'px'
+    popup.classList.add('open')
+  }
+
+  function hideStaffPopup() {
+    $('staff-popup').classList.remove('open')
+    _spBlock = null
+  }
+
+  function staffAppendToBlock(block, noteName) {
+    if (!block) return
+    const token = noteName === 'Rest'
+      ? `${_spDur}:Rest`
+      : `${_spDur}:${noteName}${_spAcc}4`
+    _spAcc = ''
+    block.staffNotes = block.staffNotes ? block.staffNotes + ' ' + token : token
+    refreshStaffChip(block)
+    // Reset acc buttons
+    const popup = $('staff-popup')
+    if (popup) popup.querySelectorAll('.ctx-staff-btn.acc-sel').forEach(b => b.classList.remove('acc-sel'))
+  }
+
+  function refreshStaffChip(block) {
+    const chip = document.querySelector(`.block-chip[data-block-id="${block.id}"]`)
+    if (!chip) { render(); return }
+    const oldSvg = chip.querySelector('svg')
+    const chipW = block.measures * MEASURE_WIDTH - 6
+    const newSvg = buildStaffSVG(block, chipW, 74)
+    if (oldSvg) chip.replaceChild(newSvg, oldSvg)
+    else chip.appendChild(newSvg)
+    // Sync left panel display if open
+    const display = document.querySelector('.ctx-staff-display')
+    if (display) display.textContent = staffFormat(block.staffNotes)
+  }
+
   function toggleMute(id) {
     const block = S.blocks.find(b => b.id === id)
     if (!block) return
@@ -1721,39 +2709,70 @@
      TRACKS CRUD
   ═══════════════════════════════════════════════════════════ */
   let _pendingTrackType = null
+  let _lastDefaultName  = ''
 
   function showAddTrack() {
     _pendingTrackType = null
+    _lastDefaultName  = ''
     const grid = $('track-type-grid')
     grid.innerHTML = ''
-    Object.entries(TRACK_CONFIGS).forEach(([type, cfg]) => {
-      const btn = el('button', 'track-type-btn')
-      btn.innerHTML = `${cfg.icon} ${cfg.name}`
-      btn.dataset.type = type
-      btn.addEventListener('click', () => {
-        grid.querySelectorAll('.track-type-btn').forEach(b => b.classList.remove('selected'))
-        btn.classList.add('selected')
-        _pendingTrackType = type
+    const nameInput = $('add-track-name')
+    if (nameInput) nameInput.value = ''
+
+    const SECTIONS = [
+      { group:'main', label:'Piste principale' },
+      { group:'sub',  label:'Sous-pistes  (sous Structure)' },
+      { group:'free', label:'Pistes libres' },
+    ]
+
+    SECTIONS.forEach(({ group, label }) => {
+      const entries = Object.entries(TRACK_CONFIGS).filter(([, c]) => c.group === group)
+      if (!entries.length) return
+
+      const section = el('div', 'track-type-section')
+      section.appendChild(el('div', 'track-type-section-label', label))
+      const subGrid = el('div', 'track-type-subgrid')
+
+      entries.forEach(([type, cfg]) => {
+        const btn = el('button', 'track-type-btn')
+        btn.innerHTML = `${cfg.icon} ${cfg.name}`
+        btn.dataset.type = type
+        btn.addEventListener('click', () => {
+          grid.querySelectorAll('.track-type-btn').forEach(b => b.classList.remove('selected'))
+          btn.classList.add('selected')
+          _pendingTrackType = type
+          const ni = $('add-track-name')
+          if (ni && (!ni.value || ni.value === _lastDefaultName)) {
+            ni.value = cfg.defaultName
+            _lastDefaultName = cfg.defaultName
+          }
+        })
+        subGrid.appendChild(btn)
       })
-      grid.appendChild(btn)
+      section.appendChild(subGrid)
+      grid.appendChild(section)
     })
+
     $('modal-add-track').classList.add('open')
+    setTimeout(() => { const ni = $('add-track-name'); if (ni) ni.focus() }, 50)
   }
 
   function closeAddTrack() { $('modal-add-track').classList.remove('open') }
 
   function confirmAddTrack() {
-    if (!_pendingTrackType) { toast('Select a track type first'); return }
+    if (!_pendingTrackType) { toast('Choisissez un type de piste'); return }
     const cfg = TRACK_CONFIGS[_pendingTrackType]
+    const nameVal = ($('add-track-name').value || '').trim()
     const track = {
       id: 't' + TID++,
       type: _pendingTrackType,
-      name: cfg.defaultName,
+      name: nameVal || cfg.defaultName,
+      collapsed: false,
     }
     S.tracks.push(track)
     closeAddTrack()
     render()
-    toast(`Track "${track.name}" added`)
+    toast(`Piste "${track.name}" ajoutée`)
   }
 
   function removeTrack(id) {
@@ -1767,11 +2786,39 @@
     toast('Track removed')
   }
 
+  function normalizeTrackOrder() {
+    const rank = t => {
+      const cfg = TRACK_CONFIGS[t.type]
+      if (!cfg) return 1
+      if (t.type === 'staff') return 3
+      if (cfg.group === 'free') return 0
+      if (cfg.group === 'main') return 1
+      if (cfg.group === 'sub')  return 2
+      return 1
+    }
+    const indexed = S.tracks.map((t, i) => ({ t, i }))
+    indexed.sort((a, b) => rank(a.t) - rank(b.t) || a.i - b.i)
+    S.tracks = indexed.map(({ t }) => t)
+  }
+
+  function toggleTrackCollapse(id) {
+    const track = S.tracks.find(t => t.id === id)
+    if (!track) return
+    track.collapsed = !track.collapsed
+    render()
+  }
+
+  function toggleGroupCollapse() {
+    S.groupCollapsed = !S.groupCollapsed
+    render()
+  }
+
   function moveTrack(id, dir) {
     const idx = S.tracks.findIndex(t => t.id === id)
     const newIdx = idx + dir
     if (newIdx < 0 || newIdx >= S.tracks.length) return
     const tmp = S.tracks[idx]; S.tracks[idx] = S.tracks[newIdx]; S.tracks[newIdx] = tmp
+    normalizeTrackOrder()
     render()
   }
 
@@ -1884,10 +2931,13 @@
       deg.appendChild(pill)
     })
 
-    // Fretboard diagram — only for blocks on a fretboard track
+    // Track-specific extras in detail panel
     const parentTrack = S.tracks.find(t => t.id === block.trackId)
     if (parentTrack && parentTrack.type === 'fretboard') {
       body.appendChild(buildFretboard(block))
+    }
+    if (parentTrack && parentTrack.type === 'staff') {
+      showStaffPalette(block)
     }
 
     footer.innerHTML = ''
@@ -2013,6 +3063,7 @@
       tempo: S.tempo,
       darkMode: S.darkMode,
       version: S.version,
+      groupCollapsed: S.groupCollapsed,
       tracks: S.tracks,
       blocks: S.blocks,
     }
@@ -2027,8 +3078,9 @@
     S.tempo    = data.tempo    || 120
     S.darkMode = data.darkMode !== false
     S.version  = data.version  || 1
-    S.tracks   = data.tracks   || []
-    S.blocks   = data.blocks   || []
+    S.tracks        = data.tracks        || []
+    S.blocks        = data.blocks        || []
+    S.groupCollapsed = data.groupCollapsed || false
     S.projectName = data.projectName || 'Untitled Project'
 
     // Sync counters
@@ -2093,7 +3145,7 @@ h1{color:#a78bfa;font-size:20px;margin-bottom:4px}
 .bloc-break{background:linear-gradient(135deg,#475569,#64748b)}
 .bloc-outro{background:linear-gradient(135deg,#7c3aed,#2563eb)}
 .bloc-solo{background:linear-gradient(135deg,#ca8a04,#d97706)}
-.bloc-interlude{background:linear-gradient(135deg,#0891b2,#6d28d9)}
+.bloc-lyrics{background:linear-gradient(135deg,#374151,#4b5563)}
 .bloc-coda{background:linear-gradient(135deg,#be185d,#7c3aed)}
 .bloc-yes{background:linear-gradient(135deg,#166534,#15803d)}
 .bloc-no{background:linear-gradient(135deg,#7f1d1d,#991b1b)}
@@ -2111,13 +3163,21 @@ ${rows}
      KEYBOARD SHORTCUTS
   ═══════════════════════════════════════════════════════════ */
   function bindKeys() {
+    document.addEventListener('click', e => {
+      const popup = $('staff-popup')
+      if (popup && popup.classList.contains('open') && !popup.contains(e.target)) {
+        hideStaffPopup()
+      }
+    })
     document.addEventListener('keydown', e => {
       const mod = e.metaKey || e.ctrlKey
       if (mod && e.key === 's') { e.preventDefault(); saveProject() }
       if (mod && e.key === 'o') { e.preventDefault(); openProject() }
       if (mod && e.key === 'n') { e.preventDefault(); newProject() }
       if (e.key === 'Escape') {
-        if ($('railroad-overlay').classList.contains('open')) closeRailroad()
+        if ($('staff-popup').classList.contains('open'))          hideStaffPopup()
+        else if ($('staff-palette-float').classList.contains('open')) hideStaffPalette()
+        else if ($('railroad-overlay').classList.contains('open')) closeRailroad()
         else if ($('modal-add-track').classList.contains('open')) closeAddTrack()
         else closePanel()
       }
@@ -2136,6 +3196,7 @@ ${rows}
       tracks: [], blocks: [], selectedBlockId: null,
       key: 'C', timeSign: '4/4', tempo: 120, darkMode: S.darkMode,
       versions: [], version: 1, projectName: 'Untitled Project',
+      groupCollapsed: false,
     }
     TID = 1; BID = 1
     $('project-name').value = 'Untitled Project'
@@ -2162,15 +3223,22 @@ ${rows}
      DEFAULT TRACKS
   ═══════════════════════════════════════════════════════════ */
   function ensureDefaultTracks() {
-    const DEFAULTS = [
-      { type:'fretboard', name:'Fretboard' },   // added in reverse for unshift order
-      { type:'staff',     name:'Staff'     },
-      { type:'lyrics',    name:'Lyrics'    },
-    ]
-    DEFAULTS.forEach(({ type, name }) => {
-      if (!S.tracks.some(t => t.type === type))
-        S.tracks.unshift({ id:'t'+TID++, type, name })
-    })
+    // Build order: 1.Lyrics  2.Fretboard  3.Structure  …sub-tracks…  4.Staff
+    // Only insert if not already present (forward-compat with saved files)
+
+    if (!S.tracks.some(t => t.type === 'staff'))
+      S.tracks.push({ id:'t'+TID++, type:'staff', name:'Staff' })
+
+    if (!S.tracks.some(t => t.type === 'structure'))
+      S.tracks.unshift({ id:'t'+TID++, type:'structure', name:'Structure' })
+
+    if (!S.tracks.some(t => t.type === 'fretboard')) {
+      const sIdx = S.tracks.findIndex(t => t.type === 'structure')
+      S.tracks.splice(Math.max(0, sIdx), 0, { id:'t'+TID++, type:'fretboard', name:'Fretboard' })
+    }
+
+    if (!S.tracks.some(t => t.type === 'lyrics'))
+      S.tracks.unshift({ id:'t'+TID++, type:'lyrics', name:'Lyrics' })
   }
 
   /* ═══════════════════════════════════════════════════════════
@@ -2200,6 +3268,14 @@ ${rows}
       block.lyrics = ta.value
       const pf = $('pf-lyrics')
       if (pf) pf.value = ta.value
+      // Live-update lyrics chip text
+      const chipText = document.querySelector(`.block-chip[data-block-id="${block.id}"] .lyrics-chip-text`)
+      const chipEmpty = document.querySelector(`.block-chip[data-block-id="${block.id}"] .lyrics-chip-empty`)
+      if (chipText) chipText.textContent = ta.value
+      if (chipEmpty && ta.value.trim()) {
+        chipEmpty.className = 'lyrics-chip-text'
+        chipEmpty.textContent = ta.value
+      }
     })
     sec.appendChild(ta)
     return sec
@@ -2209,9 +3285,29 @@ ${rows}
   function buildCtxFretboard(block) {
     const sec = el('div', 'ctx-section')
     sec.appendChild(el('div', 'ctx-section-title', 'Fretboard'))
-    if (!block) { sec.appendChild(el('div', 'ctx-empty', 'Select a block')); return sec }
+    if (!block) { sec.appendChild(el('div', 'ctx-empty', 'Sélectionner un bloc')); return sec }
     if (!block.fretDots) block.fretDots = []
 
+    // ── Chord name — PREMIER, proéminent ──
+    const chordWrap = el('div', 'ctx-chord-wrap')
+    chordWrap.appendChild(el('div', 'ctx-chord-label', 'Nom de l\'accord'))
+    const chordIn = el('input', 'ctx-chord-input-big')
+    chordIn.type = 'text'
+    chordIn.placeholder = 'Am, G7, Cmaj7…'
+    chordIn.value = block.chords || ''
+    chordIn.addEventListener('input', () => {
+      block.chords = chordIn.value
+      // Sync panel chords field
+      const pf = $('pf-chords')
+      if (pf) pf.value = chordIn.value
+      // Live-update chip label without full re-render
+      const chipChord = document.querySelector(`.block-chip[data-block-id="${block.id}"] .fret-chip-chord`)
+      if (chipChord) chipChord.textContent = chordIn.value || '—'
+    })
+    chordWrap.appendChild(chordIn)
+    sec.appendChild(chordWrap)
+
+    // ── Fretboard diagram ──
     const container = el('div', 'fretboard-container')
     const head = el('div', 'fretboard-head')
     head.appendChild(el('div', 'fret-corner'))
@@ -2234,6 +3330,9 @@ ${rows}
         cell.addEventListener('click', () => {
           toggleFretDot(block, f, s, cell)
           dotCount.textContent = String(block.fretDots.length)
+          // Refresh mini diagram in chip
+          const chipDiag = document.querySelector(`.block-chip[data-block-id="${block.id}"] .mini-chord-diag`)
+          if (chipDiag) chipDiag.replaceWith(buildMiniChordDiagram(block))
         })
         bodyEl.appendChild(cell)
       }
@@ -2244,37 +3343,54 @@ ${rows}
     const hint = el('div', 'fret-scroll-hint')
     const dotCount = el('span', 'fret-dot-count', String(block.fretDots.length))
     hint.appendChild(dotCount)
-    hint.appendChild(document.createTextNode(' dots  ·  scroll ↕ 1–16'))
+    hint.appendChild(document.createTextNode(' dots · scroll ↕ 1–16'))
     container.appendChild(hint)
     sec.appendChild(container)
-
-    const chordIn = el('input', 'ctx-chord-input')
-    chordIn.type = 'text'
-    chordIn.placeholder = 'Chord name  (Am, G7…)'
-    chordIn.value = block.chords || ''
-    chordIn.addEventListener('input', () => {
-      block.chords = chordIn.value
-      const pf = $('pf-chords')
-      if (pf) pf.value = chordIn.value
-    })
-    sec.appendChild(chordIn)
     return sec
   }
 
   // ── STAFF ─────────────────────────────────────────────────
+  // Inline SVG for note symbols that don't render in all fonts
+  const NOTE_SVG = {
+    w: `<svg width="16" height="20" viewBox="0 0 16 20"><ellipse cx="8" cy="14" rx="6" ry="4" stroke="currentColor" stroke-width="1.6" fill="none" transform="rotate(-15,8,14)"/></svg>`,
+    h: `<svg width="16" height="20" viewBox="0 0 16 20"><ellipse cx="7" cy="15" rx="5.5" ry="3.5" stroke="currentColor" stroke-width="1.6" fill="none" transform="rotate(-15,7,15)"/><line x1="12.5" y1="14" x2="12.5" y2="1" stroke="currentColor" stroke-width="1.6"/></svg>`,
+    s: `<svg width="18" height="20" viewBox="0 0 18 20"><ellipse cx="7" cy="15" rx="5.5" ry="3.5" fill="currentColor" transform="rotate(-15,7,15)"/><line x1="12.5" y1="14" x2="12.5" y2="0" stroke="currentColor" stroke-width="1.6"/><path d="M12.5 0.5 Q18 4 12.5 8" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M12.5 5 Q18 8.5 12.5 13" stroke="currentColor" stroke-width="1.6" fill="none"/></svg>`,
+    rest: `<svg width="14" height="20" viewBox="0 0 14 20"><line x1="2" y1="5" x2="12" y2="5" stroke="currentColor" stroke-width="1.5"/><line x1="12" y1="5" x2="2" y2="13" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="13" x2="12" y2="13" stroke="currentColor" stroke-width="1.5"/><circle cx="9.5" cy="17" r="2.5" fill="currentColor"/></svg>`,
+  }
+
   const DURATIONS = [
-    { k:'w', sym:'𝅝' , tip:'Whole'      },
-    { k:'h', sym:'𝅗𝅥' , tip:'Half'       },
-    { k:'q', sym:'♩'  , tip:'Quarter'    },
-    { k:'e', sym:'♪'  , tip:'Eighth'     },
-    { k:'s', sym:'𝅘𝅥𝅮' , tip:'Sixteenth'  },
+    { k:'w', sym: NOTE_SVG.w,  tip:'Ronde'     },
+    { k:'h', sym: NOTE_SVG.h,  tip:'Blanche'   },
+    { k:'q', sym: '♩',         tip:'Noire'     },
+    { k:'e', sym: '♪',         tip:'Croche'    },
+    { k:'s', sym: NOTE_SVG.s,  tip:'Double croche' },
   ]
-  const DUR_SYMS = { w:'𝅝', h:'𝅗𝅥', q:'♩', e:'♪', s:'𝅘𝅥𝅮' }
+  const DUR_SYMS = { w:'○', h:'◑', q:'♩', e:'♪', s:'♬' }
+
+  // Treble-clef SVG for staff chip header
+  const TREBLE_CLEF_SVG = `<svg width="14" height="52" viewBox="0 0 14 52" fill="none"><path d="M7 50 C3 44 2 38 2 32 C2 26 4 22 7 20 C10 18 12 20 12 24 C12 30 8 33 5 35 C2.5 37 2 39 2 41 C2 45 4.5 47 7.5 47 C10.5 47 12.5 44.5 12.5 41 C12.5 34 11 27 10 20 C9 13 9 7 11 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="7.5" cy="25" r="1.6" fill="currentColor"/></svg>`
+
+  // Treble-clef pitch → y-position map (in a 80px staff chip content area)
+  // Lines at y=16,26,36,46,56; step = 5px
+  const STAFF_PITCH_Y = {
+    'G5':11,'F5':16,'E5':21,'D5':26,'C5':31,'B4':36,'A4':41,'G4':46,'F4':51,'E4':56,'D4':61,'C4':66,
+    'G#5':11,'F#5':16,'E#5':21,'D#5':26,'C#5':31,'B#4':36,'A#4':41,'G#4':46,'F#4':51,'E#4':56,'D#4':61,
+    'Gb5':16,'Fb5':21,'Eb5':26,'Db5':31,'Cb5':36,'Bb4':41,'Ab4':46,'Gb4':51,'Eb4':56,'Db4':61,
+  }
 
   function buildCtxStaff(block) {
     const sec = el('div', 'ctx-section')
-    sec.appendChild(el('div', 'ctx-section-title', 'Staff'))
-    if (!block) { sec.appendChild(el('div', 'ctx-empty', 'Select a block')); return sec }
+    // Title row with "Open palette" button
+    const titleRow = el('div', 'ctx-section-title', '')
+    titleRow.style.display = 'flex'; titleRow.style.justifyContent = 'space-between'; titleRow.style.alignItems = 'center'
+    titleRow.appendChild(document.createTextNode('Staff'))
+    const palBtn = el('button', 'btn', '⠿ Palette')
+    palBtn.style.cssText = 'padding:1px 7px;font-size:10px;height:20px;cursor:pointer'
+    palBtn.title = 'Ouvrir la palette flottante'
+    palBtn.addEventListener('click', () => showStaffPalette(block))
+    titleRow.appendChild(palBtn)
+    sec.appendChild(titleRow)
+    if (!block) { sec.appendChild(el('div', 'ctx-empty', 'Sélectionner un bloc')); return sec }
     if (!block.staffNotes) block.staffNotes = ''
 
     // Duration row
@@ -2291,8 +3407,8 @@ ${rows}
       durBtns[k] = btn
       durRow.appendChild(btn)
     })
-    const restBtn = el('button', 'ctx-staff-btn', '𝄾')
-    restBtn.title = 'Rest'
+    const restBtn = el('button', 'ctx-staff-btn', NOTE_SVG.rest)
+    restBtn.title = 'Silence'
     restBtn.addEventListener('click', () => staffAppend(block, 'Rest', display))
     durRow.appendChild(restBtn)
     sec.appendChild(durRow)
@@ -2331,12 +3447,14 @@ ${rows}
       tokens.pop()
       block.staffNotes = tokens.join(' ')
       display.textContent = staffFormat(block.staffNotes)
+      refreshStaffChip(block)
     })
     const clrBtn = el('button', 'ctx-staff-btn', '✕')
     clrBtn.title = 'Clear all'
     clrBtn.addEventListener('click', () => {
       block.staffNotes = ''
       display.textContent = '—'
+      refreshStaffChip(block)
     })
     ctrlRow.appendChild(bkBtn)
     ctrlRow.appendChild(clrBtn)
@@ -2356,6 +3474,7 @@ ${rows}
     _staffAcc = ''
     block.staffNotes = block.staffNotes ? block.staffNotes+' '+token : token
     if (displayEl) displayEl.textContent = staffFormat(block.staffNotes)
+    refreshStaffChip(block)
   }
 
   function staffFormat(notes) {
@@ -2452,6 +3571,7 @@ ${rows}
      RAILROAD VIEW
   ═══════════════════════════════════════════════════════════ */
   function showRailroad() {
+    const RR_MW    = 48   // px per measure in railroad
     const overlay  = $('railroad-overlay')
     const scroll   = $('railroad-scroll')
     const titleEl  = $('rr-title')
@@ -2459,23 +3579,45 @@ ${rows}
     const projName = $('project-name').value || 'Untitled Project'
 
     titleEl.textContent = '🚂 ' + projName
-    metaEl.textContent  = `Key: ${S.key}  •  ${S.timeSign}  •  ${S.tempo} BPM  •  ${S.blocks.length} bloc${S.blocks.length !== 1 ? 's' : ''}`
+    metaEl.textContent  = `${S.key} • ${S.timeSign} • ${S.tempo} BPM`
 
     scroll.innerHTML = ''
 
-    if (S.tracks.length === 0) {
+    const RR_EXCLUDE = new Set(['lyrics','fretboard','staff'])
+    const rrTracks = S.tracks.filter(t => !RR_EXCLUDE.has(t.type))
+
+    if (rrTracks.length === 0) {
       const msg = el('div', 'rr-no-tracks')
-      msg.innerHTML = '<div style="font-size:36px;opacity:0.3">🚂</div><p>No tracks yet — add some tracks and blocks first.</p>'
+      msg.innerHTML = '<div style="font-size:36px;opacity:0.3">🎼</div><p>Aucune piste d\'arrangement.</p>'
       scroll.appendChild(msg)
       overlay.classList.add('open')
       return
     }
 
-    S.tracks.forEach(track => {
-      const cfg        = TRACK_CONFIGS[track.type] || { icon:'🎵', badge:'TRACK' }
+    // Compute last used measure across all visible blocks
+    const visibleBlocks = S.blocks.filter(b => rrTracks.some(t => t.id === b.trackId))
+    const lastMeasure = visibleBlocks.length
+      ? Math.max(...visibleBlocks.map(b => b.measure + b.measures - 1))
+      : MEASURES
+    const totalMeasures = Math.max(lastMeasure, 16)
+    const timelineW = totalMeasures * RR_MW
+
+    // ── Ruler ──
+    const ruler = el('div', 'rr-ruler')
+    ruler.appendChild(el('div', 'rr-ruler-spacer'))
+    for (let m = 0; m < totalMeasures; m++) {
+      const mark = el('div', 'rr-ruler-mark', String(m))
+      mark.style.minWidth = RR_MW + 'px'
+      mark.style.width    = RR_MW + 'px'
+      ruler.appendChild(mark)
+    }
+    scroll.appendChild(ruler)
+
+    // ── Track rows ──
+    rrTracks.forEach(track => {
+      const cfg = TRACK_CONFIGS[track.type] || { icon:'🎵', badge:'TRACK' }
       const trackBlocks = S.blocks
-        .filter(b => b.trackId === track.id)
-        .slice()
+        .filter(b => b.trackId === track.id && !b.muted)
         .sort((a, b) => a.measure - b.measure)
 
       const row = el('div', 'rr-track')
@@ -2483,60 +3625,32 @@ ${rows}
       // Label
       const labelEl = el('div', 'rr-track-label')
       labelEl.innerHTML = `
-        <div class="rr-track-name">${cfg.icon} ${track.name}</div>
+        <div class="rr-track-name">${cfg.icon} ${esc(track.name)}</div>
         <div class="rr-track-badge">${cfg.badge}</div>
       `
       row.appendChild(labelEl)
 
-      // Rail wrap
-      const railWrap = el('div', 'rr-rail-wrap')
+      // Timeline
+      const timeline = el('div', 'rr-track-timeline')
+      timeline.style.width    = timelineW + 'px'
+      timeline.style.minWidth = timelineW + 'px'
+      timeline.style.backgroundSize = `${RR_MW}px 100%`
 
-      // Background rail line
-      const railLine = el('div', 'rr-rail-line')
-      railWrap.appendChild(railLine)
+      trackBlocks.forEach(block => {
+        const def = BLOCK_DEFS[block.type] || { label: block.type, icon:'◼' }
+        const car = el('div', `rr-car bloc-${block.type}`)
+        car.style.left  = ((block.measure - 1) * RR_MW) + 'px'
+        car.style.width = (block.measures * RR_MW - 4) + 'px'
+        car.title = block.chords ? `${block.name} — ${block.chords}` : block.name
+        car.innerHTML = `
+          <span class="rr-car-icon">${def.icon}</span>
+          <span class="rr-car-name">${esc(block.name)}</span>
+          ${block.chords ? `<span class="rr-car-chords">${esc(block.chords)}</span>` : ''}
+        `
+        timeline.appendChild(car)
+      })
 
-      // Left cap
-      const capL = el('div', 'rr-rail-cap left')
-      railWrap.appendChild(capL)
-
-      // Cars container
-      const cars = el('div', 'rr-cars')
-
-      if (trackBlocks.length === 0) {
-        const empty = el('span', 'rr-empty-track', 'No blocks on this track')
-        cars.appendChild(empty)
-      } else {
-        trackBlocks.forEach((block, i) => {
-          const def = BLOCK_DEFS[block.type] || { label: block.type, icon:'◼' }
-
-          const car = el('div', `rr-car bloc-${block.type}`)
-          car.title = block.chords ? `${block.name} — ${block.chords}` : block.name
-
-          let carHTML = `
-            <span class="rr-car-icon">${def.icon}</span>
-            <span class="rr-car-name">${esc(block.name)}</span>
-            <span class="rr-car-meta">${block.measures}m • M${block.measure}</span>
-          `
-          if (block.chords) {
-            carHTML += `<span class="rr-car-chords">${esc(block.chords)}</span>`
-          }
-          car.innerHTML = carHTML
-          cars.appendChild(car)
-
-          // Connector between cars (not after last)
-          if (i < trackBlocks.length - 1) {
-            cars.appendChild(el('div', 'rr-connector'))
-          }
-        })
-      }
-
-      railWrap.appendChild(cars)
-
-      // Right cap
-      const capR = el('div', 'rr-rail-cap right')
-      railWrap.appendChild(capR)
-
-      row.appendChild(railWrap)
+      row.appendChild(timeline)
       scroll.appendChild(row)
     })
 
