@@ -881,6 +881,35 @@
     .block-chip.muted { filter: grayscale(1) brightness(0.55); }
     .block-chip.muted .bchip-mute { opacity: 1 !important; background: rgba(255,255,255,0.25); }
 
+    /* Right-edge resize handle on block chips */
+    .bchip-resize {
+      position: absolute;
+      right: 0; top: 0; bottom: 0;
+      width: 9px;
+      cursor: ew-resize;
+      z-index: 4;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      background: transparent;
+      transition: background 0.12s;
+      touch-action: none;
+    }
+    .bchip-resize::after {
+      content: '';
+      position: absolute;
+      right: 2px; top: 50%;
+      transform: translateY(-50%);
+      width: 2px; height: 18px;
+      border-radius: 1px;
+      background: rgba(255,255,255,0.28);
+      opacity: 0;
+      transition: opacity 0.12s;
+    }
+    .block-chip:hover .bchip-resize::after { opacity: 1; }
+    .bchip-resize:hover,
+    .bchip-resize.resizing { background: rgba(255,255,255,0.18); }
+    .bchip-resize:hover::after,
+    .bchip-resize.resizing::after { opacity: 1; }
+
     /* Top action bar (mute + delete) */
     .bchip-top {
       height: 18px;
@@ -1827,15 +1856,43 @@
     updateContextPanels(null)
     bindKeys()
     initStaffPaletteDrag()
+    initResizeHandlers()
     wireElectron()
+  }
+
+  function initResizeHandlers() {
+    document.addEventListener('mousemove', e => {
+      if (!_resizing) return
+      const dx = e.clientX - _resizing.startX
+      const deltaMeasures = Math.round(dx / MEASURE_WIDTH)
+      const block = S.blocks.find(b => b.id === _resizing.blockId)
+      if (!block) return
+      const newM = Math.max(1, _resizing.startMeasures + deltaMeasures)
+      if (newM === block.measures) return
+      block.measures = newM
+      const chip = document.querySelector(`.block-chip[data-block-id="${block.id}"]`)
+      if (!chip) return
+      chip.style.width = (block.measures * MEASURE_WIDTH - 4) + 'px'
+      const oldSvg = chip.querySelector('svg')
+      if (oldSvg) {
+        const chipW = block.measures * MEASURE_WIDTH - 6
+        chip.replaceChild(buildStaffSVG(block, chipW, 74), oldSvg)
+      }
+    })
+    document.addEventListener('mouseup', () => {
+      if (!_resizing) return
+      if (_resizing.handle) _resizing.handle.classList.remove('resizing')
+      _resizing = null
+    })
   }
 
   /* ═══════════════════════════════════════════════════════════
      FLOATING STAFF PALETTE
   ═══════════════════════════════════════════════════════════ */
-  let _spalBlock = null
-  let _spalDur   = 'q'
-  let _spalAcc   = ''
+  let _spalBlock  = null
+  let _spalDur    = 'q'
+  let _spalAcc    = ''
+  let _spalOctave = 4
 
   function initStaffPaletteDrag() {
     const panel  = $('staff-palette-float')
@@ -1857,9 +1914,10 @@
   }
 
   function showStaffPalette(block) {
-    _spalBlock = block
-    _spalDur   = 'q'
-    _spalAcc   = ''
+    _spalBlock  = block
+    _spalDur    = 'q'
+    _spalAcc    = ''
+    _spalOctave = 4
     const panel = $('staff-palette-float')
     const body  = $('spal-body')
     const nameEl = $('spal-block-name')
@@ -1898,6 +1956,24 @@
       accBtns[k] = btn; accRow.appendChild(btn)
     })
     body.appendChild(accRow)
+
+    // Octave selector
+    const octRow = el('div', 'ctx-staff-row')
+    const octBtns = {}
+    ;[3,4,5,6].forEach(oct => {
+      const btn = el('button', 'ctx-staff-btn' + (oct === _spalOctave ? ' sel' : ''), String(oct))
+      btn.title = `Octave ${oct}`
+      btn.addEventListener('click', () => {
+        _spalOctave = oct
+        Object.values(octBtns).forEach(b => b.classList.remove('sel'))
+        btn.classList.add('sel')
+      })
+      octBtns[oct] = btn; octRow.appendChild(btn)
+    })
+    const octLabel = el('span', '', 'oct')
+    octLabel.style.cssText = 'font-size:9px;opacity:0.5;margin-left:3px;align-self:center'
+    octRow.appendChild(octLabel)
+    body.appendChild(octRow)
 
     // Note buttons
     const noteRow = el('div', 'ctx-staff-row')
@@ -1944,7 +2020,7 @@
     if (!_spalBlock) return
     const token = noteName === 'Rest'
       ? `${_spalDur}:Rest`
-      : `${_spalDur}:${noteName}${_spalAcc}4`
+      : `${_spalDur}:${noteName}${_spalAcc}${_spalOctave}`
     _spalAcc = ''
     _spalBlock.staffNotes = _spalBlock.staffNotes ? _spalBlock.staffNotes + ' ' + token : token
     refreshStaffChip(_spalBlock)
@@ -2225,9 +2301,23 @@
   /* ═══════════════════════════════════════════════════════════
      BLOCK CHIP
   ═══════════════════════════════════════════════════════════ */
+
+  function makeResizeHandle(block) {
+    const h = el('div', 'bchip-resize')
+    h.title = 'Étirer'
+    h.addEventListener('mousedown', e => {
+      e.stopPropagation()
+      e.preventDefault()
+      h.classList.add('resizing')
+      _resizing = { blockId: block.id, startX: e.clientX, startMeasures: block.measures, handle: h }
+    })
+    return h
+  }
+
   let _dragBlockId  = null   // id of block chip being dragged
   let _chipDragging = false  // guard to suppress click after drag
   let _dragTrackId  = null   // id of track row being reordered
+  let _resizing     = null   // { blockId, startX, startMeasures, handle }
 
   function buildBlockChip(block, track) {
     if (track && track.type === 'lyrics')    return buildLyricsChip(block)
@@ -2292,6 +2382,7 @@
       openBlockDetail(block.id)
     })
 
+    chip.appendChild(makeResizeHandle(block))
     return chip
   }
 
@@ -2334,6 +2425,7 @@
       setTimeout(() => { _chipDragging = false }, 0)
     })
     chip.addEventListener('click', () => { if (_chipDragging) return; openBlockDetail(block.id) })
+    chip.appendChild(makeResizeHandle(block))
     return chip
   }
 
@@ -2381,6 +2473,7 @@
       setTimeout(() => { _chipDragging = false }, 0)
     })
     chip.addEventListener('click', () => { if (_chipDragging) return; openBlockDetail(block.id) })
+    chip.appendChild(makeResizeHandle(block))
     return chip
   }
 
@@ -2463,6 +2556,7 @@
       setTimeout(() => { _chipDragging = false }, 0)
     })
     chip.addEventListener('click', () => { if (_chipDragging) return; openBlockDetail(block.id) })
+    chip.appendChild(makeResizeHandle(block))
     return chip
   }
 
@@ -2522,8 +2616,16 @@
       const cy = STAFF_PITCH_Y[note] ?? 34  // default to B4
       const filled = dur !== 'w' && dur !== 'h'
 
-      // Ledger line for C4
-      if (cy >= 64) line(cx-7, 64, cx+7, 64, 0.5)
+      // Ledger lines below the staff (C4 and lower)
+      if (cy >= 59) {
+        const bot = LINE_Y[LINE_Y.length - 1]  // 54
+        for (let ly = bot + 10; ly <= cy + 3; ly += 10) line(cx-7, ly, cx+7, ly, 0.5)
+      }
+      // Ledger lines above the staff (above G5)
+      if (cy <= 9) {
+        const top = LINE_Y[0]  // 14
+        for (let ly = top - 10; ly >= cy - 3; ly -= 10) line(cx-7, ly, cx+7, ly, 0.5)
+      }
 
       // Notehead
       const ell = document.createElementNS(NS,'ellipse')
@@ -2561,25 +2663,27 @@
     return svg
   }
 
-  // Convert Y pixel in staff track-blocks to nearest pitch name
+  // Convert Y pixel in staff track-blocks to nearest note letter + octave
   function staffYToPitch(relY) {
-    // Lines at CSS y=24,35,46,57,68 (from ::after) → pitch E4..F5
-    // step ≈ 5.5px per half-step
-    const pitches = ['F5','E5','D5','C5','B4','A4','G4','F4','E4','D4','C4']
-    const topY = 24, bottomY = 68
+    const pitches = [
+      ['F',5],['E',5],['D',5],['C',5],['B',4],['A',4],['G',4],['F',4],['E',4],['D',4],['C',4],['B',3],['A',3]
+    ]
+    const topY = 24, bottomY = 80
     const frac = Math.max(0, Math.min(1, (relY - topY) / (bottomY - topY)))
-    return pitches[Math.round(frac * (pitches.length - 1))]
+    return pitches[Math.round(frac * (pitches.length - 1))]  // [letter, octave]
   }
 
   /* ── STAFF NOTE POPUP ────────────────────────────────────── */
-  let _spBlock = null
-  let _spDur   = 'q'
-  let _spAcc   = ''
+  let _spBlock  = null
+  let _spDur    = 'q'
+  let _spAcc    = ''
+  let _spOctave = 4
 
   function showStaffPopup(block, x, y, pitchHint) {
-    _spBlock = block
-    _spDur   = 'q'
-    _spAcc   = ''
+    _spBlock  = block
+    _spDur    = 'q'
+    _spAcc    = ''
+    _spOctave = (pitchHint && pitchHint[1]) ? pitchHint[1] : 4
     const popup = $('staff-popup')
 
     popup.innerHTML = `
@@ -2626,11 +2730,31 @@
       accRow.appendChild(btn)
     })
 
-    // Note buttons  (pitch hint pre-selects the note row context)
+    // Octave selector row
+    const spOctRow = el('div', 'ctx-staff-row')
+    spOctRow.id = 'sp-oct-row'
+    $('sp-note-row').before(spOctRow)
+    const spOctBtns = {}
+    ;[3,4,5,6].forEach(oct => {
+      const btn = el('button', 'ctx-staff-btn' + (oct === _spOctave ? ' sel' : ''), String(oct))
+      btn.title = `Octave ${oct}`
+      btn.addEventListener('click', () => {
+        _spOctave = oct
+        Object.values(spOctBtns).forEach(b => b.classList.remove('sel'))
+        btn.classList.add('sel')
+      })
+      spOctBtns[oct] = btn; spOctRow.appendChild(btn)
+    })
+    const spOctLbl = el('span', '', 'oct')
+    spOctLbl.style.cssText = 'font-size:9px;opacity:0.5;margin-left:3px;align-self:center'
+    spOctRow.appendChild(spOctLbl)
+
+    // Note buttons  (pitch hint pre-selects the note letter)
     const noteRow = $('sp-note-row')
+    const hintLetter = pitchHint ? pitchHint[0] : null
     ;['C','D','E','F','G','A','B'].forEach(n => {
       const btn = el('button', 'ctx-staff-btn', n)
-      if (pitchHint && pitchHint.startsWith(n)) btn.classList.add('sel')
+      if (hintLetter === n) btn.classList.add('sel')
       btn.addEventListener('click', () => {
         staffAppendToBlock(_spBlock, n)
         noteRow.querySelectorAll('.ctx-staff-btn').forEach(b => b.classList.remove('sel'))
@@ -2668,7 +2792,7 @@
     if (!block) return
     const token = noteName === 'Rest'
       ? `${_spDur}:Rest`
-      : `${_spDur}:${noteName}${_spAcc}4`
+      : `${_spDur}:${noteName}${_spAcc}${_spOctave}`
     _spAcc = ''
     block.staffNotes = block.staffNotes ? block.staffNotes + ' ' + token : token
     refreshStaffChip(block)
@@ -3244,8 +3368,9 @@ ${rows}
   /* ═══════════════════════════════════════════════════════════
      PALETTE CONTEXT PANELS
   ═══════════════════════════════════════════════════════════ */
-  let _staffDur = 'q'    // current note duration
-  let _staffAcc = ''     // current accidental
+  let _staffDur    = 'q'  // current note duration
+  let _staffAcc    = ''   // current accidental
+  let _staffOctave = 4    // current octave for right-panel note entry
 
   function updateContextPanels(block) {
     const ctx = $('palette-ctx')
@@ -3373,9 +3498,23 @@ ${rows}
   // Treble-clef pitch → y-position map (in a 80px staff chip content area)
   // Lines at y=16,26,36,46,56; step = 5px
   const STAFF_PITCH_Y = {
-    'G5':11,'F5':16,'E5':21,'D5':26,'C5':31,'B4':36,'A4':41,'G4':46,'F4':51,'E4':56,'D4':61,'C4':66,
-    'G#5':11,'F#5':16,'E#5':21,'D#5':26,'C#5':31,'B#4':36,'A#4':41,'G#4':46,'F#4':51,'E#4':56,'D#4':61,
-    'Gb5':16,'Fb5':21,'Eb5':26,'Db5':31,'Cb5':36,'Bb4':41,'Ab4':46,'Gb4':51,'Eb4':56,'Db4':61,
+    // Octave 6 (above)
+    'C6':1,
+    // Octave 5
+    'B5':6,'A5':8,'G5':11,'F5':16,'E5':21,'D5':26,'C5':31,
+    // Octave 4
+    'B4':36,'A4':41,'G4':46,'F4':51,'E4':56,'D4':61,'C4':66,
+    // Octave 3 (below staff — ledger lines drawn in buildStaffSVG)
+    'B3':71,'A3':76,'G3':81,'F3':86,'E3':91,'D3':96,'C3':101,
+    // Sharps octave 5
+    'G#5':11,'F#5':16,'E#5':21,'D#5':26,'C#5':31,'B#4':36,'A#4':41,'G#4':46,'F#4':51,'E#4':56,'D#4':61,'C#4':66,
+    // Flats octave 5
+    'Bb5':6,'Ab5':8,'Gb5':16,'Fb5':21,'Eb5':26,'Db5':31,'Cb5':36,
+    // Sharps/flats octave 4
+    'Bb4':41,'Ab4':46,'Gb4':51,'Eb4':56,'Db4':61,
+    // Sharps/flats octave 3
+    'B#3':71,'A#3':76,'G#3':81,'F#3':86,'E#3':91,'D#3':96,'C#3':101,
+    'Bb3':71,'Ab3':76,'Gb3':81,'Eb3':91,'Db3':96,
   }
 
   function buildCtxStaff(block) {
@@ -3429,6 +3568,24 @@ ${rows}
     })
     sec.appendChild(accRow)
 
+    // Octave selector
+    const octRow = el('div', 'ctx-staff-row')
+    const octBtns = {}
+    ;[3,4,5,6].forEach(oct => {
+      const btn = el('button', 'ctx-staff-btn' + (oct === _staffOctave ? ' sel' : ''), String(oct))
+      btn.title = `Octave ${oct}`
+      btn.addEventListener('click', () => {
+        _staffOctave = oct
+        Object.values(octBtns).forEach(b => b.classList.remove('sel'))
+        btn.classList.add('sel')
+      })
+      octBtns[oct] = btn; octRow.appendChild(btn)
+    })
+    const octLabel = el('span', '', 'oct')
+    octLabel.style.cssText = 'font-size:9px;opacity:0.5;margin-left:3px;align-self:center'
+    octRow.appendChild(octLabel)
+    sec.appendChild(octRow)
+
     // Note buttons
     const noteRow = el('div', 'ctx-staff-row')
     ;['C','D','E','F','G','A','B'].forEach(n => {
@@ -3470,7 +3627,7 @@ ${rows}
   function staffAppend(block, noteName, displayEl) {
     const token = noteName === 'Rest'
       ? `${_staffDur}:Rest`
-      : `${_staffDur}:${noteName}${_staffAcc}4`
+      : `${_staffDur}:${noteName}${_staffAcc}${_staffOctave}`
     _staffAcc = ''
     block.staffNotes = block.staffNotes ? block.staffNotes+' '+token : token
     if (displayEl) displayEl.textContent = staffFormat(block.staffNotes)
