@@ -593,25 +593,50 @@
     .track-row.is-staff .track-blocks { min-height: 104px; }
     .track-row.is-staff .track-label  { align-items: flex-start; padding-top: 10px; }
 
-    /* 5 staff lines drawn as ::after overlay */
+    /* 5 staff lines — aligned with SVG chip lines (bchip-top=18px + SVG LINE_Y) */
     .track-row.is-staff .track-blocks::after {
       content: '';
       position: absolute;
       inset: 0;
       pointer-events: none;
       background: linear-gradient(
-        transparent 0, transparent 24px,
-        rgba(160,165,210,0.22) 24px, rgba(160,165,210,0.22) 25px,
-        transparent 25px, transparent 35px,
-        rgba(160,165,210,0.22) 35px, rgba(160,165,210,0.22) 36px,
-        transparent 36px, transparent 46px,
-        rgba(160,165,210,0.22) 46px, rgba(160,165,210,0.22) 47px,
-        transparent 47px, transparent 57px,
-        rgba(160,165,210,0.22) 57px, rgba(160,165,210,0.22) 58px,
-        transparent 58px, transparent 68px,
-        rgba(160,165,210,0.22) 68px, rgba(160,165,210,0.22) 69px,
-        transparent 69px
+        transparent 0, transparent 32px,
+        rgba(160,165,210,0.22) 32px, rgba(160,165,210,0.22) 33px,
+        transparent 33px, transparent 42px,
+        rgba(160,165,210,0.22) 42px, rgba(160,165,210,0.22) 43px,
+        transparent 43px, transparent 52px,
+        rgba(160,165,210,0.22) 52px, rgba(160,165,210,0.22) 53px,
+        transparent 53px, transparent 62px,
+        rgba(160,165,210,0.22) 62px, rgba(160,165,210,0.22) 63px,
+        transparent 63px, transparent 72px,
+        rgba(160,165,210,0.22) 72px, rgba(160,165,210,0.22) 73px,
+        transparent 73px
       );
+    }
+
+    /* Ghost note — floating preview that follows the cursor on a staff track */
+    .staff-ghost {
+      position: absolute;
+      pointer-events: none;
+      z-index: 10;
+      display: none;
+    }
+    .staff-ghost-head {
+      position: absolute;
+      width: 11px; height: 8px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(167,139,250,0.9);
+      background: rgba(167,139,250,0.35);
+      transform: rotate(-15deg);
+    }
+    .staff-ghost-label {
+      position: absolute;
+      left: 14px;
+      font-size: 9px;
+      font-family: 'Space Mono', monospace;
+      font-weight: 700;
+      color: rgba(167,139,250,0.95);
+      white-space: nowrap;
     }
 
     /* Pencil cursor on staff track — signals note-entry zone */
@@ -2271,32 +2296,72 @@
       dropBlock(type, track.id, measure)
     })
 
-    // Right-click on STAFF track → floating note-entry popup
+    // STAFF track: ghost note preview + click-to-place
     if (track.type === 'staff') {
-      blocksEl.addEventListener('contextmenu', e => {
-        e.preventDefault()
+      // Ghost note overlay (follows cursor, shows pitch preview)
+      const ghost     = el('div', 'staff-ghost')
+      const ghostHead = el('div', 'staff-ghost-head')
+      const ghostLbl  = el('span', 'staff-ghost-label')
+      ghost.appendChild(ghostHead)
+      ghost.appendChild(ghostLbl)
+      blocksEl.appendChild(ghost)
+
+      blocksEl.addEventListener('mousemove', e => {
+        if (_dragBlockId || _chipDragging || _resizing) { ghost.style.display = 'none'; return }
+        const rect = blocksEl.getBoundingClientRect()
+        const relY = e.clientY - rect.top
+        if (relY < 18) { ghost.style.display = 'none'; return }
+        const [letter, oct] = staffYToPitch(relY)
+        const acc = _spalAcc || ''
+        const trackY = staffPitchToTrackY(letter, oct)
+        ghostHead.style.top  = (trackY - 4) + 'px'
+        ghostLbl.style.top   = (trackY - 6) + 'px'
+        ghostLbl.textContent = `${letter}${acc || ''}${oct}`
+        ghost.style.left    = (e.clientX - rect.left + 6) + 'px'
+        ghost.style.display = 'block'
+      })
+      blocksEl.addEventListener('mouseleave', () => { ghost.style.display = 'none' })
+
+      // Click to place note at cursor Y position
+      blocksEl.addEventListener('click', e => {
+        if (_dragBlockId || _chipDragging || _resizing) return
+        if (e.target.closest('.bchip-mute,.bchip-del,.bchip-resize')) return
+        if (e.target.closest('.bchip-top')) return  // handled by chip (open detail)
         const rect = blocksEl.getBoundingClientRect()
         const relX = e.clientX - rect.left
+        const relY = e.clientY - rect.top
+        if (relY < 18) return
+
         const measure = Math.max(1, Math.floor(relX / MEASURE_WIDTH) + 1)
-        // Find existing block at this measure, or create one
         let block = S.blocks.find(b =>
           b.trackId === track.id && b.measure <= measure && (b.measure + b.measures - 1) >= measure
         )
         if (!block) {
-          block = {
-            id: 'b' + BID++, type: 'verse', trackId: track.id,
-            measure, measures: 4, name: 'Verse', notes: '', chords: '',
-            lyrics: '', tempo: S.tempo, key: S.key, muted: false,
-            fretDots: [], staffNotes: '',
-          }
+          block = { id:'b'+BID++, type:'staff-bloc', trackId:track.id,
+            measure, measures:4, name:'Staff', notes:'', chords:'',
+            lyrics:'', tempo:S.tempo, key:S.key, muted:false,
+            fretDots:[], staffNotes:'' }
           S.blocks.push(block)
           render()
         }
-        // Determine pitch from Y position on staff
-        const relY = e.clientY - rect.top
-        const pitchHint = staffYToPitch(relY)
-        showStaffPopup(block, e.clientX, e.clientY, pitchHint)
+        const [letter, oct] = staffYToPitch(relY)
+        const dur = _spalDur || 'q'
+        const acc = _spalAcc || ''
+        const token = `${dur}:${letter}${acc}${oct}`
+        _spalAcc = ''
+        block.staffNotes = block.staffNotes ? block.staffNotes + ' ' + token : token
+        _spalBlock = block
+        refreshStaffChip(block)
+        // Sync palette display if open
+        const spalBody = $('spal-body')
+        if (spalBody) {
+          const disp = spalBody.querySelector('.ctx-staff-display')
+          if (disp) disp.textContent = staffFormat(block.staffNotes)
+          spalBody.querySelectorAll('.ctx-staff-btn.acc-sel').forEach(b => b.classList.remove('acc-sel'))
+        }
       })
+
+      blocksEl.addEventListener('contextmenu', e => e.preventDefault())
     }
 
     // Render blocks on this track
@@ -2567,7 +2632,11 @@
       chip.classList.remove('dragging'); _dragBlockId = null
       setTimeout(() => { _chipDragging = false }, 0)
     })
-    chip.addEventListener('click', () => { if (_chipDragging) return; openBlockDetail(block.id) })
+    chip.addEventListener('click', e => {
+      if (_chipDragging) return
+      if (e.target.closest('.bchip-top')) openBlockDetail(block.id)
+      // else: bubbles to track-blocks click handler → note entry
+    })
     chip.appendChild(makeResizeHandle(block))
     return chip
   }
@@ -2675,14 +2744,25 @@
     return svg
   }
 
-  // Convert Y pixel in staff track-blocks to nearest note letter + octave
+  // Map track-blocks Y → nearest [letter, octave] using SVG coordinate system
+  // bchip-top = 18px, so SVG Y = relY - 18; STAFF_PITCH_Y step = 5px
+  const _STAFF_PITCH_TABLE = [
+    {l:'G',o:5,y:11},{l:'F',o:5,y:16},{l:'E',o:5,y:21},{l:'D',o:5,y:26},{l:'C',o:5,y:31},
+    {l:'B',o:4,y:36},{l:'A',o:4,y:41},{l:'G',o:4,y:46},{l:'F',o:4,y:51},{l:'E',o:4,y:56},
+    {l:'D',o:4,y:61},{l:'C',o:4,y:66},{l:'B',o:3,y:71},{l:'A',o:3,y:76},{l:'G',o:3,y:81},
+  ]
   function staffYToPitch(relY) {
-    const pitches = [
-      ['F',5],['E',5],['D',5],['C',5],['B',4],['A',4],['G',4],['F',4],['E',4],['D',4],['C',4],['B',3],['A',3]
-    ]
-    const topY = 24, bottomY = 80
-    const frac = Math.max(0, Math.min(1, (relY - topY) / (bottomY - topY)))
-    return pitches[Math.round(frac * (pitches.length - 1))]  // [letter, octave]
+    const svgY = relY - 18  // subtract bchip-top height
+    let best = _STAFF_PITCH_TABLE[0], bestD = Math.abs(svgY - best.y)
+    for (const p of _STAFF_PITCH_TABLE) {
+      const d = Math.abs(svgY - p.y)
+      if (d < bestD) { bestD = d; best = p }
+    }
+    return [best.l, best.o]
+  }
+  function staffPitchToTrackY(letter, octave) {
+    const key = `${letter}${octave}`
+    return 18 + (STAFF_PITCH_Y[key] ?? 36)
   }
 
   /* ── STAFF NOTE POPUP ────────────────────────────────────── */
