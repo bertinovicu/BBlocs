@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BertinoMusicBlocs — Rapport v1.5</title>
+  <style>
+    /* ── Reset & base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0e0f11;
+      --surface:   #1a1c20;
+      --surface2:  #22252b;
+      --border:    #2e3138;
+      --accent:    #4f8ef7;
+      --accent2:   #6c63ff;
+      --neon:      #00e5a0;
+      --text:      #e8eaf0;
+      --text2:     #8b8f9a;
+      --red:       #f44336;
+      --orange:    #ff9800;
+      --yellow:    #ffc107;
+      --green:     #4caf50;
+      --radius:    8px;
+    }
+
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg:       #f4f5f7;
+        --surface:  #ffffff;
+        --surface2: #eef0f4;
+        --border:   #d0d3da;
+        --text:     #1a1c20;
+        --text2:    #5a5e6b;
+      }
+    }
+
+    html { font-size: 15px; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      line-height: 1.65;
+      padding: 2rem 1rem 4rem;
+    }
+
+    /* ── Layout ── */
+    .wrapper {
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: linear-gradient(135deg, #1a1f3a 0%, #0f1628 60%, #111520 100%);
+      border: 1px solid #2a3060;
+      border-radius: var(--radius);
+      padding: 2.2rem 2.4rem 2rem;
+      margin-bottom: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 80% 20%, rgba(79,142,247,0.12) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .header-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .header h1 {
+      font-size: 1.65rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #fff;
+    }
+    .header h1 span {
+      color: var(--accent);
+    }
+    .header-sub {
+      margin-top: 0.45rem;
+      font-size: 0.85rem;
+      color: var(--text2);
+      letter-spacing: 0.03em;
+    }
+    .badge-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(255,152,0,0.15);
+      border: 1px solid rgba(255,152,0,0.4);
+      color: #ffb74d;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 0.3rem 0.75rem;
+      border-radius: 20px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .badge-status::before {
+      content: '';
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      background: #ff9800;
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.3; }
+    }
+    .header-meta {
+      margin-top: 1rem;
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .meta-item {
+      font-size: 0.8rem;
+      color: var(--text2);
+    }
+    .meta-item strong {
+      color: var(--text);
+    }
+
+    /* ── Sections ── */
+    section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.8rem 2rem;
+      margin-bottom: 1.5rem;
+    }
+    section h2 {
+      font-size: 1rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      margin-bottom: 1.2rem;
+      padding-bottom: 0.6rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* ── Axes ── */
+    .axis {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+    .axis:last-child { margin-bottom: 0; }
+
+    .axis-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.85rem 1.1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .axis-header h3 {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .axis-icon {
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+    .axis-badge {
+      margin-left: auto;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+    }
+    .badge-ok    { background: rgba(76,175,80,0.18);  color: #81c784; border: 1px solid rgba(76,175,80,0.35); }
+    .badge-warn  { background: rgba(255,193,7,0.18);  color: #ffd54f; border: 1px solid rgba(255,193,7,0.35); }
+    .badge-new   { background: rgba(108,99,255,0.18); color: #9c94ff; border: 1px solid rgba(108,99,255,0.35); }
+
+    .axis-body {
+      padding: 0.9rem 1.1rem;
+    }
+
+    /* ── Item lists ── */
+    ul.items {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+    ul.items li {
+      display: flex;
+      align-items: baseline;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      color: var(--text);
+      line-height: 1.5;
+    }
+    ul.items li .ico {
+      flex-shrink: 0;
+      width: 1.2em;
+      text-align: center;
+      font-size: 0.85em;
+    }
+    ul.items li.warn  { color: var(--text2); }
+    ul.items li.warn .ico { filter: grayscale(0); }
+
+    /* ── Table ── */
+    .table-wrap {
+      overflow-x: auto;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.855rem;
+    }
+    thead tr {
+      background: var(--surface2);
+    }
+    thead th {
+      text-align: left;
+      padding: 0.65rem 0.9rem;
+      font-weight: 600;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text2);
+      border-bottom: 1px solid var(--border);
+    }
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--surface2); }
+    tbody td {
+      padding: 0.65rem 0.9rem;
+      vertical-align: top;
+      line-height: 1.5;
+    }
+    tbody td:first-child {
+      font-size: 1rem;
+      white-space: nowrap;
+    }
+    .td-prob { font-weight: 500; }
+    .td-impact { color: var(--text2); font-size: 0.82rem; }
+
+    /* ── Plan ── */
+    .plan-week {
+      margin-bottom: 1.2rem;
+    }
+    .plan-week:last-child { margin-bottom: 0; }
+    .plan-week-title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text2);
+      margin-bottom: 0.5rem;
+    }
+    .plan-week-title span {
+      font-size: 0.7rem;
+      font-weight: 500;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      margin-left: 0.5rem;
+    }
+    .p1 span { background: rgba(244,67,54,0.18); color: #ef9a9a; border: 1px solid rgba(244,67,54,0.3); }
+    .p2 span { background: rgba(255,152,0,0.18); color: #ffcc80; border: 1px solid rgba(255,152,0,0.3); }
+    .p3 span { background: rgba(76,175,80,0.18); color: #a5d6a7; border: 1px solid rgba(76,175,80,0.3); }
+
+    ol.plan-items {
+      padding-left: 0;
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      counter-reset: plan-counter;
+    }
+    ol.plan-items li {
+      display: flex;
+      align-items: baseline;
+      gap: 0.55rem;
+      font-size: 0.875rem;
+      counter-increment: plan-counter;
+    }
+    ol.plan-items li::before {
+      content: counter(plan-counter);
+      flex-shrink: 0;
+      width: 1.5rem;
+      height: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--text2);
+    }
+
+    /* ── Architecture code block ── */
+    .arch-block {
+      background: #0a0b0d;
+      border: 1px solid #1e2228;
+      border-radius: 6px;
+      padding: 1.2rem 1.4rem;
+      overflow-x: auto;
+    }
+    .arch-block pre {
+      font-family: "SF Mono", "Fira Code", "JetBrains Mono", Menlo, Consolas, monospace;
+      font-size: 0.8rem;
+      line-height: 1.7;
+      color: #c9d1d9;
+      margin: 0;
+    }
+    .arch-block .c-gray   { color: #6e7681; }
+    .arch-block .c-blue   { color: #79c0ff; }
+    .arch-block .c-green  { color: #7ee787; }
+    .arch-block .c-yellow { color: #e3b341; }
+    .arch-block .c-purple { color: #d2a8ff; }
+
+    /* ── Recommandations ── */
+    ol.reco {
+      padding-left: 0;
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+      counter-reset: reco-counter;
+    }
+    ol.reco li {
+      display: flex;
+      gap: 0.8rem;
+      counter-increment: reco-counter;
+    }
+    ol.reco li::before {
+      content: counter(reco-counter);
+      flex-shrink: 0;
+      width: 1.7rem;
+      height: 1.7rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      border-radius: 50%;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #fff;
+    }
+    ol.reco li .reco-body {
+      flex: 1;
+    }
+    ol.reco li .reco-title {
+      font-weight: 600;
+      font-size: 0.875rem;
+      margin-bottom: 0.2rem;
+    }
+    ol.reco li .reco-detail {
+      font-size: 0.82rem;
+      color: var(--text2);
+    }
+    code {
+      font-family: "SF Mono", "Fira Code", Menlo, Consolas, monospace;
+      font-size: 0.82em;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 0.1em 0.35em;
+    }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--text2);
+      margin-top: 2.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- ══ HEADER ══ -->
+  <header class="header">
+    <div class="header-top">
+      <div>
+        <h1>BertinoMusicBlocs <span>v1.5</span></h1>
+        <p class="header-sub">Rapport d'audit technique — migration v1.0 → v1.5</p>
+      </div>
+      <div class="badge-status">EN COURS — alpha</div>
+    </div>
+    <div class="header-meta">
+      <div class="meta-item"><strong>Date</strong> : 2026-05-19</div>
+      <div class="meta-item"><strong>Fichier principal</strong> : <code>src/index.html</code> (~4 600 lignes)</div>
+      <div class="meta-item"><strong>Plateforme</strong> : Electron 31 · macOS Universal</div>
+      <div class="meta-item"><strong>Schema JSON</strong> : v1.0 (migration v2 recommandée)</div>
+    </div>
+  </header>
+
+  <!-- ══ SECTION 2 — RÉSUMÉ DES MODIFICATIONS ══ -->
+  <section>
+    <h2>Résumé des modifications v1.0 → v1.5</h2>
+
+    <!-- Axe 1 -->
+    <div class="axis">
+      <div class="axis-header">
+        <span class="axis-icon">🔒</span>
+        <h3>Axe 1 — Stabilité</h3>
+        <span class="axis-badge badge-warn">Partiel</span>
+      </div>
+      <div class="axis-body">
+        <ul class="items">
+          <li><span class="ico">✅</span> Anti-overlap blocs à l'insertion (<code>dropBlock</code> vérifie la plage complète)</li>
+          <li><span class="ico">✅</span> Resize Staff limité à 4 mesures max</li>
+          <li><span class="ico">✅</span> <code>rebuildStaffChip()</code> in-place (évite <code>render()</code> global)</li>
+          <li><span class="ico">✅</span> <code>_rubber</code> global pour rubber-band (élimine l'accumulation de listeners)</li>
+          <li><span class="ico">✅</span> Validation <code>staffNotes</code> à l'import JSON (<code>sanitizeStaffNotes</code>)</li>
+          <li class="warn"><span class="ico">⚠</span> <code>render()</code> partiel non implémenté — appels complets subsistent</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Axe 2 -->
+    <div class="axis">
+      <div class="axis-header">
+        <span class="axis-icon">🎼</span>
+        <h3>Axe 2 — Staff SVG solfège (conservé / dormant)</h3>
+        <span class="axis-badge badge-warn">Dormant</span>
+      </div>
+      <div class="axis-body">
+        <ul class="items">
+          <li><span class="ico">✅</span> <code>parseStaffTokens()</code>, <code>keySigInfo()</code>, <code>STAFF_BEAT_VALUES</code></li>
+          <li><span class="ico">✅</span> <code>buildStaffSVG</code> 3 passes (layout → notes → beams classiques)</li>
+          <li><span class="ico">✅</span> Beaming classique : barres rectangulaires, pas de flags sur notes beamées</li>
+          <li><span class="ico">✅</span> Armure, chiffrage, barres de mesure, espacement proportionnel</li>
+          <li><span class="ico">✅</span> Triolets (qt/et), notes pointées, silences visuels</li>
+          <li><span class="ico">✅</span> Chip agrandissable ×2 (⤢/⤡), scale-aware</li>
+          <li><span class="ico">✅</span> Sélection Ctrl+clic → <code>_selectedNotes[]</code>, flèches ↑↓←→</li>
+          <li class="warn"><span class="ico">⚠</span> Piste Staff n'est plus créée par défaut (remplacée par Live Memo)</li>
+          <li class="warn"><span class="ico">⚠</span> Rubber band sélection : difficile à utiliser, fiabilité incertaine</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Axe 3 -->
+    <div class="axis">
+      <div class="axis-header">
+        <span class="axis-icon">🔊</span>
+        <h3>Axe 3 — Audio Web Audio API</h3>
+        <span class="axis-badge badge-ok">Implémenté</span>
+      </div>
+      <div class="axis-body">
+        <ul class="items">
+          <li><span class="ico">✅</span> <code>getAudioCtx()</code>, <code>noteToFreq()</code>, <code>_pianoNote()</code> (synthèse additive)</li>
+          <li><span class="ico">✅</span> <code>playStaffBlock()</code> + <code>playStaffTrack()</code> (lecture Staff)</li>
+          <li><span class="ico">✅</span> <code>_playStop</code> : annule la lecture en cours</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Axe 4 -->
+    <div class="axis">
+      <div class="axis-header">
+        <span class="axis-icon">🎙</span>
+        <h3>Axe 4 — Live Memo (nouveau)</h3>
+        <span class="axis-badge badge-new">Nouveau</span>
+      </div>
+      <div class="axis-body">
+        <ul class="items">
+          <li><span class="ico">✅</span> Piste <code>live-memo</code> avec 2 canaux A et B</li>
+          <li><span class="ico">✅</span> Enregistrement micro : <code>getUserMedia</code> → <code>MediaRecorder</code> → WebM/Opus → base64</li>
+          <li><span class="ico">✅</span> Génération <code>waveformData</code> après enregistrement</li>
+          <li><span class="ico">✅</span> Waveform SVG dans les chips de clips</li>
+          <li><span class="ico">✅</span> Lecture : base64 → <code>ArrayBuffer</code> → <code>decodeAudioData</code> → <code>AudioBufferSourceNode</code></li>
+          <li><span class="ico">✅</span> Boutons ⏺/▶/⏹ par lane (toujours visibles)</li>
+          <li><span class="ico">✅</span> Chips clips : waveform + champ nom + durée + ▶ + ✕</li>
+          <li class="warn"><span class="ico">⚠</span> Waveform pas encore générée (code en cours — <code>mr.onstop</code> incomplet)</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Axe 4b -->
+    <div class="axis">
+      <div class="axis-header">
+        <span class="axis-icon">📝</span>
+        <h3>Axe 4b — Mémos texte (nouveau)</h3>
+        <span class="axis-badge badge-new">Nouveau</span>
+      </div>
+      <div class="axis-body">
+        <ul class="items">
+          <li><span class="ico">✅</span> Piste <code>memos</code> avec blocs <code>memo-text</code> (📝)</li>
+          <li><span class="ico">✅</span> Chip notepad : textarea éditable inline, style parchemin</li>
+          <li><span class="ico">✅</span> Créée automatiquement sous Live Memo au démarrage</li>
+        </ul>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ══ SECTION 3 — PROBLÈMES CONNUS ══ -->
+  <section>
+    <h2>Problèmes connus</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Priorité</th>
+            <th>Problème</th>
+            <th>Impact</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>🔴 Critique</td>
+            <td class="td-prob">Waveform Live Memo pas générée (<code>mr.onstop</code> incomplet)</td>
+            <td class="td-impact">Pas de visuel après enregistrement</td>
+          </tr>
+          <tr>
+            <td>🔴 Critique</td>
+            <td class="td-prob"><code>render()</code> complet déclenché trop souvent</td>
+            <td class="td-impact">Performance dégradée sur gros projets</td>
+          </tr>
+          <tr>
+            <td>🟠 Haute</td>
+            <td class="td-prob">Staff track : saisie de notes encore difficile</td>
+            <td class="td-impact">UX dégradée</td>
+          </tr>
+          <tr>
+            <td>🟠 Haute</td>
+            <td class="td-prob">Rubber band sélection peu fiable</td>
+            <td class="td-impact">Sélection multi-notes impossible en pratique</td>
+          </tr>
+          <tr>
+            <td>🟡 Moyenne</td>
+            <td class="td-prob">Waveform SVG fill path algorithm incorrect</td>
+            <td class="td-impact">Affichage waveform incorrect</td>
+          </tr>
+          <tr>
+            <td>🟡 Moyenne</td>
+            <td class="td-prob">Piste Staff dormante (~2 000 lignes de code)</td>
+            <td class="td-impact">Poids du fichier (4 500+ lignes)</td>
+          </tr>
+          <tr>
+            <td>🟡 Moyenne</td>
+            <td class="td-prob"><code>ensureDefaultTracks</code> : pas de migration propre des anciens projets</td>
+            <td class="td-impact">Projets sauvegardés peuvent avoir des pistes Staff résiduelles</td>
+          </tr>
+          <tr>
+            <td>🟢 Faible</td>
+            <td class="td-prob">Palette Staff toujours présente dans le DOM (<code>#staff-palette-float</code>)</td>
+            <td class="td-impact">Dead code</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ══ SECTION 4 — PLAN DE STABILISATION ══ -->
+  <section>
+    <h2>Plan de stabilisation v1.5</h2>
+
+    <div class="plan-week p1">
+      <div class="plan-week-title">Semaine 1 <span>Priorité critique</span></div>
+      <ol class="plan-items">
+        <li>Finaliser waveform Live Memo : compléter <code>mr.onstop</code> avec <code>blob.arrayBuffer()</code> + <code>decodeAudioData</code></li>
+        <li>Fixer le SVG fill path dans <code>drawMemoWaveform()</code></li>
+        <li>Tester enregistrement sur macOS avec permissions Electron</li>
+        <li>Ajouter max durée clip (60s) avec nouveau chip automatique</li>
+      </ol>
+    </div>
+
+    <div class="plan-week p2">
+      <div class="plan-week-title">Semaine 2 <span>Priorité haute</span></div>
+      <ol class="plan-items">
+        <li>Optimiser <code>render()</code> → render partiel pour les pistes non-Staff</li>
+        <li>Nettoyer le code Staff dormant (conditionnel ou fichier séparé)</li>
+        <li>Corriger rubber band : vérifier z-index, tester sur différents thèmes</li>
+        <li>Migration propre des anciens projets Staff → toast d'information</li>
+      </ol>
+    </div>
+
+    <div class="plan-week p3">
+      <div class="plan-week-title">Semaine 3 <span>Polish</span></div>
+      <ol class="plan-items">
+        <li>VU-meter temps réel pendant l'enregistrement (<code>AnalyserNode</code>)</li>
+        <li>Export MIDI depuis les tokens Staff (si piste Staff réactivée)</li>
+        <li>Lecture séquentielle multi-clips Live Memo</li>
+        <li>Synchronisation tempo / clips mémo</li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ══ SECTION 5 — ARCHITECTURE ══ -->
+  <section>
+    <h2>Architecture actuelle (résumé)</h2>
+    <div class="arch-block">
+      <pre><span class="c-blue">src/index.html</span>  <span class="c-gray">(~4 600 lignes, tout inline)</span>
+  ├── <span class="c-yellow">CSS</span>  <span class="c-gray">(lignes 1–1 200)</span>
+  │     ├── <span class="c-gray">Thème, layout, pistes standard</span>
+  │     ├── <span class="c-gray">Staff SVG (dormant)</span>
+  │     ├── <span class="c-gray">Live Memo lanes + chips</span>
+  │     └── <span class="c-gray">Mémos notepad chips</span>
+  ├── <span class="c-yellow">HTML template</span>  <span class="c-gray">(lignes 1 700–1 870)</span>
+  └── <span class="c-yellow">JavaScript</span>  <span class="c-gray">(lignes 1 870–fin)</span>
+        ├── <span class="c-green">State</span>  <span class="c-gray">(S, TID, BID)</span>
+        ├── <span class="c-green">Render engine</span>  <span class="c-gray">(buildTrackRow, buildBlockChip…)</span>
+        ├── <span class="c-purple">Staff system</span>  <span class="c-gray">(dormant : buildStaffSVG, palette…)</span>
+        ├── <span class="c-green">Live Memo</span>  <span class="c-gray">(startMemoRecording, playMemoBlock…)</span>
+        ├── <span class="c-green">Web Audio engine</span>  <span class="c-gray">(getAudioCtx, _pianoNote…)</span>
+        └── <span class="c-green">Electron bridge</span>  <span class="c-gray">(wireElectron)</span></pre>
+    </div>
+  </section>
+
+  <!-- ══ SECTION 6 — RECOMMANDATIONS ══ -->
+  <section>
+    <h2>Recommandations techniques</h2>
+    <ol class="reco">
+      <li>
+        <div class="reco-body">
+          <div class="reco-title">Segmenter <code>index.html</code></div>
+          <div class="reco-detail">Extraire CSS → <code>style.css</code>, JS → <code>app.js</code> pour faciliter la maintenance. Note : <code>CLAUDE.md</code> prescrit "inline uniquement" — à discuter avec l'équipe avant toute extraction.</div>
+        </div>
+      </li>
+      <li>
+        <div class="reco-body">
+          <div class="reco-title">Smoke tests unitaires</div>
+          <div class="reco-detail">Ajouter au minimum des smoke tests pour les fonctions critiques : <code>parseStaffTokens</code>, <code>buildStaffSVG</code>, <code>sanitizeStaffNotes</code>.</div>
+        </div>
+      </li>
+      <li>
+        <div class="reco-body">
+          <div class="reco-title">Version JSON schema → 2</div>
+          <div class="reco-detail">Passer <code>"version": 2</code> dans le schema JSON pour distinguer les projets v1.0 et v1.5 et activer la migration propre.</div>
+        </div>
+      </li>
+      <li>
+        <div class="reco-body">
+          <div class="reco-title">Sauvegarde automatique</div>
+          <div class="reco-detail">Déclencher <code>saveProject()</code> toutes les 5 minutes via IPC Electron pour éviter les pertes de données.</div>
+        </div>
+      </li>
+      <li>
+        <div class="reco-body">
+          <div class="reco-title">Permissions micro Electron</div>
+          <div class="reco-detail">Déclarer <code>"microphone"</code> dans <code>entitlements.mac.plist</code> pour la release App Store — sans ça, l'enregistrement Live Memo sera refusé en production signée.</div>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <footer>
+    BertinoMusicBlocs v1.5 — Rapport généré le 2026-05-19 &nbsp;·&nbsp; com.bertinovic.musicblocs
+  </footer>
+
+</div>
+</body>
+</html>
