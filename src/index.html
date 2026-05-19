@@ -2012,6 +2012,45 @@
       if (_resizing.handle) _resizing.handle.classList.remove('resizing')
       _resizing = null
     })
+    // ── Rubber-band finalization (unique global listener) ─────────
+    document.addEventListener('mouseup', e => {
+      if (!_rubber) return
+      const rect = _rubber.blocksElRect
+      const curX = e.clientX - rect.left
+      const curY = e.clientY - rect.top
+      const x1 = Math.min(_rubber.startX, curX)
+      const y1 = Math.min(_rubber.startY, curY)
+      const x2 = Math.max(_rubber.startX, curX)
+      const y2 = Math.max(_rubber.startY, curY)
+      _rubber.selBoxEl.style.display = 'none'
+      const trackId = _rubber.trackId
+      _rubber = null
+      if (x2 - x1 < 5 && y2 - y1 < 5) return
+      const bpm = parseInt((S.timeSign||'4/4').split('/')[0]) || 4
+      _selectedNotes = []
+      S.blocks.filter(b => b.trackId === trackId).forEach(block => {
+        const chipLeft  = (block.measure - 1) * MEASURE_WIDTH
+        const staffScale = _expandedStaff.has(block.id) ? 2 : 1
+        const keySig    = keySigInfo(S.key || 'C')
+        const HEAD_W    = 18 + keySig.count * 6 + 12 + 4
+        const chipW     = block.measures * MEASURE_WIDTH - 6
+        const numM      = Math.max(1, Math.min(4, block.measures || 1))
+        const MEAS_W    = (chipW - HEAD_W) / numM
+        const { notes } = parseStaffTokens(block.staffNotes, bpm)
+        notes.forEach((n, idx) => {
+          if (n.measureIdx >= numM || n.note === 'Rest') return
+          const svgX = HEAD_W + n.measureIdx*MEAS_W + (n.beatInMeasure/bpm)*MEAS_W + 10
+          const svgY = (STAFF_PITCH_Y[n.note] ?? 36) * staffScale
+          const tx = chipLeft + svgX, ty = 18 + svgY
+          if (tx >= x1 && tx <= x2 && ty >= y1 && ty <= y2)
+            _selectedNotes.push({ blockId: block.id, tokenIdx: idx })
+        })
+      })
+      const seen = new Set()
+      S.blocks.filter(b => b.trackId === trackId).forEach(b => {
+        if (!seen.has(b.id)) { seen.add(b.id); refreshStaffChip(b) }
+      })
+    })
   }
 
   /* ═══════════════════════════════════════════════════════════
@@ -2439,20 +2478,19 @@
       // Selection box element
       const selBox = el('div', 'staff-selbox')
       blocksEl.appendChild(selBox)
-      let _sbStart = null
-      let _sbRect  = null   // blocksEl rect cached during drag
 
       blocksEl.addEventListener('mousemove', e => {
-        // Rubber-band update
-        if (_sbStart) {
-          const curX = e.clientX - _sbRect.left
-          const curY = e.clientY - _sbRect.top
-          const x = Math.min(_sbStart.x, curX)
-          const y = Math.min(_sbStart.y, curY)
-          selBox.style.left   = x + 'px'
-          selBox.style.top    = y + 'px'
-          selBox.style.width  = Math.abs(curX - _sbStart.x) + 'px'
-          selBox.style.height = Math.abs(curY - _sbStart.y) + 'px'
+        // Rubber-band live update
+        if (_rubber && _rubber.trackId === track.id) {
+          const rect = blocksEl.getBoundingClientRect()
+          const curX = e.clientX - rect.left
+          const curY = e.clientY - rect.top
+          const x = Math.min(_rubber.startX, curX)
+          const y = Math.min(_rubber.startY, curY)
+          _rubber.selBoxEl.style.left   = x + 'px'
+          _rubber.selBoxEl.style.top    = y + 'px'
+          _rubber.selBoxEl.style.width  = Math.abs(curX - _rubber.startX) + 'px'
+          _rubber.selBoxEl.style.height = Math.abs(curY - _rubber.startY) + 'px'
           return
         }
         // Show ghost only in draw mode
@@ -2504,9 +2542,11 @@
         // Start rubber-band (only in select mode, no Ctrl)
         if (_staffPaletteMode === 'select' && !e.ctrlKey && !e.metaKey) {
           if (e.target.closest('.bchip-mute,.bchip-del,.bchip-resize,.bchip-top')) return
-          _sbRect  = blocksEl.getBoundingClientRect()
-          _sbStart = { x: e.clientX - _sbRect.left, y: e.clientY - _sbRect.top }
-          selBox.style.left = _sbStart.x + 'px'; selBox.style.top = _sbStart.y + 'px'
+          const rect = blocksEl.getBoundingClientRect()
+          const relX = e.clientX - rect.left, relY = e.clientY - rect.top
+          _rubber = { selBoxEl: selBox, blocksElRect: rect,
+                      startX: relX, startY: relY, trackId: track.id }
+          selBox.style.left = relX + 'px'; selBox.style.top = relY + 'px'
           selBox.style.width = '0'; selBox.style.height = '0'
           selBox.style.display = 'block'
           return
@@ -2590,46 +2630,7 @@
       blocksEl.addEventListener('contextmenu', e => e.preventDefault())
 
       // ── Rubber-band mouseup: finalize selection ──
-      const _trackIdForSel = track.id
-      document.addEventListener('mouseup', e => {
-        if (!_sbStart) return
-        const curX = e.clientX - _sbRect.left
-        const curY = e.clientY - _sbRect.top
-        const x1 = Math.min(_sbStart.x, curX)
-        const y1 = Math.min(_sbStart.y, curY)
-        const x2 = Math.max(_sbStart.x, curX)
-        const y2 = Math.max(_sbStart.y, curY)
-        _sbStart = null
-        selBox.style.display = 'none'
-        if (x2 - x1 < 5 && y2 - y1 < 5) return  // trop petit → ignore
-        // Find notes inside the box
-        const bpm = parseInt((S.timeSign||'4/4').split('/')[0]) || 4
-        const found = []
-        S.blocks.filter(b => b.trackId === _trackIdForSel).forEach(block => {
-          const chipLeft = (block.measure - 1) * MEASURE_WIDTH
-          const keySig   = keySigInfo(S.key || 'C')
-          const HEAD_W   = 18 + keySig.count * 6 + 12 + 4
-          const chipW    = block.measures * MEASURE_WIDTH - 6
-          const numM     = Math.max(1, Math.min(4, block.measures || 1))
-          const MEAS_W   = (chipW - HEAD_W) / numM
-          const { notes } = parseStaffTokens(block.staffNotes, bpm)
-          notes.forEach((n, idx) => {
-            if (n.measureIdx >= numM || n.note === 'Rest') return
-            const svgX = HEAD_W + n.measureIdx*MEAS_W + (n.beatInMeasure/bpm)*MEAS_W + 10
-            const svgY = STAFF_PITCH_Y[n.note] ?? 36
-            const tx = chipLeft + svgX
-            const ty = 18 + svgY
-            if (tx >= x1 && tx <= x2 && ty >= y1 && ty <= y2) {
-              found.push({ blockId: block.id, tokenIdx: idx })
-            }
-          })
-        })
-        _selectedNotes = found
-        const seen = new Set()
-        S.blocks.filter(b => b.trackId === _trackIdForSel).forEach(b => {
-          if (!seen.has(b.id)) { seen.add(b.id); refreshStaffChip(b) }
-        })
-      })
+      // Rubber-band finalization handled by global mouseup in initResizeHandlers
     }
 
     // Render blocks on this track
@@ -2667,6 +2668,7 @@
   let _staffPaletteMode = 'draw'  // 'draw' | 'select'
   const _expandedStaff = new Set()   // IDs de chips Staff agrandis
   let _audioCtx = null               // Web Audio API context (lazy)
+  let _rubber   = null               // { selBoxEl, blocksElRect, startX, startY, trackId }
 
   // ── Note selection helpers ───────────────────────────────────
   const _DIATONIC = ['C','D','E','F','G','A','B']
@@ -2934,16 +2936,12 @@
     const chipW = block.measures * MEASURE_WIDTH - 6
     chip.appendChild(buildStaffSVG(block, chipW, svgH))
 
-    // Expand toggle
+    // Expand toggle — replace chip in-place (no full render)
     chip.querySelector('.bchip-expand').addEventListener('click', e => {
       e.stopPropagation()
       if (_expandedStaff.has(block.id)) _expandedStaff.delete(block.id)
       else _expandedStaff.add(block.id)
-      // Update track row class
-      const row = chip.closest('.track-row')
-      if (row) row.classList.toggle('has-expanded',
-        S.blocks.some(b => b.trackId === block.trackId && _expandedStaff.has(b.id)))
-      render()
+      rebuildStaffChip(block)
     })
     chip.querySelector('.bchip-mute').addEventListener('click', e => { e.stopPropagation(); toggleMute(block.id) })
     chip.querySelector('.bchip-play').addEventListener('click', e => {
@@ -3343,6 +3341,16 @@
     // Reset acc buttons
     const popup = $('staff-popup')
     if (popup) popup.querySelectorAll('.ctx-staff-btn.acc-sel').forEach(b => b.classList.remove('acc-sel'))
+  }
+
+  function rebuildStaffChip(block) {
+    const old = document.querySelector(`.block-chip[data-block-id="${block.id}"]`)
+    if (!old) { render(); return }
+    const newChip = buildStaffChip(block)
+    old.replaceWith(newChip)
+    const row = newChip.closest('.track-row')
+    if (row) row.classList.toggle('has-expanded',
+      S.blocks.some(b => b.trackId === block.trackId && _expandedStaff.has(b.id)))
   }
 
   function refreshStaffChip(block) {
