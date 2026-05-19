@@ -549,6 +549,9 @@
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       min-width: 236px;
+      max-width: 300px;
+      max-height: 88vh;
+      overflow-y: auto;
       display: none;
     }
     #staff-palette-float.open { display: block; }
@@ -662,12 +665,13 @@
     /* Rubber-band selection box */
     .staff-selbox {
       position: absolute;
-      border: 1.5px dashed rgba(167,139,250,0.85);
-      background: rgba(124,58,237,0.12);
+      border: 2px dashed rgba(167,139,250,1);
+      background: rgba(124,58,237,0.18);
       pointer-events: none;
-      z-index: 15;
+      z-index: 25;
       display: none;
       border-radius: 2px;
+      box-shadow: 0 0 6px rgba(124,58,237,0.4);
     }
     /* Arrow/select mode: override crosshair cursor */
     .track-row.is-staff.staff-select-mode .track-blocks,
@@ -2340,7 +2344,10 @@
     if (isFreeTrack)              row.classList.add('is-free-track')
     if (track.type==='lyrics')    row.classList.add('is-lyrics')
     if (track.type==='fretboard') row.classList.add('is-fretboard')
-    if (track.type==='staff')     row.classList.add('is-staff')
+    if (track.type==='staff') {
+      row.classList.add('is-staff')
+      if (_staffPaletteMode === 'select') row.classList.add('staff-select-mode')
+    }
     if (track.collapsed)          row.classList.add('collapsed')
     if (isSubTrack && S.groupCollapsed) row.classList.add('group-hidden')
 
@@ -2511,7 +2518,37 @@
         const acc = _spalAcc || ''
         const trackY = staffPitchToTrackY(letter, oct, hoverScale)
 
-        // Stem direction: up if note is on/below B4 (trackY ≥ 54), down if above
+        // Compute next-note insert X (where the note will actually appear)
+        let ghostX = relX  // fallback = cursor
+        if (hoverBlock) {
+          const gbpm   = parseInt((S.timeSign||'4/4').split('/')[0]) || 4
+          const { totalBeats } = parseStaffTokens(hoverBlock.staffNotes, gbpm)
+          const capacity = hoverBlock.measures * gbpm
+          if (totalBeats >= capacity) {
+            // Chip full — show "full" indicator instead of ghost
+            ghostLbl.textContent = '⛔ Bloc plein'
+            ghostLbl.style.left  = (relX + 6) + 'px'
+            ghostLbl.style.top   = (trackY - 8) + 'px'
+            ghostHead.style.display = 'none'
+            ghostStem.style.display = 'none'
+            ghostGuide.style.top    = '-100px'
+            ghost.style.display     = 'block'
+            return
+          }
+          const gkSig  = keySigInfo(S.key || 'C')
+          const gHEADW = 18 + gkSig.count * 6 + 12 + 4
+          const gChipW = hoverBlock.measures * MEASURE_WIDTH - 6
+          const gNumM  = Math.max(1, Math.min(4, hoverBlock.measures || 1))
+          const gMEASW = (gChipW - gHEADW) / gNumM
+          const nextMeasIdx = Math.floor(totalBeats / gbpm)
+          const nextBeatInM = totalBeats - nextMeasIdx * gbpm
+          const svgX = gHEADW + nextMeasIdx * gMEASW + (nextBeatInM / gbpm) * gMEASW + 10
+          ghostX = (hoverBlock.measure - 1) * MEASURE_WIDTH + 2 + svgX
+        }
+        ghostHead.style.display = ''
+        ghostStem.style.display = ''
+
+        // Stem direction
         const stemUp = trackY >= 54
         const STEM_H = 20
         const stemTop = stemUp ? trackY - STEM_H : trackY + 4
@@ -2519,17 +2556,17 @@
         // Horizontal guide — full width at exact pitch Y
         ghostGuide.style.top = (trackY - 1) + 'px'
 
-        // Stem
-        ghostStem.style.left   = (relX + 1) + 'px'
+        // Stem at insert X
+        ghostStem.style.left   = (ghostX + 1) + 'px'
         ghostStem.style.top    = stemTop + 'px'
         ghostStem.style.height = STEM_H + 'px'
 
-        // Notehead centered on (relX, trackY)
-        ghostHead.style.left = (relX - 6) + 'px'
+        // Notehead at insert X
+        ghostHead.style.left = (ghostX - 6) + 'px'
         ghostHead.style.top  = (trackY - 4) + 'px'
 
-        // Label badge to the right
-        ghostLbl.style.left  = (relX + 14) + 'px'
+        // Label badge
+        ghostLbl.style.left  = (ghostX + 14) + 'px'
         ghostLbl.style.top   = (trackY - 8) + 'px'
         ghostLbl.textContent = `${letter}${acc}${oct}`
 
@@ -2606,6 +2643,14 @@
             fretDots:[], staffNotes:'' }
           S.blocks.push(block)
           render()
+        }
+        // Check capacity before inserting
+        const clickBpm = parseInt((S.timeSign||'4/4').split('/')[0]) || 4
+        const { totalBeats: usedBeats } = parseStaffTokens(block.staffNotes, clickBpm)
+        const blockCapacity = block.measures * clickBpm
+        if (usedBeats >= blockCapacity) {
+          toast('⚠ Bloc plein — agrandissez (⤢) ou créez un nouveau bloc', 2500)
+          return
         }
         const clickScale = (block && _expandedStaff.has(block.id)) ? 2 : 1
         const [letter, oct] = staffYToPitch(relY, clickScale)
