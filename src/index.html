@@ -2082,8 +2082,8 @@
     no:   { label:'NO',   icon:'✖', color:'#7f1d1d' },
     on:   { label:'ON',   icon:'⚡', color:'#0369a1' },
     stop: { label:'STOP', icon:'■', color:'#1c1c28' },
-    'memo-clip': { label:'Mémo', icon:'🎙', color:'#0f2744' },
-    'memo-text':  { label:'Mémo',   icon:'📝', color:'#1c1917' },
+    'memo-clip': { label:'Mémo', icon:'🎙', color:'#0f2744', internal:true },
+    'memo-text':  { label:'Mémo',   icon:'📝', color:'#1c1917', internal:true },
   }
 
   // Subset rendered in the ACTION palette section
@@ -2438,6 +2438,7 @@
     Object.entries(BLOCK_DEFS).forEach(([type, def]) => {
       if (ACTION_TYPES.has(type)) return
       if (PALETTE_HIDDEN.has(type)) return
+      if (def.internal) return          // blocs internes (memo-clip, memo-text…)
       area.appendChild(makePaletteChip(type, def, false))
     })
 
