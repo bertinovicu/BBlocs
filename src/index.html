@@ -337,8 +337,8 @@
     }
 
     .ruler-label-spacer {
-      width: 160px;
-      min-width: 160px;
+      width: 200px;
+      min-width: 200px;
       border-right: 1px solid var(--border2);
       background: var(--surface2);
       flex-shrink: 0;
@@ -386,8 +386,8 @@
     .track-row.drag-over .track-blocks { background: rgba(124, 91, 240, 0.08); }
 
     .track-label {
-      width: 160px;
-      min-width: 160px;
+      width: 200px;
+      min-width: 200px;
       background: var(--surface2);
       border-right: 1px solid var(--border2);
       display: flex;
@@ -1022,30 +1022,19 @@
       overflow: hidden;
       min-height: 0;
     }
-    /* Left col: block type name, vertical */
+    /* Top name row — horizontal, lisible */
     .fret-chip-type-col {
-      width: 26px;
-      min-width: 26px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-right: 1px solid rgba(255,255,255,0.14);
-      padding: 4px 2px;
-      flex-shrink: 0;
-      overflow: hidden;
+      display: none;   /* supprimé — nom passé dans bchip-top */
     }
-    .fret-chip-type-text {
-      writing-mode: vertical-rl;
-      text-orientation: mixed;
-      transform: rotate(180deg);
-      font-size: 8px;
-      font-weight: 700;
+    .fret-chip-name-row {
+      padding: 3px 8px 2px;
+      font-size: 9px; font-weight: 700;
       font-family: 'Space Mono', monospace;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: rgba(255,255,255,0.75);
-      white-space: nowrap;
-      overflow: hidden;
+      text-transform: uppercase; letter-spacing: 0.6px;
+      color: rgba(255,255,255,0.9);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+      flex-shrink: 0;
     }
     /* Center: chord diagram */
     .fret-chip-center {
@@ -3361,10 +3350,8 @@
         <button class="bchip-mute" title="Mute / Unmute">${muteLabel}</button>
         <button class="bchip-del"  title="Delete">✕</button>
       </div>
+      <div class="fret-chip-name-row">${esc(block.name || def.label)}</div>
       <div class="fret-chip-body">
-        <div class="fret-chip-type-col">
-          <span class="fret-chip-type-text">${esc(block.name || def.label)}</span>
-        </div>
         <div class="fret-chip-center"></div>
         <div class="fret-chip-chord-col">
           <span class="fret-chip-chord-name">${esc(block.chords) || '—'}</span>
