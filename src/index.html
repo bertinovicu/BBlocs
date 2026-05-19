@@ -4438,10 +4438,7 @@ ${rows}
   function updateContextPanels(block) {
     const ctx = $('palette-ctx')
     if (!ctx) return
-    ctx.innerHTML = ''
-    ctx.appendChild(buildCtxLyrics(block))
-    ctx.appendChild(buildCtxFretboard(block))
-    ctx.appendChild(buildCtxStaff(block))
+    ctx.innerHTML = ''   // sections Lyrics / Fretboard / Staff retirées
   }
 
   // ── LYRICS ────────────────────────────────────────────────
