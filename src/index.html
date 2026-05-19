@@ -819,103 +819,106 @@
     .track-row.is-fretboard .track-label  { align-items: flex-start; padding-top: 10px; }
 
     /* ── LIVE MEMO track ── */
-    .track-row.is-live-memo { min-height: 92px; }
+    .track-row.is-live-memo { min-height: 96px; }
     .track-row.is-live-memo .track-blocks {
-      min-height: 92px;
+      min-height: 96px;
       display: flex;
       flex-direction: column;
-      padding: 2px 0;
-      gap: 2px;
+      padding: 4px 0;
+      gap: 3px;
     }
-    .track-row.is-live-memo .track-label { align-items: flex-start; padding-top: 8px; }
+    .track-row.is-live-memo .track-label { align-items: flex-start; padding-top: 10px; }
 
-    /* Lanes A and B */
+    /* Lane A / B */
     .memo-lane {
       display: flex;
-      align-items: center;
-      height: 42px;
-      min-width: 100%;
-      position: relative;
+      align-items: stretch;
+      height: 40px;
+      width: 100%;
     }
-    .memo-lane-hdr {
-      width: 22px; min-width: 22px;
-      height: 100%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 9px; font-weight: 700; font-family: 'Space Mono', monospace;
-      color: var(--text2);
+
+    /* Left control panel : label + rec + stop */
+    .memo-lane-ctrl {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 0 6px;
       background: var(--surface2);
       border-right: 1px solid var(--border2);
-      border-radius: 3px 0 0 3px;
+      flex-shrink: 0;
       user-select: none;
     }
+    .memo-lane-lbl {
+      font-size: 9px; font-weight: 700;
+      font-family: 'Space Mono', monospace;
+      color: var(--text3);
+      width: 10px;
+    }
+    .memo-btn {
+      display: flex; align-items: center; justify-content: center;
+      width: 26px; height: 26px; border-radius: 50%;
+      border: 1.5px solid; font-size: 11px; cursor: pointer;
+      transition: background 0.12s, border-color 0.12s, color 0.12s;
+      background: none; color: rgba(255,255,255,0.7);
+      flex-shrink: 0;
+    }
+    .memo-btn.rec  { border-color: rgba(239,68,68,0.6); }
+    .memo-btn.rec:hover  { background: rgba(239,68,68,0.3); border-color: #ef4444; color:#fff; }
+    .memo-btn.rec.active { background: #ef4444; border-color: #ef4444; color:#fff;
+      animation: memo-pulse 0.8s ease-in-out infinite; }
+    .memo-btn.play { border-color: rgba(74,222,128,0.5); }
+    .memo-btn.play:hover { background: rgba(74,222,128,0.2); border-color: #4ade80; color:#4ade80; }
+    .memo-btn.play.active{ background: rgba(74,222,128,0.25); border-color: #4ade80; color:#4ade80; }
+    .memo-btn.stop { border-color: rgba(255,255,255,0.25); }
+    .memo-btn.stop:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.6); color:#fff; }
+    @keyframes memo-pulse { 0%,100%{opacity:1} 50%{opacity:0.55} }
+
+    /* Clips scroll area */
     .memo-clips-area {
       position: relative;
       flex: 1;
       height: 100%;
-      overflow: hidden;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+    .memo-clips-area::-webkit-scrollbar { height: 3px; }
+    .memo-clips-area::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 2px; }
+    .memo-clips-inner {
+      position: relative;
+      height: 100%;
+      min-width: 100%;
     }
 
-    /* Chip d'un clip mémo */
+    /* Clip chip */
     .memo-chip {
       position: absolute;
-      height: 38px;
-      top: 2px;
+      height: 34px;
+      top: 3px;
       background: linear-gradient(135deg, #1e3a5f 0%, #0f2744 100%);
       border: 1.5px solid rgba(96,165,250,0.4);
       border-radius: 5px;
-      display: flex;
-      align-items: center;
-      gap: 5px;
+      display: flex; align-items: center; gap: 5px;
       padding: 0 8px;
       color: rgba(255,255,255,0.9);
-      font-size: 11px;
-      font-family: 'Space Mono', monospace;
-      cursor: pointer;
-      overflow: hidden;
-      user-select: none;
+      font-size: 11px; font-family: 'Space Mono', monospace;
+      cursor: default; overflow: hidden; user-select: none;
       transition: border-color 0.15s;
-      min-width: 60px;
+      min-width: 64px;
     }
-    .memo-chip:hover { border-color: rgba(96,165,250,0.8); }
-    .memo-chip.playing { border-color: #4ade80; }
-    .memo-chip.recording { border-color: #ef4444; animation: memo-rec-pulse 0.8s ease-in-out infinite; }
-    @keyframes memo-rec-pulse { 0%,100% { opacity:1 } 50% { opacity:0.6 } }
+    .memo-chip:hover  { border-color: rgba(96,165,250,0.8); }
+    .memo-chip.playing{ border-color: #4ade80; }
 
-    .memo-chip-wave {
-      font-size: 14px;
-      opacity: 0.7;
-      flex-shrink: 0;
-    }
-    .memo-chip-dur {
-      font-size: 10px;
-      opacity: 0.85;
-      flex: 1;
-      white-space: nowrap;
-    }
+    .memo-chip-wave { font-size: 13px; opacity: 0.65; flex-shrink: 0; }
+    .memo-chip-dur  { font-size: 10px; opacity: 0.9; flex: 1; white-space: nowrap; }
     .memo-chip-play, .memo-chip-del {
       background: none; border: none;
-      color: rgba(255,255,255,0.6); font-size: 10px;
-      cursor: pointer; padding: 0 2px; line-height: 1;
-      transition: color 0.12s; flex-shrink: 0;
+      color: rgba(255,255,255,0.55); font-size: 10px;
+      cursor: pointer; padding: 1px 3px; border-radius: 3px;
+      transition: color 0.12s, background 0.12s; flex-shrink: 0;
     }
-    .memo-chip-play:hover { color: #4ade80; }
-    .memo-chip-del:hover  { color: #f87171; }
-
-    /* Bouton enregistrement sur la lane */
-    .memo-rec-btn {
-      position: absolute;
-      right: 6px; top: 50%;
-      transform: translateY(-50%);
-      background: rgba(239,68,68,0.18);
-      border: 1.5px solid rgba(239,68,68,0.6);
-      border-radius: 50%;
-      width: 26px; height: 26px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 12px; cursor: pointer; z-index: 2;
-      transition: background 0.15s, border-color 0.15s;
-    }
-    .memo-rec-btn:hover { background: rgba(239,68,68,0.35); border-color: #ef4444; }
-    .memo-rec-btn.active { background: #ef4444; border-color: #ef4444; color: #fff; }
+    .memo-chip-play:hover { color: #4ade80; background: rgba(74,222,128,0.12); }
+    .memo-chip-del:hover  { color: #f87171; background: rgba(248,113,113,0.12); }
+    .memo-chip-play.active { color: #4ade80; }
 
     /* Fretboard chip — horizontal 3-column layout */
     .fret-chip {
@@ -2862,33 +2865,67 @@
     ['A','B'].forEach(sub => {
       const lane = el('div', 'memo-lane')
 
-      // Lane header (A or B)
-      lane.appendChild(el('div', 'memo-lane-hdr', sub))
+      // ── Left controls: [A/B] [⏺ REC] [▶ PLAY] [⏹ STOP] ──────
+      const ctrl = el('div', 'memo-lane-ctrl')
+      ctrl.appendChild(el('div', 'memo-lane-lbl', sub))
 
-      // Clips area
-      const clipsArea = el('div', 'memo-clips-area')
-      clipsArea.style.minWidth = (MEASURES * MEASURE_WIDTH - 22) + 'px'
-
-      // Existing clips for this sub-track
-      S.blocks
-        .filter(b => b.trackId === track.id && b.subTrack === sub && b.type === 'memo-clip')
-        .sort((a,b) => a.measure - b.measure)
-        .forEach(block => clipsArea.appendChild(buildMemoChip(block)))
-
-      // Record button (right side of lane)
-      const recBtn = el('div', 'memo-rec-btn', '🎙')
-      recBtn.title = `Enregistrer sur ${sub}`
+      // Record button
+      const recBtn = el('button', 'memo-btn rec')
+      recBtn.textContent = '⏺'
+      recBtn.title = `Enregistrer canal ${sub}`
       recBtn.addEventListener('click', e => {
         e.stopPropagation()
-        if (_memoRec && _memoRec.trackId === track.id && _memoRec.sub === sub) {
+        if (_memoRec && _memoRec.sub === sub && _memoRec.trackId === track.id) {
           stopMemoRecording()
         } else {
           if (_memoRec) stopMemoRecording()
           startMemoRecording(track.id, sub, recBtn)
         }
       })
+      ctrl.appendChild(recBtn)
+
+      // Play-all button (plays all clips of this sub in sequence)
+      const playAllBtn = el('button', 'memo-btn play')
+      playAllBtn.textContent = '▶'
+      playAllBtn.title = `Lire canal ${sub}`
+      playAllBtn.addEventListener('click', e => {
+        e.stopPropagation()
+        const clips = S.blocks
+          .filter(b => b.trackId === track.id && b.subTrack === sub && b.type === 'memo-clip')
+          .sort((a,b) => a.measure - b.measure)
+        if (!clips.length) { toast('Canal vide', 1000); return }
+        playMemoBlock(clips[0], playAllBtn)
+      })
+      ctrl.appendChild(playAllBtn)
+
+      // Stop button
+      const stopBtn = el('button', 'memo-btn stop')
+      stopBtn.textContent = '⏹'
+      stopBtn.title = 'Stop'
+      stopBtn.addEventListener('click', e => {
+        e.stopPropagation()
+        if (_memoRec) stopMemoRecording()
+        if (_memoPlay) {
+          try { _memoPlay.source.stop() } catch(err) {}
+          if (_memoPlay.btnEl) { _memoPlay.btnEl.textContent = '▶'; _memoPlay.btnEl.classList.remove('active') }
+          _memoPlay = null
+        }
+      })
+      ctrl.appendChild(stopBtn)
+      lane.appendChild(ctrl)
+
+      // ── Clips scroll area ─────────────────────────────────────
+      const clipsArea = el('div', 'memo-clips-area')
+      const clipsInner = el('div', 'memo-clips-inner')
+      clipsInner.style.width = (MEASURES * MEASURE_WIDTH) + 'px'
+
+      S.blocks
+        .filter(b => b.trackId === track.id && b.subTrack === sub && b.type === 'memo-clip')
+        .sort((a,b) => a.measure - b.measure)
+        .forEach(block => clipsInner.appendChild(buildMemoChip(block)))
+
+      clipsArea.appendChild(clipsInner)
       lane.appendChild(clipsArea)
-      lane.appendChild(recBtn)
       blocksEl.appendChild(lane)
     })
   }
@@ -2916,11 +2953,6 @@
     chip.appendChild(playBtn)
     chip.appendChild(delBtn)
 
-    // Mute on click (main chip area)
-    chip.addEventListener('click', () => {
-      block.muted = !block.muted
-      chip.style.opacity = block.muted ? '0.4' : '1'
-    })
     return chip
   }
 
