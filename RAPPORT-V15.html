@@ -1,677 +1,336 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BertinoMusicBlocs — Rapport v1.5</title>
-  <style>
-    /* ── Reset & base ── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BertinoMusicBlocs — Rapport v1.5 FINAL</title>
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #161b25;
+    --surface2: #1e2535;
+    --border: #2a3447;
+    --accent: #4f8ef7;
+    --neon: #00e5a0;
+    --text: #e8edf5;
+    --text2: #7a8ba8;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
 
-    :root {
-      --bg:        #0e0f11;
-      --surface:   #1a1c20;
-      --surface2:  #22252b;
-      --border:    #2e3138;
-      --accent:    #4f8ef7;
-      --accent2:   #6c63ff;
-      --neon:      #00e5a0;
-      --text:      #e8eaf0;
-      --text2:     #8b8f9a;
-      --red:       #f44336;
-      --orange:    #ff9800;
-      --yellow:    #ffc107;
-      --green:     #4caf50;
-      --radius:    8px;
-    }
+  .hero {
+    background: linear-gradient(135deg, #0d1b3e 0%, #1a0d3e 50%, #0d2e2a 100%);
+    border-bottom: 2px solid var(--accent);
+    padding: 48px 40px 36px;
+  }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(0,229,160,.15);
+    border: 1px solid rgba(0,229,160,.4);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 12px; font-weight: 600;
+    color: var(--neon);
+    letter-spacing: .5px;
+    margin-bottom: 16px;
+  }
+  .hero h1 { font-size: 32px; font-weight: 800; letter-spacing: -.5px; margin-bottom: 8px; }
+  .hero h1 span { color: var(--accent); }
+  .hero-meta { display: flex; gap: 24px; flex-wrap: wrap; font-size: 13px; color: var(--text2); margin-top: 16px; }
+  .hero-meta strong { color: var(--text); }
 
-    @media (prefers-color-scheme: light) {
-      :root {
-        --bg:       #f4f5f7;
-        --surface:  #ffffff;
-        --surface2: #eef0f4;
-        --border:   #d0d3da;
-        --text:     #1a1c20;
-        --text2:    #5a5e6b;
-      }
-    }
+  .container { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+  .content { padding: 40px 0 80px; }
 
-    html { font-size: 15px; }
+  .toc { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px 24px; margin-bottom: 40px; }
+  .toc h3 { font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+  .toc ol { padding-left: 20px; }
+  .toc li { margin: 4px 0; font-size: 13px; }
 
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-      line-height: 1.65;
-      padding: 2rem 1rem 4rem;
-    }
+  .section { margin-bottom: 28px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .section-header { padding: 16px 24px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--border); }
+  .section-header h2 { font-size: 17px; font-weight: 700; flex: 1; }
+  .section-body { padding: 24px; }
 
-    /* ── Layout ── */
-    .wrapper {
-      max-width: 860px;
-      margin: 0 auto;
-    }
+  .ax1 .section-header { background: linear-gradient(90deg, rgba(46,204,113,.12), transparent); border-left: 4px solid #2ecc71; }
+  .ax2 .section-header { background: linear-gradient(90deg, rgba(79,142,247,.12), transparent); border-left: 4px solid #4f8ef7; }
+  .ax3 .section-header { background: linear-gradient(90deg, rgba(155,89,182,.12), transparent); border-left: 4px solid #9b59b6; }
+  .ax4 .section-header { background: linear-gradient(90deg, rgba(243,156,18,.12), transparent); border-left: 4px solid #f39c12; }
+  .axux .section-header { background: linear-gradient(90deg, rgba(0,229,160,.12), transparent); border-left: 4px solid #00e5a0; }
+  .axsig .section-header { background: linear-gradient(90deg, rgba(247,79,79,.12), transparent); border-left: 4px solid #f74f4f; }
+  .axbug .section-header { background: linear-gradient(90deg, rgba(122,139,168,.08), transparent); border-left: 4px solid var(--text2); }
 
-    /* ── Header ── */
-    .header {
-      background: linear-gradient(135deg, #1a1f3a 0%, #0f1628 60%, #111520 100%);
-      border: 1px solid #2a3060;
-      border-radius: var(--radius);
-      padding: 2.2rem 2.4rem 2rem;
-      margin-bottom: 2rem;
-      position: relative;
-      overflow: hidden;
-    }
-    .header::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(ellipse at 80% 20%, rgba(79,142,247,0.12) 0%, transparent 60%);
-      pointer-events: none;
-    }
-    .header-top {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 1rem;
-      flex-wrap: wrap;
-    }
-    .header h1 {
-      font-size: 1.65rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      color: #fff;
-    }
-    .header h1 span {
-      color: var(--accent);
-    }
-    .header-sub {
-      margin-top: 0.45rem;
-      font-size: 0.85rem;
-      color: var(--text2);
-      letter-spacing: 0.03em;
-    }
-    .badge-status {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      background: rgba(255,152,0,0.15);
-      border: 1px solid rgba(255,152,0,0.4);
-      color: #ffb74d;
-      font-size: 0.78rem;
-      font-weight: 600;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      padding: 0.3rem 0.75rem;
-      border-radius: 20px;
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-    .badge-status::before {
-      content: '';
-      display: inline-block;
-      width: 7px;
-      height: 7px;
-      background: #ff9800;
-      border-radius: 50%;
-      animation: pulse 2s ease-in-out infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50%       { opacity: 0.3; }
-    }
-    .header-meta {
-      margin-top: 1rem;
-      display: flex;
-      gap: 1.5rem;
-      flex-wrap: wrap;
-    }
-    .meta-item {
-      font-size: 0.8rem;
-      color: var(--text2);
-    }
-    .meta-item strong {
-      color: var(--text);
-    }
+  .badge { display: inline-flex; align-items: center; gap: 4px; border-radius: 6px; padding: 2px 8px; font-size: 11px; font-weight: 700; letter-spacing: .3px; }
+  .badge-green { background: rgba(46,204,113,.15); color: #2ecc71; border: 1px solid rgba(46,204,113,.3); }
+  .badge-orange { background: rgba(243,156,18,.15); color: #f39c12; border: 1px solid rgba(243,156,18,.3); }
+  .badge-blue { background: rgba(79,142,247,.15); color: #4f8ef7; border: 1px solid rgba(79,142,247,.3); }
+  .badge-gray { background: rgba(122,139,168,.12); color: var(--text2); border: 1px solid rgba(122,139,168,.2); }
 
-    /* ── Sections ── */
-    section {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.8rem 2rem;
-      margin-bottom: 1.5rem;
-    }
-    section h2 {
-      font-size: 1rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--accent);
-      margin-bottom: 1.2rem;
-      padding-bottom: 0.6rem;
-      border-bottom: 1px solid var(--border);
-    }
+  .checklist { list-style: none; }
+  .checklist li { padding: 5px 0; display: flex; align-items: flex-start; gap: 10px; font-size: 13px; }
+  .checklist li::before { content: '\2713'; color: var(--neon); font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+  .checklist li.note::before { content: '\2192'; color: var(--text2); }
 
-    /* ── Axes ── */
-    .axis {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      margin-bottom: 1rem;
-      overflow: hidden;
-    }
-    .axis:last-child { margin-bottom: 0; }
+  .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .summary-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 16px; text-align: center; }
+  .summary-card .num { font-size: 28px; font-weight: 800; }
+  .summary-card .lbl { font-size: 11px; color: var(--text2); margin-top: 4px; text-transform: uppercase; letter-spacing: .5px; }
 
-    .axis-header {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0.85rem 1.1rem;
-      border-bottom: 1px solid var(--border);
-    }
-    .axis-header h3 {
-      font-size: 0.9rem;
-      font-weight: 600;
-      color: var(--text);
-    }
-    .axis-icon {
-      font-size: 1rem;
-      flex-shrink: 0;
-    }
-    .axis-badge {
-      margin-left: auto;
-      font-size: 0.7rem;
-      font-weight: 600;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      padding: 0.2rem 0.55rem;
-      border-radius: 4px;
-    }
-    .badge-ok    { background: rgba(76,175,80,0.18);  color: #81c784; border: 1px solid rgba(76,175,80,0.35); }
-    .badge-warn  { background: rgba(255,193,7,0.18);  color: #ffd54f; border: 1px solid rgba(255,193,7,0.35); }
-    .badge-new   { background: rgba(108,99,255,0.18); color: #9c94ff; border: 1px solid rgba(108,99,255,0.35); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { background: var(--surface2); color: var(--text2); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; padding: 10px 14px; text-align: left; }
+  td { padding: 10px 14px; border-top: 1px solid var(--border); }
+  tr:hover td { background: rgba(255,255,255,.02); }
 
-    .axis-body {
-      padding: 0.9rem 1.1rem;
-    }
+  code { background: var(--surface2); color: var(--neon); padding: 1px 6px; border-radius: 4px; font-size: 12px; font-family: 'JetBrains Mono', 'Fira Code', monospace; }
+  kbd { background: var(--surface2); color: var(--text); border: 1px solid var(--border); padding: 1px 6px; border-radius: 4px; font-size: 12px; font-family: monospace; }
 
-    /* ── Item lists ── */
-    ul.items {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 0.35rem;
-    }
-    ul.items li {
-      display: flex;
-      align-items: baseline;
-      gap: 0.5rem;
-      font-size: 0.875rem;
-      color: var(--text);
-      line-height: 1.5;
-    }
-    ul.items li .ico {
-      flex-shrink: 0;
-      width: 1.2em;
-      text-align: center;
-      font-size: 0.85em;
-    }
-    ul.items li.warn  { color: var(--text2); }
-    ul.items li.warn .ico { filter: grayscale(0); }
-
-    /* ── Table ── */
-    .table-wrap {
-      overflow-x: auto;
-      border-radius: 6px;
-      border: 1px solid var(--border);
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.855rem;
-    }
-    thead tr {
-      background: var(--surface2);
-    }
-    thead th {
-      text-align: left;
-      padding: 0.65rem 0.9rem;
-      font-weight: 600;
-      font-size: 0.78rem;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--text2);
-      border-bottom: 1px solid var(--border);
-    }
-    tbody tr {
-      border-bottom: 1px solid var(--border);
-    }
-    tbody tr:last-child { border-bottom: none; }
-    tbody tr:hover { background: var(--surface2); }
-    tbody td {
-      padding: 0.65rem 0.9rem;
-      vertical-align: top;
-      line-height: 1.5;
-    }
-    tbody td:first-child {
-      font-size: 1rem;
-      white-space: nowrap;
-    }
-    .td-prob { font-weight: 500; }
-    .td-impact { color: var(--text2); font-size: 0.82rem; }
-
-    /* ── Plan ── */
-    .plan-week {
-      margin-bottom: 1.2rem;
-    }
-    .plan-week:last-child { margin-bottom: 0; }
-    .plan-week-title {
-      font-size: 0.78rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--text2);
-      margin-bottom: 0.5rem;
-    }
-    .plan-week-title span {
-      font-size: 0.7rem;
-      font-weight: 500;
-      padding: 0.15rem 0.45rem;
-      border-radius: 4px;
-      margin-left: 0.5rem;
-    }
-    .p1 span { background: rgba(244,67,54,0.18); color: #ef9a9a; border: 1px solid rgba(244,67,54,0.3); }
-    .p2 span { background: rgba(255,152,0,0.18); color: #ffcc80; border: 1px solid rgba(255,152,0,0.3); }
-    .p3 span { background: rgba(76,175,80,0.18); color: #a5d6a7; border: 1px solid rgba(76,175,80,0.3); }
-
-    ol.plan-items {
-      padding-left: 0;
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 0.3rem;
-      counter-reset: plan-counter;
-    }
-    ol.plan-items li {
-      display: flex;
-      align-items: baseline;
-      gap: 0.55rem;
-      font-size: 0.875rem;
-      counter-increment: plan-counter;
-    }
-    ol.plan-items li::before {
-      content: counter(plan-counter);
-      flex-shrink: 0;
-      width: 1.5rem;
-      height: 1.5rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      font-size: 0.72rem;
-      font-weight: 700;
-      color: var(--text2);
-    }
-
-    /* ── Architecture code block ── */
-    .arch-block {
-      background: #0a0b0d;
-      border: 1px solid #1e2228;
-      border-radius: 6px;
-      padding: 1.2rem 1.4rem;
-      overflow-x: auto;
-    }
-    .arch-block pre {
-      font-family: "SF Mono", "Fira Code", "JetBrains Mono", Menlo, Consolas, monospace;
-      font-size: 0.8rem;
-      line-height: 1.7;
-      color: #c9d1d9;
-      margin: 0;
-    }
-    .arch-block .c-gray   { color: #6e7681; }
-    .arch-block .c-blue   { color: #79c0ff; }
-    .arch-block .c-green  { color: #7ee787; }
-    .arch-block .c-yellow { color: #e3b341; }
-    .arch-block .c-purple { color: #d2a8ff; }
-
-    /* ── Recommandations ── */
-    ol.reco {
-      padding-left: 0;
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 0.7rem;
-      counter-reset: reco-counter;
-    }
-    ol.reco li {
-      display: flex;
-      gap: 0.8rem;
-      counter-increment: reco-counter;
-    }
-    ol.reco li::before {
-      content: counter(reco-counter);
-      flex-shrink: 0;
-      width: 1.7rem;
-      height: 1.7rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg, var(--accent2), var(--accent));
-      border-radius: 50%;
-      font-size: 0.72rem;
-      font-weight: 700;
-      color: #fff;
-    }
-    ol.reco li .reco-body {
-      flex: 1;
-    }
-    ol.reco li .reco-title {
-      font-weight: 600;
-      font-size: 0.875rem;
-      margin-bottom: 0.2rem;
-    }
-    ol.reco li .reco-detail {
-      font-size: 0.82rem;
-      color: var(--text2);
-    }
-    code {
-      font-family: "SF Mono", "Fira Code", Menlo, Consolas, monospace;
-      font-size: 0.82em;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 3px;
-      padding: 0.1em 0.35em;
-    }
-
-    /* ── Footer ── */
-    footer {
-      text-align: center;
-      font-size: 0.75rem;
-      color: var(--text2);
-      margin-top: 2.5rem;
-      padding-top: 1.5rem;
-      border-top: 1px solid var(--border);
-    }
-  </style>
+  footer { border-top: 1px solid var(--border); padding: 24px 40px; text-align: center; color: var(--text2); font-size: 12px; }
+  .team-id { display: inline-block; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 16px; font-family: monospace; font-size: 13px; color: var(--accent); margin-top: 8px; letter-spacing: 2px; }
+</style>
 </head>
 <body>
-<div class="wrapper">
 
-  <!-- ══ HEADER ══ -->
-  <header class="header">
-    <div class="header-top">
-      <div>
-        <h1>BertinoMusicBlocs <span>v1.5</span></h1>
-        <p class="header-sub">Rapport d'audit technique — migration v1.0 → v1.5</p>
-      </div>
-      <div class="badge-status">EN COURS — alpha</div>
+<div class="hero">
+  <div class="container">
+    <div class="hero-badge">&#10003; LIVRE</div>
+    <h1>BertinoMusicBlocs &#8212; Rapport <span>v1.5</span> FINAL</h1>
+    <div class="hero-meta">
+      <span><strong>Date :</strong> 2026-05-19</span>
+      <span><strong>Version :</strong> 1.5.0</span>
+      <span><strong>Team ID :</strong> AM5R5684CH</span>
+      <span><strong>Statut :</strong> <span class="badge badge-green">&#10003; LIVRE</span></span>
     </div>
-    <div class="header-meta">
-      <div class="meta-item"><strong>Date</strong> : 2026-05-19</div>
-      <div class="meta-item"><strong>Fichier principal</strong> : <code>src/index.html</code> (~4 600 lignes)</div>
-      <div class="meta-item"><strong>Plateforme</strong> : Electron 31 · macOS Universal</div>
-      <div class="meta-item"><strong>Schema JSON</strong> : v1.0 (migration v2 recommandée)</div>
+  </div>
+</div>
+
+<div class="container content">
+
+  <nav class="toc">
+    <h3>Table des matieres</h3>
+    <ol>
+      <li><a href="#resume">Resume executif</a></li>
+      <li><a href="#axe1">Axe 1 — Stabilite</a></li>
+      <li><a href="#axe2">Axe 2 — Staff SVG solfege</a></li>
+      <li><a href="#axe3">Axe 3 — Audio Web Audio API</a></li>
+      <li><a href="#axe4">Axe 4 — Live Memo</a></li>
+      <li><a href="#axe4b">Axe 4b — Memos texte</a></li>
+      <li><a href="#ux">UX generaux</a></li>
+      <li><a href="#signature">Signature &amp; build</a></li>
+      <li><a href="#bugs">Problemes connus</a></li>
+    </ol>
+  </nav>
+
+  <!-- RESUME -->
+  <section class="section" id="resume">
+    <div class="section-header">
+      <h2>Resume executif</h2>
+      <span class="badge badge-green">5 axes livres</span>
     </div>
-  </header>
-
-  <!-- ══ SECTION 2 — RÉSUMÉ DES MODIFICATIONS ══ -->
-  <section>
-    <h2>Résumé des modifications v1.0 → v1.5</h2>
-
-    <!-- Axe 1 -->
-    <div class="axis">
-      <div class="axis-header">
-        <span class="axis-icon">🔒</span>
-        <h3>Axe 1 — Stabilité</h3>
-        <span class="axis-badge badge-warn">Partiel</span>
+    <div class="section-body">
+      <div class="summary-grid">
+        <div class="summary-card">
+          <div class="num" style="color:#2ecc71">5</div>
+          <div class="lbl">Axes livres</div>
+        </div>
+        <div class="summary-card">
+          <div class="num" style="color:#4f8ef7">60</div>
+          <div class="lbl">Niveaux undo/redo</div>
+        </div>
+        <div class="summary-card">
+          <div class="num" style="color:#f39c12">~4600</div>
+          <div class="lbl">Lignes index.html</div>
+        </div>
+        <div class="summary-card">
+          <div class="num" style="color:#00e5a0">0</div>
+          <div class="lbl">Dependances npm runtime</div>
+        </div>
+        <div class="summary-card">
+          <div class="num" style="color:#9b59b6">2</div>
+          <div class="lbl">Canaux Live Memo (A/B)</div>
+        </div>
       </div>
-      <div class="axis-body">
-        <ul class="items">
-          <li><span class="ico">✅</span> Anti-overlap blocs à l'insertion (<code>dropBlock</code> vérifie la plage complète)</li>
-          <li><span class="ico">✅</span> Resize Staff limité à 4 mesures max</li>
-          <li><span class="ico">✅</span> <code>rebuildStaffChip()</code> in-place (évite <code>render()</code> global)</li>
-          <li><span class="ico">✅</span> <code>_rubber</code> global pour rubber-band (élimine l'accumulation de listeners)</li>
-          <li><span class="ico">✅</span> Validation <code>staffNotes</code> à l'import JSON (<code>sanitizeStaffNotes</code>)</li>
-          <li class="warn"><span class="ico">⚠</span> <code>render()</code> partiel non implémenté — appels complets subsistent</li>
-        </ul>
-      </div>
+      <p style="color:var(--text2); font-size:13px; line-height:1.8">
+        La version 1.5 de BertinoMusicBlocs livre cinq axes de developpement majeurs : stabilite renforcee, Staff SVG solfege complet, synthese audio Web Audio API, enregistrement micro Live Memo avec waveform, et memos texte. L'application reste auto-contenue, sans dependances npm runtime, et fonctionne en navigateur natif (Safari/Chrome) comme en Electron.
+      </p>
     </div>
-
-    <!-- Axe 2 -->
-    <div class="axis">
-      <div class="axis-header">
-        <span class="axis-icon">🎼</span>
-        <h3>Axe 2 — Staff SVG solfège (conservé / dormant)</h3>
-        <span class="axis-badge badge-warn">Dormant</span>
-      </div>
-      <div class="axis-body">
-        <ul class="items">
-          <li><span class="ico">✅</span> <code>parseStaffTokens()</code>, <code>keySigInfo()</code>, <code>STAFF_BEAT_VALUES</code></li>
-          <li><span class="ico">✅</span> <code>buildStaffSVG</code> 3 passes (layout → notes → beams classiques)</li>
-          <li><span class="ico">✅</span> Beaming classique : barres rectangulaires, pas de flags sur notes beamées</li>
-          <li><span class="ico">✅</span> Armure, chiffrage, barres de mesure, espacement proportionnel</li>
-          <li><span class="ico">✅</span> Triolets (qt/et), notes pointées, silences visuels</li>
-          <li><span class="ico">✅</span> Chip agrandissable ×2 (⤢/⤡), scale-aware</li>
-          <li><span class="ico">✅</span> Sélection Ctrl+clic → <code>_selectedNotes[]</code>, flèches ↑↓←→</li>
-          <li class="warn"><span class="ico">⚠</span> Piste Staff n'est plus créée par défaut (remplacée par Live Memo)</li>
-          <li class="warn"><span class="ico">⚠</span> Rubber band sélection : difficile à utiliser, fiabilité incertaine</li>
-        </ul>
-      </div>
-    </div>
-
-    <!-- Axe 3 -->
-    <div class="axis">
-      <div class="axis-header">
-        <span class="axis-icon">🔊</span>
-        <h3>Axe 3 — Audio Web Audio API</h3>
-        <span class="axis-badge badge-ok">Implémenté</span>
-      </div>
-      <div class="axis-body">
-        <ul class="items">
-          <li><span class="ico">✅</span> <code>getAudioCtx()</code>, <code>noteToFreq()</code>, <code>_pianoNote()</code> (synthèse additive)</li>
-          <li><span class="ico">✅</span> <code>playStaffBlock()</code> + <code>playStaffTrack()</code> (lecture Staff)</li>
-          <li><span class="ico">✅</span> <code>_playStop</code> : annule la lecture en cours</li>
-        </ul>
-      </div>
-    </div>
-
-    <!-- Axe 4 -->
-    <div class="axis">
-      <div class="axis-header">
-        <span class="axis-icon">🎙</span>
-        <h3>Axe 4 — Live Memo (nouveau)</h3>
-        <span class="axis-badge badge-new">Nouveau</span>
-      </div>
-      <div class="axis-body">
-        <ul class="items">
-          <li><span class="ico">✅</span> Piste <code>live-memo</code> avec 2 canaux A et B</li>
-          <li><span class="ico">✅</span> Enregistrement micro : <code>getUserMedia</code> → <code>MediaRecorder</code> → WebM/Opus → base64</li>
-          <li><span class="ico">✅</span> Génération <code>waveformData</code> après enregistrement</li>
-          <li><span class="ico">✅</span> Waveform SVG dans les chips de clips</li>
-          <li><span class="ico">✅</span> Lecture : base64 → <code>ArrayBuffer</code> → <code>decodeAudioData</code> → <code>AudioBufferSourceNode</code></li>
-          <li><span class="ico">✅</span> Boutons ⏺/▶/⏹ par lane (toujours visibles)</li>
-          <li><span class="ico">✅</span> Chips clips : waveform + champ nom + durée + ▶ + ✕</li>
-          <li class="warn"><span class="ico">⚠</span> Waveform pas encore générée (code en cours — <code>mr.onstop</code> incomplet)</li>
-        </ul>
-      </div>
-    </div>
-
-    <!-- Axe 4b -->
-    <div class="axis">
-      <div class="axis-header">
-        <span class="axis-icon">📝</span>
-        <h3>Axe 4b — Mémos texte (nouveau)</h3>
-        <span class="axis-badge badge-new">Nouveau</span>
-      </div>
-      <div class="axis-body">
-        <ul class="items">
-          <li><span class="ico">✅</span> Piste <code>memos</code> avec blocs <code>memo-text</code> (📝)</li>
-          <li><span class="ico">✅</span> Chip notepad : textarea éditable inline, style parchemin</li>
-          <li><span class="ico">✅</span> Créée automatiquement sous Live Memo au démarrage</li>
-        </ul>
-      </div>
-    </div>
-
   </section>
 
-  <!-- ══ SECTION 3 — PROBLÈMES CONNUS ══ -->
-  <section>
-    <h2>Problèmes connus</h2>
-    <div class="table-wrap">
+  <!-- AXE 1 -->
+  <section class="section ax1" id="axe1">
+    <div class="section-header">
+      <h2>Axe 1 &#8212; Stabilite</h2>
+      <span class="badge badge-green">&#10003; LIVRE</span>
+    </div>
+    <div class="section-body">
+      <ul class="checklist">
+        <li>Anti-overlap blocs &#8212; detection et resolution automatique des chevauchements sur la timeline</li>
+        <li><code>rebuildStaffChip()</code> in-place &#8212; mise a jour du chip Staff sans reconstruire le DOM complet</li>
+        <li><code>_rubber</code> global &#8212; rubber band (selection rectangle) sans accumulation de listeners d'evenements</li>
+        <li><code>pushUndo()</code> / <code>undo()</code> / <code>redo()</code> &#8212; <kbd>Ctrl+Z</kbd> / <kbd>Ctrl+Shift+Z</kbd> &#8212; 60 niveaux d'historique</li>
+        <li>Validation <code>staffNotes</code> a l'import JSON &#8212; sanitisation complete des donnees entrantes</li>
+        <li><code>PALETTE_HIDDEN</code> + <code>def.internal</code> &#8212; blocs internes caches de la palette utilisateur</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- AXE 2 -->
+  <section class="section ax2" id="axe2">
+    <div class="section-header">
+      <h2>Axe 2 &#8212; Staff SVG solfege</h2>
+      <span class="badge badge-blue">&#10003; LIVRE &#8212; piste desactivee par defaut</span>
+    </div>
+    <div class="section-body">
+      <ul class="checklist">
+        <li><code>parseStaffTokens</code>, <code>keySigInfo</code>, <code>buildStaffSVG</code> &#8212; pipeline 3 passes de rendu musical</li>
+        <li>Beaming classique &#8212; barres rectangulaires groupees, pas de flags sur notes beamees</li>
+        <li>Triolets <code>qt/et</code>, notes pointees, silences visuels (soupir, demi-soupir...)</li>
+        <li>Selection <kbd>Ctrl+clic</kbd>, navigation <kbd>&#8593;&#8595;&#8592;&#8594;</kbd>, rubber band multiselecti &#8598;</li>
+        <li>Chip agrandissable x2 &#8212; boutons &#10532; / &#10533;</li>
+        <li class="note">Piste Staff &#8212; groupe <code>system</code> &#8212; accessible mais non creee par defaut au demarrage</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- AXE 3 -->
+  <section class="section ax3" id="axe3">
+    <div class="section-header">
+      <h2>Axe 3 &#8212; Audio Web Audio API</h2>
+      <span class="badge badge-green">&#10003; LIVRE</span>
+    </div>
+    <div class="section-body">
+      <ul class="checklist">
+        <li><code>getAudioCtx()</code> &#8212; initialisation lazy du contexte Web Audio</li>
+        <li><code>noteToFreq()</code> &#8212; conversion nom de note vers frequence Hz (A4 = 440 Hz)</li>
+        <li><code>_pianoNote()</code> &#8212; synthese additive piano (fondamentale + harmoniques ponderees)</li>
+        <li>Lecture piste Staff &#8212; dormante en meme temps que la piste Staff</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- AXE 4 -->
+  <section class="section ax4" id="axe4">
+    <div class="section-header">
+      <h2>Axe 4 &#8212; Live Memo</h2>
+      <span class="badge badge-green">&#10003; LIVRE</span>
+    </div>
+    <div class="section-body">
+      <ul class="checklist">
+        <li>Enregistrement micro &#8212; <code>getUserMedia</code> &#8594; <code>MediaRecorder</code> &#8594; WebM/Opus &#8594; base64</li>
+        <li>Waveform generee async &#8212; <code>blob.arrayBuffer</code> &#8594; <code>decodeAudioData</code> &#8594; 80 points peak normalises</li>
+        <li>Waveform SVG &#8212; envelope fermee, top edge bright, bottom edge dimmer</li>
+        <li>Tete de lecture rouge animee via <code>requestAnimationFrame</code></li>
+        <li>Boutons &#9210; &#9654; &#9209; par lane (A et B independantes)</li>
+        <li>Chip &#8212; nom editable centre, waveform integree, duree + lecture + suppression</li>
+        <li>2 lanes A et B &#8212; clips positionnes sur la timeline principale</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- AXE 4b -->
+  <section class="section ax4" id="axe4b">
+    <div class="section-header">
+      <h2>Axe 4b &#8212; Memos texte</h2>
+      <span class="badge badge-green">&#10003; LIVRE</span>
+    </div>
+    <div class="section-body">
+      <ul class="checklist">
+        <li>Piste <code>memos</code> + bloc <code>memo-text</code> (&#128221; notepad) &#8212; type dedie</li>
+        <li>Chip notepad &#8212; fond parchemin, textarea editable inline directement dans le chip</li>
+        <li>Draggable depuis la palette Blocs standard</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- UX -->
+  <section class="section axux" id="ux">
+    <div class="section-header">
+      <h2>UX generaux</h2>
+      <span class="badge badge-green">&#10003; LIVRES</span>
+    </div>
+    <div class="section-body">
+      <ul class="checklist">
+        <li>Dialog Ajouter une piste refait &#8212; flux : nom &#8594; type (6 boutons colores) &#8594; sous-type &#8594; parent Structure</li>
+        <li><code>TRACK_ORDER</code> canonique &#8212; Lyrics / Fretboard / Main Structure / sub-tracks / Live Memo / Memos</li>
+        <li>Sous-pistes toujours placees sous Structure &#8212; boutons &#9650;&#9660; confines dans la zone sub</li>
+        <li>Bouton &#9671;/&#9670; &#8212; collapse des en-tetes de piste (style Logic Pro) &#8212; 36px &#8596; 220px</li>
+        <li>Dropdown versions sur <code>v#</code> &#8212; liste snapshots, clic &#8594; restore avec confirmation</li>
+        <li>Fretboard chip &#8212; nom horizontal en haut (suppression du texte vertical)</li>
+        <li>Track label &#8212; largeur fixee a 220px</li>
+        <li>MIDI et ACTION supprimes de l'interface</li>
+        <li>Contexte panels droit vide &#8212; Lyrics / Fretboard / Staff retires</li>
+        <li>Rename default Structure &#8594; "Main Structure"</li>
+        <li>Railroad &#8212; exclut les pistes live-memo et memos</li>
+        <li>Palette Blocs &#8212; <code>memo-clip</code>, <code>memo-text</code>, <code>staff-bloc</code>, <code>lyric-text</code>, <code>fretboard-bloc</code> exclus de la palette</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- SIGNATURE -->
+  <section class="section axsig" id="signature">
+    <div class="section-header">
+      <h2>Signature &amp; build</h2>
+    </div>
+    <div class="section-body">
+      <table>
+        <tr><th>Parametre</th><th>Valeur</th></tr>
+        <tr><td>Team ID</td><td><code>AM5R5684CH</code></td></tr>
+        <tr><td>hardenedRuntime</td><td><code>true</code></td></tr>
+        <tr><td>package.json version</td><td><code>1.5.0</code></td></tr>
+        <tr><td>Electron</td><td><code>^31.x</code> (resolu 31.7.7)</td></tr>
+        <tr><td>App ID</td><td><code>com.bertinovic.musicblocs</code></td></tr>
+        <tr><td>Format projet</td><td><code>.bmb</code> (JSON)</td></tr>
+        <tr><td>Schema version</td><td><code>1.0</code></td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- BUGS CONNUS -->
+  <section class="section axbug" id="bugs">
+    <div class="section-header">
+      <h2>Problemes connus / restants</h2>
+    </div>
+    <div class="section-body">
       <table>
         <thead>
-          <tr>
-            <th>Priorité</th>
-            <th>Problème</th>
-            <th>Impact</th>
-          </tr>
+          <tr><th>Priorite</th><th>Probleme</th></tr>
         </thead>
         <tbody>
           <tr>
-            <td>🔴 Critique</td>
-            <td class="td-prob">Waveform Live Memo pas générée (<code>mr.onstop</code> incomplet)</td>
-            <td class="td-impact">Pas de visuel après enregistrement</td>
+            <td><span class="badge badge-orange">Moyen</span></td>
+            <td>Waveform visible seulement apres 2eme ouverture du projet (base64 decode async non resolu)</td>
           </tr>
           <tr>
-            <td>🔴 Critique</td>
-            <td class="td-prob"><code>render()</code> complet déclenché trop souvent</td>
-            <td class="td-impact">Performance dégradée sur gros projets</td>
+            <td><span class="badge badge-orange">Faible</span></td>
+            <td><code>render()</code> complet encore appele dans certains chemins &#8212; performance a ameliorer</td>
           </tr>
           <tr>
-            <td>🟠 Haute</td>
-            <td class="td-prob">Staff track : saisie de notes encore difficile</td>
-            <td class="td-impact">UX dégradée</td>
+            <td><span class="badge badge-orange">Faible</span></td>
+            <td>Code Staff ~2000 lignes dormant &#8212; poids <code>index.html</code> (~4600 lignes)</td>
           </tr>
           <tr>
-            <td>🟠 Haute</td>
-            <td class="td-prob">Rubber band sélection peu fiable</td>
-            <td class="td-impact">Sélection multi-notes impossible en pratique</td>
-          </tr>
-          <tr>
-            <td>🟡 Moyenne</td>
-            <td class="td-prob">Waveform SVG fill path algorithm incorrect</td>
-            <td class="td-impact">Affichage waveform incorrect</td>
-          </tr>
-          <tr>
-            <td>🟡 Moyenne</td>
-            <td class="td-prob">Piste Staff dormante (~2 000 lignes de code)</td>
-            <td class="td-impact">Poids du fichier (4 500+ lignes)</td>
-          </tr>
-          <tr>
-            <td>🟡 Moyenne</td>
-            <td class="td-prob"><code>ensureDefaultTracks</code> : pas de migration propre des anciens projets</td>
-            <td class="td-impact">Projets sauvegardés peuvent avoir des pistes Staff résiduelles</td>
-          </tr>
-          <tr>
-            <td>🟢 Faible</td>
-            <td class="td-prob">Palette Staff toujours présente dans le DOM (<code>#staff-palette-float</code>)</td>
-            <td class="td-impact">Dead code</td>
+            <td><span class="badge badge-gray">Mineur</span></td>
+            <td>Mini chord diagram fretboard &#8212; ordre des cordes non mis a jour dans le diagram miniature</td>
           </tr>
         </tbody>
       </table>
     </div>
   </section>
 
-  <!-- ══ SECTION 4 — PLAN DE STABILISATION ══ -->
-  <section>
-    <h2>Plan de stabilisation v1.5</h2>
-
-    <div class="plan-week p1">
-      <div class="plan-week-title">Semaine 1 <span>Priorité critique</span></div>
-      <ol class="plan-items">
-        <li>Finaliser waveform Live Memo : compléter <code>mr.onstop</code> avec <code>blob.arrayBuffer()</code> + <code>decodeAudioData</code></li>
-        <li>Fixer le SVG fill path dans <code>drawMemoWaveform()</code></li>
-        <li>Tester enregistrement sur macOS avec permissions Electron</li>
-        <li>Ajouter max durée clip (60s) avec nouveau chip automatique</li>
-      </ol>
-    </div>
-
-    <div class="plan-week p2">
-      <div class="plan-week-title">Semaine 2 <span>Priorité haute</span></div>
-      <ol class="plan-items">
-        <li>Optimiser <code>render()</code> → render partiel pour les pistes non-Staff</li>
-        <li>Nettoyer le code Staff dormant (conditionnel ou fichier séparé)</li>
-        <li>Corriger rubber band : vérifier z-index, tester sur différents thèmes</li>
-        <li>Migration propre des anciens projets Staff → toast d'information</li>
-      </ol>
-    </div>
-
-    <div class="plan-week p3">
-      <div class="plan-week-title">Semaine 3 <span>Polish</span></div>
-      <ol class="plan-items">
-        <li>VU-meter temps réel pendant l'enregistrement (<code>AnalyserNode</code>)</li>
-        <li>Export MIDI depuis les tokens Staff (si piste Staff réactivée)</li>
-        <li>Lecture séquentielle multi-clips Live Memo</li>
-        <li>Synchronisation tempo / clips mémo</li>
-      </ol>
-    </div>
-  </section>
-
-  <!-- ══ SECTION 5 — ARCHITECTURE ══ -->
-  <section>
-    <h2>Architecture actuelle (résumé)</h2>
-    <div class="arch-block">
-      <pre><span class="c-blue">src/index.html</span>  <span class="c-gray">(~4 600 lignes, tout inline)</span>
-  ├── <span class="c-yellow">CSS</span>  <span class="c-gray">(lignes 1–1 200)</span>
-  │     ├── <span class="c-gray">Thème, layout, pistes standard</span>
-  │     ├── <span class="c-gray">Staff SVG (dormant)</span>
-  │     ├── <span class="c-gray">Live Memo lanes + chips</span>
-  │     └── <span class="c-gray">Mémos notepad chips</span>
-  ├── <span class="c-yellow">HTML template</span>  <span class="c-gray">(lignes 1 700–1 870)</span>
-  └── <span class="c-yellow">JavaScript</span>  <span class="c-gray">(lignes 1 870–fin)</span>
-        ├── <span class="c-green">State</span>  <span class="c-gray">(S, TID, BID)</span>
-        ├── <span class="c-green">Render engine</span>  <span class="c-gray">(buildTrackRow, buildBlockChip…)</span>
-        ├── <span class="c-purple">Staff system</span>  <span class="c-gray">(dormant : buildStaffSVG, palette…)</span>
-        ├── <span class="c-green">Live Memo</span>  <span class="c-gray">(startMemoRecording, playMemoBlock…)</span>
-        ├── <span class="c-green">Web Audio engine</span>  <span class="c-gray">(getAudioCtx, _pianoNote…)</span>
-        └── <span class="c-green">Electron bridge</span>  <span class="c-gray">(wireElectron)</span></pre>
-    </div>
-  </section>
-
-  <!-- ══ SECTION 6 — RECOMMANDATIONS ══ -->
-  <section>
-    <h2>Recommandations techniques</h2>
-    <ol class="reco">
-      <li>
-        <div class="reco-body">
-          <div class="reco-title">Segmenter <code>index.html</code></div>
-          <div class="reco-detail">Extraire CSS → <code>style.css</code>, JS → <code>app.js</code> pour faciliter la maintenance. Note : <code>CLAUDE.md</code> prescrit "inline uniquement" — à discuter avec l'équipe avant toute extraction.</div>
-        </div>
-      </li>
-      <li>
-        <div class="reco-body">
-          <div class="reco-title">Smoke tests unitaires</div>
-          <div class="reco-detail">Ajouter au minimum des smoke tests pour les fonctions critiques : <code>parseStaffTokens</code>, <code>buildStaffSVG</code>, <code>sanitizeStaffNotes</code>.</div>
-        </div>
-      </li>
-      <li>
-        <div class="reco-body">
-          <div class="reco-title">Version JSON schema → 2</div>
-          <div class="reco-detail">Passer <code>"version": 2</code> dans le schema JSON pour distinguer les projets v1.0 et v1.5 et activer la migration propre.</div>
-        </div>
-      </li>
-      <li>
-        <div class="reco-body">
-          <div class="reco-title">Sauvegarde automatique</div>
-          <div class="reco-detail">Déclencher <code>saveProject()</code> toutes les 5 minutes via IPC Electron pour éviter les pertes de données.</div>
-        </div>
-      </li>
-      <li>
-        <div class="reco-body">
-          <div class="reco-title">Permissions micro Electron</div>
-          <div class="reco-detail">Déclarer <code>"microphone"</code> dans <code>entitlements.mac.plist</code> pour la release App Store — sans ça, l'enregistrement Live Memo sera refusé en production signée.</div>
-        </div>
-      </li>
-    </ol>
-  </section>
-
-  <footer>
-    BertinoMusicBlocs v1.5 — Rapport généré le 2026-05-19 &nbsp;·&nbsp; com.bertinovic.musicblocs
-  </footer>
-
 </div>
+
+<footer>
+  <div>BertinoMusicBlocs &#8212; Rapport v1.5 FINAL &#8212; 2026-05-19</div>
+  <div class="team-id">TEAM ID : AM5R5684CH</div>
+</footer>
+
 </body>
 </html>

@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BertinoMusicBlocs — Audit + Roadmap v2.0</title>
+<style>
+  :root {
+    --bg: #0a0c12;
+    --surface: #13182200;
+    --surface-s: #131822;
+    --surface2: #1a2030;
+    --border: #252e42;
+    --accent: #4f8ef7;
+    --neon: #00e5a0;
+    --warn: #f7c948;
+    --danger: #f74f4f;
+    --text: #dde4f0;
+    --text2: #6e7f9c;
+    --green: #2ecc71;
+    --orange: #f39c12;
+    --purple: #9b59b6;
+    --teal: #1abc9c;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; font-size: 14px; line-height: 1.7; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* HERO */
+  .hero {
+    background: linear-gradient(160deg, #0a0c12 0%, #0d1a2e 40%, #12102a 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 48px 40px 36px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::after {
+    content: 'v2.0';
+    position: absolute; right: 40px; top: 50%; transform: translateY(-50%);
+    font-size: 120px; font-weight: 900; opacity: .03; color: var(--accent);
+    pointer-events: none;
+  }
+  .hero-sub { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--text2); margin-bottom: 10px; }
+  .hero h1 { font-size: 30px; font-weight: 800; letter-spacing: -.3px; }
+  .hero h1 em { color: var(--accent); font-style: normal; }
+  .hero-meta { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 14px; font-size: 13px; color: var(--text2); }
+  .hero-meta strong { color: var(--text); }
+
+  /* CONTAINER */
+  .container { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+  .content { padding: 40px 0 80px; }
+
+  /* TOC */
+  .toc { background: var(--surface-s); border: 1px solid var(--border); border-radius: 12px; padding: 20px 24px; margin-bottom: 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 0 32px; }
+  .toc h3 { grid-column: 1/-1; font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+  .toc ol { padding-left: 18px; }
+  .toc li { margin: 4px 0; font-size: 13px; }
+
+  /* SECTION */
+  .section { margin-bottom: 32px; background: var(--surface-s); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .section-header { padding: 16px 24px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--border); }
+  .section-header h2 { font-size: 17px; font-weight: 700; flex: 1; }
+  .section-body { padding: 24px; }
+  .section-body p { color: var(--text2); font-size: 13px; margin-bottom: 14px; }
+
+  /* SECTION COLORS */
+  .s-audit .section-header { border-left: 4px solid var(--accent); background: linear-gradient(90deg, rgba(79,142,247,.1), transparent); }
+  .s-stab  .section-header { border-left: 4px solid var(--green); background: linear-gradient(90deg, rgba(46,204,113,.1), transparent); }
+  .s-v21   .section-header { border-left: 4px solid var(--orange); background: linear-gradient(90deg, rgba(243,156,18,.1), transparent); }
+  .s-v22   .section-header { border-left: 4px solid #4f8ef7; background: linear-gradient(90deg, rgba(79,142,247,.1), transparent); }
+  .s-v23   .section-header { border-left: 4px solid var(--purple); background: linear-gradient(90deg, rgba(155,89,182,.1), transparent); }
+  .s-v24   .section-header { border-left: 4px solid var(--teal); background: linear-gradient(90deg, rgba(26,188,156,.1), transparent); }
+  .s-v25   .section-header { border-left: 4px solid var(--neon); background: linear-gradient(90deg, rgba(0,229,160,.1), transparent); }
+  .s-v26   .section-header { border-left: 4px solid var(--warn); background: linear-gradient(90deg, rgba(247,201,72,.1), transparent); }
+  .s-arch  .section-header { border-left: 4px solid var(--danger); background: linear-gradient(90deg, rgba(247,79,79,.1), transparent); }
+
+  /* BADGES */
+  .badge { display: inline-flex; align-items: center; gap: 4px; border-radius: 6px; padding: 2px 8px; font-size: 11px; font-weight: 700; letter-spacing: .3px; }
+  .ok  { background: rgba(46,204,113,.12); color: #2ecc71; border: 1px solid rgba(46,204,113,.25); }
+  .w   { background: rgba(247,201,72,.12); color: #f7c948; border: 1px solid rgba(247,201,72,.25); }
+  .bad { background: rgba(247,79,79,.12); color: #f74f4f; border: 1px solid rgba(247,79,79,.25); }
+  .n   { background: rgba(79,142,247,.12); color: #4f8ef7; border: 1px solid rgba(79,142,247,.25); }
+
+  /* AUDIT GRID */
+  .audit-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .audit-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
+  .audit-card h3 { font-size: 13px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .audit-item { display: flex; align-items: flex-start; gap: 10px; padding: 5px 0; border-top: 1px solid var(--border); font-size: 12px; color: var(--text2); }
+  .audit-item:first-of-type { border-top: none; }
+  .audit-item .ico { flex-shrink: 0; width: 18px; text-align: center; }
+  .ico-ok { color: var(--green); }
+  .ico-w  { color: var(--warn); }
+  .ico-bad { color: var(--danger); }
+
+  /* STABILISATION LIST */
+  .stab-list { list-style: none; counter-reset: stab; }
+  .stab-list li { counter-increment: stab; display: flex; gap: 14px; padding: 12px 0; border-top: 1px solid var(--border); font-size: 13px; }
+  .stab-list li:first-child { border-top: none; padding-top: 0; }
+  .stab-num { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; background: var(--surface2); border: 1px solid var(--border); color: var(--text2); font-size: 12px; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+  .stab-content strong { display: block; color: var(--text); margin-bottom: 3px; }
+  .stab-content span { color: var(--text2); font-size: 12px; }
+
+  /* ROADMAP ITEM */
+  .rm-item { display: flex; gap: 16px; padding: 14px 0; border-top: 1px solid var(--border); }
+  .rm-item:first-child { border-top: none; padding-top: 0; }
+  .rm-dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
+  .rm-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .rm-desc { font-size: 12px; color: var(--text2); line-height: 1.6; }
+  .rm-desc ul { padding-left: 16px; }
+  .rm-desc li { margin: 3px 0; }
+
+  /* ARCH TABLE */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { background: var(--surface2); color: var(--text2); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; padding: 10px 14px; text-align: left; }
+  td { padding: 10px 14px; border-top: 1px solid var(--border); vertical-align: top; }
+  tr:hover td { background: rgba(255,255,255,.015); }
+
+  code { background: var(--surface2); color: var(--neon); padding: 1px 5px; border-radius: 4px; font-size: 12px; font-family: 'JetBrains Mono', 'Fira Code', monospace; }
+  kbd { background: var(--surface2); color: var(--text); border: 1px solid var(--border); padding: 1px 6px; border-radius: 4px; font-size: 12px; font-family: monospace; }
+
+  .tip { background: rgba(79,142,247,.08); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; padding: 12px 16px; font-size: 13px; color: var(--text2); margin: 14px 0; }
+
+  /* PRIORITY LEGEND */
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text2); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+  footer { border-top: 1px solid var(--border); padding: 24px 40px; text-align: center; color: var(--text2); font-size: 12px; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="container">
+    <div class="hero-sub">Audit technique + Feuille de route</div>
+    <h1>BertinoMusicBlocs &#8212; Audit + Roadmap <em>v2.0</em></h1>
+    <div class="hero-meta">
+      <span><strong>Base :</strong> v1.5.0</span>
+      <span><strong>Date :</strong> 2026-05-19</span>
+      <span><strong>Auteur :</strong> AM5R5684CH</span>
+    </div>
+  </div>
+</div>
+
+<div class="container content">
+
+  <nav class="toc">
+    <h3>Sommaire</h3>
+    <ol>
+      <li><a href="#audit">Audit stabilite actuelle</a></li>
+      <li><a href="#stab">Stabilisation pre-v2</a></li>
+      <li><a href="#v21">2.1 — Lecture audio globale</a></li>
+      <li><a href="#v22">2.2 — Staff solfege reactiv&#233;</a></li>
+    </ol>
+    <ol start="5">
+      <li><a href="#v23">2.3 — Collaboration</a></li>
+      <li><a href="#v24">2.4 — Intelligence musicale</a></li>
+      <li><a href="#v25">2.5 — UX avancee</a></li>
+      <li><a href="#v26">2.6 — Build &amp; distribution</a></li>
+      <li><a href="#arch">Architecture v2</a></li>
+    </ol>
+  </nav>
+
+  <!-- AUDIT -->
+  <section class="section s-audit" id="audit">
+    <div class="section-header">
+      <h2>Audit stabilite actuelle (base v1.5)</h2>
+    </div>
+    <div class="section-body">
+      <div class="audit-grid">
+
+        <div class="audit-card">
+          <h3>Architecture <span class="badge n">fichier unique ~4600 L</span></h3>
+          <div class="audit-item">
+            <div class="ico ico-ok">&#10003;</div>
+            <div>Self-contained (0 dependances npm runtime)</div>
+          </div>
+          <div class="audit-item">
+            <div class="ico ico-ok">&#10003;</div>
+            <div>Browser fallback complet (Safari / Chrome)</div>
+          </div>
+          <div class="audit-item">
+            <div class="ico ico-w">&#9651;</div>
+            <div>Taille index.html croissante &#8212; seuil critique ~6000 lignes</div>
+          </div>
+          <div class="audit-item">
+            <div class="ico ico-w">&#9651;</div>
+            <div><code>render()</code> complet sur trop d'operations</div>
+          </div>
+        </div>
+
+        <div class="audit-card">
+          <h3>Performance</h3>
+          <div class="audit-item">
+            <div class="ico ico-w">&#9651;</div>
+            <div><code>render()</code> reconstruit tout le DOM a chaque mutation</div>
+          </div>
+          <div class="audit-item">
+            <div class="ico ico-w">&#9651;</div>
+            <div><code>buildStaffSVG</code> recrée 100% du SVG a chaque note ajoutee</div>
+          </div>
+          <div class="audit-item">
+            <div class="ico ico-ok">&#10003;</div>
+            <div><code>rebuildStaffChip()</code> in-place pour les chips Staff</div>
+          </div>
+        </div>
+
+        <div class="audit-card">
+          <h3>Robustesse</h3>
+          <div class="audit-item">
+            <div class="ico ico-ok">&#10003;</div>
+            <div>Undo/Redo 60 niveaux</div>
+          </div>
+          <div class="audit-item">
+            <div class="ico ico-ok">&#10003;</div>
+            <div><code>sanitizeStaffNotes</code> a l'import JSON</div>
+          </div>
+          <div class="audit-item">
+            <div class="ico ico-w">&#9651;</div>
+            <div>Pas de validation schema complet a l'import</div>
+          </div>
+          <div class="audit-item">
+            <div class="ico ico-w">&#9651;</div>
+            <div>Clips Live Memo : base64 peut grossir le JSON (30s &#8776; 640Ko)</div>
+          </div>
+          <div class="audit-item">
+            <div class="ico ico-bad">&#x2715;</div>
+            <div>Pas d'autosave</div>
+          </div>
+        </div>
+
+        <div class="audit-card">
+          <h3>Securite</h3>
+          <div class="audit-item">
+            <div class="ico ico-ok">&#10003;</div>
+            <div><code>contextBridge</code> pour tous les acces Electron</div>
+          </div>
+          <div class="audit-item">
+            <div class="ico ico-ok">&#10003;</div>
+            <div><code>nodeIntegration: false</code></div>
+          </div>
+          <div class="audit-item">
+            <div class="ico ico-ok">&#10003;</div>
+            <div><code>hardenedRuntime: true</code></div>
+          </div>
+          <div class="audit-item">
+            <div class="ico ico-ok">&#10003;</div>
+            <div>Pas d'eval() ni innerHTML non sanitize</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- STABILISATION -->
+  <section class="section s-stab" id="stab">
+    <div class="section-header">
+      <h2>Propositions de stabilisation immediate (pre-v2)</h2>
+      <span class="badge ok">5 actions</span>
+    </div>
+    <div class="section-body">
+      <ul class="stab-list">
+        <li>
+          <div class="stab-num">1</div>
+          <div class="stab-content">
+            <strong>render() partiel &#8212; observer pattern</strong>
+            <span>Ne rebuilder que les rows DOM affectees par une mutation. Utiliser un Map blockId &#8594; element DOM. Reduire la charge CPU de 60-80% sur les timelines longues.</span>
+          </div>
+        </li>
+        <li>
+          <div class="stab-num">2</div>
+          <div class="stab-content">
+            <strong>Autosave toutes les 3 minutes</strong>
+            <span>Via <code>setInterval</code> + IPC Electron (<code>ipcMain.handle('autosave', ...)</code>). Sauvegarde silencieuse dans un fichier <code>.bmb.bak</code>. Notification discrete dans le header.</span>
+          </div>
+        </li>
+        <li>
+          <div class="stab-num">3</div>
+          <div class="stab-content">
+            <strong>JSON schema v2 &#8212; validation complete a l'import</strong>
+            <span>Definir un schema explicite pour le format .bmb. Valider toutes les proprietes a l'import. Migration automatique schema v1 &#8594; v2.</span>
+          </div>
+        </li>
+        <li>
+          <div class="stab-num">4</div>
+          <div class="stab-content">
+            <strong>Limite taille clips Live Memo</strong>
+            <span>Maximum 60 secondes par clip. Avertissement visuel a 45s. Refus d'enregistrement au-dela. Evite les fichiers .bmb de plusieurs Mo.</span>
+          </div>
+        </li>
+        <li>
+          <div class="stab-num">5</div>
+          <div class="stab-content">
+            <strong>Tests smoke minimaux</strong>
+            <span>Au moins : <code>parseStaffTokens</code>, <code>noteToFreq</code>, <code>normalizeTrackOrder</code>. Script Node.js lance par <code>npm test</code>. Zero dependance framework de test.</span>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ROADMAP v2.1 -->
+  <section class="section s-v21" id="v21">
+    <div class="section-header">
+      <h2>2.1 &#8212; Lecture audio globale</h2>
+      <span class="badge w">Priorite haute</span>
+    </div>
+    <div class="section-body">
+      <div class="rm-item">
+        <div class="rm-dot" style="background:#f39c12"></div>
+        <div>
+          <div class="rm-title">Transport global dans le header</div>
+          <div class="rm-desc">Boutons &#9654;&#9654; / &#9646;&#9646; / &#9209; dans le header. Position de lecture synchronisee avec la timeline (indicateur vertical anime).</div>
+        </div>
+      </div>
+      <div class="rm-item">
+        <div class="rm-dot" style="background:#f39c12"></div>
+        <div>
+          <div class="rm-title">BPM et metronome</div>
+          <div class="rm-desc">Champ BPM dans le header. Click metronome optionnel via <code>_pianoNote()</code>. Grille de mesures calculee a partir du BPM.</div>
+        </div>
+      </div>
+      <div class="rm-item">
+        <div class="rm-dot" style="background:#f39c12"></div>
+        <div>
+          <div class="rm-title">Lecture synchronisee des clips Live Memo</div>
+          <div class="rm-desc">Tous les clips joues a leur position de mesure respective. Gestion multi-source via Web Audio API (<code>AudioBufferSourceNode</code>). Arret propre de toutes les sources.</div>
+        </div>
+      </div>
+      <div class="rm-item">
+        <div class="rm-dot" style="background:#f39c12"></div>
+        <div>
+          <div class="rm-title">Export mixdown</div>
+          <div class="rm-desc">Rendu offline via <code>OfflineAudioContext</code>. Export ArrayBuffer &#8594; WAV PCM 16-bit. Telechargement direct (blob URL) ou sauvegarde native Electron.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ROADMAP v2.2 -->
+  <section class="section s-v22" id="v22">
+    <div class="section-header">
+      <h2>2.2 &#8212; Piste Staff reactivee (solfege complet)</h2>
+      <span class="badge n">Priorite normale</span>
+    </div>
+    <div class="section-body">
+      <div class="rm-item">
+        <div class="rm-dot" style="background:#4f8ef7"></div>
+        <div>
+          <div class="rm-title">Insertion au curseur X</div>
+          <div class="rm-desc">Clic sur la portee a la position X insere la note a la mesure correspondante (pas seulement en append a la fin).</div>
+        </div>
+      </div>
+      <div class="rm-item">
+        <div class="rm-dot" style="background:#4f8ef7"></div>
+        <div>
+          <div class="rm-title">Suppression de note</div>
+          <div class="rm-desc"><kbd>Ctrl+Clic</kbd> pour selectionner, puis <kbd>Backspace</kbd> pour supprimer. Suppression multiple via multiselecti.</div>
+        </div>
+      </div>
+      <div class="rm-item">
+        <div class="rm-dot" style="background:#4f8ef7"></div>
+        <div>
+          <div class="rm-title">Export MIDI</div>
+          <div class="rm-desc">Generer un fichier MIDI type 0 depuis les tokens Staff. Ecriture binaire pure (pas de bibliotheque). Telechargement direct.</div>
+        </div>
+      </div>
+      <div class="rm-item">
+        <div class="rm-dot" style="background:#4f8ef7"></div>
+        <div>
+          <div class="rm-title">Cle de Fa optionnelle</div>
+          <div class="rm-desc">Chaque bloc Staff peut basculer entre cle de Sol (defaut) et cle de Fa (basse). Choix dans le panneau droit.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ROADMAP v2.3 -->
+  <section class="section s-v23" id="v23">
+    <div class="section-header">
+      <h2>2.3 &#8212; Collaboration</h2>
+      <span class="badge n">Priorite normale</span>
+    </div>
+    <div class="section-body">
+      <div class="rm-item">
+        <div class="rm-dot" style="background:#9b59b6"></div>
+        <div>
+          <div class="rm-title">Export projet partageable</div>
+          <div class="rm-desc">JSON compresse (LZ-String) encode en base64 dans l'URL. QR code generable inline (SVG pur, sans lib). Importable via un simple paste d'URL.</div>
+        </div>
+      </div>
+      <div class="rm-item">
+        <div class="rm-dot" style="background:#9b59b6"></div>
+        <div>
+          <div class="rm-title">Import depuis URL</div>
+          <div class="rm-desc">Detection automatique du parametre <code>?p=</code> dans l'URL au chargement. Decode et charge le projet directement.</div>
+        </div>
+      </div>
+      <div class="rm-item">
+        <div class="rm-dot" style="background:#9b59b6"></div>
+        <div>
+          <div class="rm-title">Mode presentation fullscreen</div>
+          <div class="rm-desc">Vue Railroad animee en fullscreen. Defilement automatique ajustable. Ideal pour repetitions et presentations sur scene.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ROADMAP v2.4 -->
+  <section class="section s-v24" id="v24">
+    <div class="section-header">
+      <h2>2.4 &#8212; Intelligence musicale</h2>
+      <span class="badge n">Priorite basse</span>
+    </div>
+    <div class="section-body">
+      <div class="rm-item">
+        <div class="rm-dot" style="background:#1abc9c"></div>
+        <div>
+          <div class="rm-title">Detection de tonalite</div>
+          <div class="rm-desc">Analyse des accords Fretboard presents dans le projet. Identification de la tonalite par scoring harmonique (frequence des degres).</div>
+        </div>
+      </div>
+      <div class="rm-item">
+        <div class="rm-dot" style="background:#1abc9c"></div>
+        <div>
+          <div class="rm-title">Suggestion d'accords coherents</div>
+          <div class="rm-desc">A partir de la tonalite detectee, proposer les accords diatoniques compatibles. Affichage dans le panneau droit lors de l'edition d'un bloc Fretboard.</div>
+        </div>
+      </div>
+      <div class="rm-item">
+        <div class="rm-dot" style="background:#1abc9c"></div>
+        <div>
+          <div class="rm-title">Transposition globale</div>
+          <div class="rm-desc">Transposer tous les blocs d'un projet d'un nombre de demi-tons choisi. Mise a jour de tous les tokens Staff et diagrammes Fretboard en une operation.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ROADMAP v2.5 -->
+  <section class="section s-v25" id="v25">
+    <div class="section-header">
+      <h2>2.5 &#8212; UX avancee</h2>
+      <span class="badge n">Priorite normale</span>
+    </div>
+    <div class="section-body">
+      <div class="rm-item">
+        <div class="rm-dot" style="background:#00e5a0"></div>
+        <div>
+          <div class="rm-title">Themes personnalisables</div>
+          <div class="rm-desc">Couleurs par piste configurables. Palettes preset (Dark Classic, Light Wood, Neon Studio). Sauvegarde dans le fichier .bmb.</div>
+        </div>
+      </div>
+      <div class="rm-item">
+        <div class="rm-dot" style="background:#00e5a0"></div>
+        <div>
+          <div class="rm-title">Zoom horizontal sur la timeline</div>
+          <div class="rm-desc"><code>MEASURE_WIDTH</code> variable de 40 a 160px via slider ou <kbd>Cmd++</kbd> / <kbd>Cmd+-</kbd>. Tous les blocs se redimensionnent proportionnellement.</div>
+        </div>
+      </div>
+      <div class="rm-item">
+        <div class="rm-dot" style="background:#00e5a0"></div>
+        <div>
+          <div class="rm-title">Multi-selection de blocs</div>
+          <div class="rm-desc"><kbd>Shift+Clic</kbd> pour ajouter/retirer de la selection. Drag rectangle sur la timeline. Actions groupees (deplacer, supprimer, muter tous les blocs selectionnes).</div>
+        </div>
+      </div>
+      <div class="rm-item">
+        <div class="rm-dot" style="background:#00e5a0"></div>
+        <div>
+          <div class="rm-title">Templates de projet</div>
+          <div class="rm-desc">Presets : Rock, Jazz, Electro, Acoustique. Chargement du template depuis le dialog Nouveau projet. Structure de pistes et blocs pre-configures.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ROADMAP v2.6 -->
+  <section class="section s-v26" id="v26">
+    <div class="section-header">
+      <h2>2.6 &#8212; Build &amp; distribution</h2>
+      <span class="badge w">Strategique</span>
+    </div>
+    <div class="section-body">
+      <div class="rm-item">
+        <div class="rm-dot" style="background:#f7c948"></div>
+        <div>
+          <div class="rm-title">CI/CD GitHub Actions</div>
+          <div class="rm-desc">Build automatique sur push de tag <code>v*</code>. Matrix : arm64 + x64. Artifacts publies dans les GitHub Releases. Zero intervention manuelle.</div>
+        </div>
+      </div>
+      <div class="rm-item">
+        <div class="rm-dot" style="background:#f7c948"></div>
+        <div>
+          <div class="rm-title">Notarisation Apple automatique</div>
+          <div class="rm-desc">Secrets GitHub : <code>APPLE_ID</code>, <code>APPLE_TEAM_ID</code>, <code>APPLE_APP_PASSWORD</code>. Notarisation via <code>electron-notarize</code> dans le afterSign hook.</div>
+        </div>
+      </div>
+      <div class="rm-item">
+        <div class="rm-dot" style="background:#f7c948"></div>
+        <div>
+          <div class="rm-title">Auto-updater</div>
+          <div class="rm-desc">Integration <code>electron-updater</code>. Verif de mise a jour au demarrage. Dialog de mise a jour non-bloquant. Telechargement en arriere-plan.</div>
+        </div>
+      </div>
+      <div class="rm-item">
+        <div class="rm-dot" style="background:#f7c948"></div>
+        <div>
+          <div class="rm-title">Version Windows</div>
+          <div class="rm-desc">Installer NSIS. Signature code Windows (certificat EV). Adaptation des chemins IPC pour Windows. Tests sur Windows 11.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ARCHITECTURE v2 -->
+  <section class="section s-arch" id="arch">
+    <div class="section-header">
+      <h2>Recommandations architecture v2</h2>
+    </div>
+    <div class="section-body">
+      <div class="tip">
+        L'objectif est de garder la philosophie "un seul fichier HTML" pour la distribution, mais d'organiser le developpement en modules separes compiles a la fin.
+      </div>
+      <table>
+        <thead>
+          <tr><th>#</th><th>Recommandation</th><th>Justification</th><th>Priorite</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td>Extraire JS dans <code>src/app.js</code></td>
+            <td>index.html depasse le seuil lisible a ~6000 lignes. CSS inline reste acceptable.</td>
+            <td><span class="badge w">Haute</span></td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>Module systeme : <code>store.js</code>, <code>render.js</code>, <code>audio.js</code></td>
+            <td>Separation responsabilites. Permet les tests unitaires sans DOM. Facilite les PR.</td>
+            <td><span class="badge w">Haute</span></td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td>Versionner explicitement le schema JSON</td>
+            <td>Schema actuellement implicite. Ajout d'un champ <code>"schema": 2</code> dans le .bmb. Migration automatique.</td>
+            <td><span class="badge n">Normale</span></td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td>Utiliser <code>contextBridge</code> pour tous les acces Electron</td>
+            <td>Deja fait en v1.5. Maintenir cette rigueur pour toutes les nouvelles fonctionnalites.</td>
+            <td><span class="badge ok">Fait</span></td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td>Bundler optionnel (esbuild)</td>
+            <td>Si modules JS separes, esbuild permet de regenérer un index.html unique pour la distribution navigateur. Zero config, tres rapide.</td>
+            <td><span class="badge n">Basse</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  BertinoMusicBlocs &#8212; Audit + Roadmap v2.0 &#8212; 2026-05-19 &#8212; AM5R5684CH
+</footer>
+
+</body>
+</html>

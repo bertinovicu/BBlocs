@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BertinoMusicBlocs — Guide d'utilisation</title>
+<style>
+  :root {
+    --bg: #f4f6f9;
+    --surface: #ffffff;
+    --surface2: #f0f3f8;
+    --border: #dde3ee;
+    --accent: #2563eb;
+    --accent-light: #dbeafe;
+    --neon: #059669;
+    --text: #1e293b;
+    --text2: #64748b;
+    --warn: #d97706;
+    --warn-light: #fef3c7;
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d0f14;
+      --surface: #161b25;
+      --surface2: #1e2535;
+      --border: #2a3447;
+      --accent: #4f8ef7;
+      --accent-light: rgba(79,142,247,.12);
+      --neon: #00e5a0;
+      --text: #e8edf5;
+      --text2: #7a8ba8;
+      --warn: #f7c948;
+      --warn-light: rgba(247,201,72,.12);
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; font-size: 15px; line-height: 1.7; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* HEADER */
+  .header {
+    background: var(--accent);
+    color: white;
+    padding: 40px 40px 32px;
+  }
+  .header-inner { max-width: 900px; margin: 0 auto; }
+  .header-tag { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; opacity: .7; margin-bottom: 10px; }
+  .header h1 { font-size: 30px; font-weight: 800; }
+  .header p { opacity: .85; margin-top: 8px; font-size: 14px; }
+
+  /* LAYOUT */
+  .layout { max-width: 900px; margin: 0 auto; padding: 0 24px; display: flex; gap: 32px; align-items: flex-start; }
+  .sidebar {
+    position: sticky; top: 24px;
+    width: 220px; flex-shrink: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 32px;
+  }
+  .sidebar h3 { font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+  .sidebar ol { padding-left: 18px; }
+  .sidebar li { margin: 5px 0; }
+  .sidebar a { font-size: 13px; color: var(--text2); }
+  .sidebar a:hover { color: var(--accent); }
+  .main { flex: 1; padding: 32px 0 80px; min-width: 0; }
+
+  /* SECTION */
+  .section { margin-bottom: 36px; }
+  .section-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--accent); color: white;
+    font-size: 13px; font-weight: 800;
+    flex-shrink: 0;
+  }
+  .section h2 {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 19px; font-weight: 700;
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 10px; margin-bottom: 18px;
+  }
+  .section h3 { font-size: 14px; font-weight: 700; color: var(--accent); margin: 16px 0 8px; }
+
+  /* CARD */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; margin-bottom: 14px; }
+  .card p, .card li { font-size: 14px; color: var(--text2); }
+  .card p { margin-bottom: 6px; }
+  .card ul, .card ol { padding-left: 18px; }
+  .card li { margin: 4px 0; }
+
+  /* INTERFACE DIAGRAM */
+  .interface-diagram {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    font-size: 13px;
+    font-family: monospace;
+    margin-bottom: 16px;
+  }
+  .interface-diagram .zone {
+    border: 1px dashed var(--border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin: 4px 0;
+    color: var(--text2);
+  }
+  .interface-diagram .zone strong { color: var(--accent); }
+
+  /* TRACK TYPE GRID */
+  .track-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin: 12px 0; }
+  .track-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    display: flex; gap: 12px; align-items: flex-start;
+  }
+  .track-icon { font-size: 22px; flex-shrink: 0; }
+  .track-name { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+  .track-desc { font-size: 12px; color: var(--text2); line-height: 1.5; }
+
+  /* SHORTCUT TABLE */
+  .shortcuts { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .shortcuts th { background: var(--surface2); color: var(--text2); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; padding: 8px 14px; text-align: left; }
+  .shortcuts td { padding: 9px 14px; border-top: 1px solid var(--border); vertical-align: middle; }
+  .shortcuts tr:hover td { background: var(--surface2); }
+
+  kbd {
+    display: inline-block;
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 2px 8px;
+    font-size: 12px;
+    font-family: monospace;
+    white-space: nowrap;
+    box-shadow: 0 1px 0 var(--border);
+  }
+
+  code { background: var(--surface2); color: var(--neon); padding: 1px 5px; border-radius: 4px; font-size: 12px; font-family: monospace; }
+
+  /* TIP BOX */
+  .tip { background: var(--accent-light); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; padding: 12px 16px; font-size: 13px; color: var(--text2); margin: 12px 0; }
+  .tip strong { color: var(--accent); }
+  .warn-box { background: var(--warn-light); border-left: 3px solid var(--warn); border-radius: 0 8px 8px 0; padding: 12px 16px; font-size: 13px; color: var(--text2); margin: 12px 0; }
+
+  /* STEP LIST */
+  .steps { list-style: none; counter-reset: step; }
+  .steps li { counter-increment: step; display: flex; gap: 12px; margin: 8px 0; font-size: 14px; }
+  .steps li::before { content: counter(step); display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: white; font-size: 11px; font-weight: 800; flex-shrink: 0; margin-top: 2px; }
+
+  footer { border-top: 1px solid var(--border); padding: 24px; text-align: center; color: var(--text2); font-size: 12px; }
+
+  @media (max-width: 720px) {
+    .sidebar { display: none; }
+    .layout { display: block; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div class="header-tag">Guide d'utilisation</div>
+    <h1>BertinoMusicBlocs v1.5</h1>
+    <p>Guide complet pour composer et arranger vos projets musicaux</p>
+  </div>
+</div>
+
+<div class="layout">
+  <nav class="sidebar">
+    <h3>Sections</h3>
+    <ol>
+      <li><a href="#s1">Demarrage rapide</a></li>
+      <li><a href="#s2">Les blocs</a></li>
+      <li><a href="#s3">Les pistes</a></li>
+      <li><a href="#s4">Snapshots &amp; versions</a></li>
+      <li><a href="#s5">Live Memo</a></li>
+      <li><a href="#s6">Memos texte</a></li>
+      <li><a href="#s7">Fretboard</a></li>
+      <li><a href="#s8">Raccourcis clavier</a></li>
+      <li><a href="#s9">Vue Railroad</a></li>
+      <li><a href="#s10">Collapse en-tetes</a></li>
+    </ol>
+  </nav>
+
+  <main class="main">
+
+    <!-- 1 - DEMARRAGE RAPIDE -->
+    <section class="section" id="s1">
+      <h2><span class="section-num">1</span> Demarrage rapide</h2>
+      <p style="color:var(--text2);font-size:14px;margin-bottom:16px">
+        A l'ouverture, l'application affiche l'interface principale divisee en quatre zones :
+      </p>
+      <div class="interface-diagram">
+        <div class="zone"><strong>HEADER</strong> &mdash; Titre du projet, boutons Snapshot / Undo / Redo / Mode clair-sombre / Railroad</div>
+        <div class="zone"><strong>PALETTE</strong> (gauche) &mdash; Liste des blocs disponibles a glisser-deposer sur la timeline</div>
+        <div class="zone" style="min-height:60px"><strong>TIMELINE</strong> (centre) &mdash; Pistes horizontales avec leurs blocs, ruler de mesures en haut</div>
+        <div class="zone"><strong>PANNEAU DROIT</strong> &mdash; Proprietes du bloc selectionne</div>
+      </div>
+      <div class="tip">
+        <strong>Astuce :</strong> L'application fonctionne directement dans Safari ou Chrome sans installer Electron. Les fonctions de sauvegarde native (Cmd+S) ne sont disponibles qu'en mode Electron.
+      </div>
+    </section>
+
+    <!-- 2 - BLOCS -->
+    <section class="section" id="s2">
+      <h2><span class="section-num">2</span> Les blocs</h2>
+      <div class="card">
+        <h3 style="margin-top:0">Ajouter un bloc</h3>
+        <ol style="padding-left:18px;font-size:14px;color:var(--text2)">
+          <li style="margin:4px 0">Dans la palette a gauche, reperer le type de bloc souhaite (Intro, Verse, Chorus...)</li>
+          <li style="margin:4px 0">Glisser-deposer le bloc sur la piste de destination dans la timeline</li>
+          <li style="margin:4px 0">Le bloc se positionne automatiquement sans chevaucher les blocs existants</li>
+        </ol>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">Manipuler un bloc</h3>
+        <ul style="padding-left:18px;font-size:14px;color:var(--text2)">
+          <li style="margin:4px 0"><strong>Deplacer :</strong> cliquer-glisser le corps du bloc</li>
+          <li style="margin:4px 0"><strong>Redimensionner :</strong> tirer la poignee sur le bord droit du bloc</li>
+          <li style="margin:4px 0"><strong>Muter :</strong> cliquer le bouton &#128263; sur le bloc (le bloc apparait grise)</li>
+          <li style="margin:4px 0"><strong>Supprimer :</strong> cliquer le bouton &#x2715; sur le bloc, ou appuyer sur <kbd>Suppr</kbd> / <kbd>Backspace</kbd></li>
+          <li style="margin:4px 0"><strong>Annuler :</strong> <kbd>Ctrl+Z</kbd> (60 niveaux d'historique)</li>
+        </ul>
+      </div>
+      <div class="tip">
+        <strong>Chip :</strong> Chaque bloc affiche une "fiche" (chip) avec son nom et ses informations. Certains chips sont interactifs (waveform, portee, tablature).
+      </div>
+    </section>
+
+    <!-- 3 - PISTES -->
+    <section class="section" id="s3">
+      <h2><span class="section-num">3</span> Les pistes</h2>
+      <p style="color:var(--text2);font-size:14px;margin-bottom:14px">
+        Cliquer <strong>+ Ajouter une piste</strong> en bas de la liste pour ouvrir le dialog de creation. Le flux guide en 3 etapes : nom &#8594; type &#8594; sous-type (si applicable).
+      </p>
+      <div class="track-grid">
+        <div class="track-card">
+          <div class="track-icon">&#127959;</div>
+          <div>
+            <div class="track-name">Main Structure</div>
+            <div class="track-desc">Blocs d'arrangement principaux : Intro, Verse, Chorus, Bridge, Outro. Piste reference de votre composition.</div>
+          </div>
+        </div>
+        <div class="track-card">
+          <div class="track-icon">&#9654;</div>
+          <div>
+            <div class="track-name">Sous-pistes</div>
+            <div class="track-desc">Loops, Solo, Bass, Drums... Toujours positionnees sous la Structure. Boutons &#9650;&#9660; confines dans leur zone.</div>
+          </div>
+        </div>
+        <div class="track-card">
+          <div class="track-icon">&#128196;</div>
+          <div>
+            <div class="track-name">Lyrics</div>
+            <div class="track-desc">Paroles et textes. Blocs lyric-text avec textarea editable directement dans le chip.</div>
+          </div>
+        </div>
+        <div class="track-card">
+          <div class="track-icon">&#127928;</div>
+          <div>
+            <div class="track-name">Fretboard</div>
+            <div class="track-desc">Diagrammes d'accords guitare. Cordes de haut en bas : e B G D A E. Cases de gauche a droite.</div>
+          </div>
+        </div>
+        <div class="track-card">
+          <div class="track-icon">&#127897;</div>
+          <div>
+            <div class="track-name">Live Memo</div>
+            <div class="track-desc">Enregistrement micro sur 2 canaux independants A et B. Waveform visible dans le chip.</div>
+          </div>
+        </div>
+        <div class="track-card">
+          <div class="track-icon">&#128221;</div>
+          <div>
+            <div class="track-name">Memos</div>
+            <div class="track-desc">Blocs-notes texte libre. Textarea editable inline dans le chip, fond parchemin.</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">Reordonner les pistes</h3>
+        <p>Utiliser les boutons <kbd>&#9650;</kbd> <kbd>&#9660;</kbd> dans l'en-tete de chaque piste. Les sous-pistes restent confinee dans leur zone Structure et ne peuvent pas en sortir.</p>
+      </div>
+    </section>
+
+    <!-- 4 - SNAPSHOTS -->
+    <section class="section" id="s4">
+      <h2><span class="section-num">4</span> Snapshots &amp; versions</h2>
+      <div class="card">
+        <ul style="padding-left:18px;font-size:14px;color:var(--text2)">
+          <li style="margin:6px 0">Cliquer le bouton <strong>&#128336; Snapshot</strong> dans le header pour sauvegarder l'etat courant</li>
+          <li style="margin:6px 0">Un badge <code>v1</code>, <code>v2</code>... apparait dans l'header</li>
+          <li style="margin:6px 0">Cliquer sur le badge de version pour ouvrir le dropdown des snapshots disponibles</li>
+          <li style="margin:6px 0">Cliquer un snapshot dans la liste pour le restaurer (une confirmation est demandee)</li>
+        </ul>
+      </div>
+      <div class="tip">
+        <strong>Conseil :</strong> Prendre un snapshot avant chaque modification importante. Les snapshots sont sauvegardes dans le fichier .bmb lors de l'export.
+      </div>
+    </section>
+
+    <!-- 5 - LIVE MEMO -->
+    <section class="section" id="s5">
+      <h2><span class="section-num">5</span> Live Memo</h2>
+      <p style="color:var(--text2);font-size:14px;margin-bottom:14px">La piste Live Memo permet d'enregistrer des idees vocales ou instrumentales directement dans l'app, sur 2 canaux independants A et B.</p>
+      <div class="card">
+        <h3 style="margin-top:0">Enregistrer</h3>
+        <ol class="steps">
+          <li>Sur la lane A ou B, cliquer le bouton <strong>&#9210; Enregistrer</strong></li>
+          <li>Autoriser l'acces au microphone si le navigateur le demande</li>
+          <li>Parler, chanter ou jouer</li>
+          <li>Cliquer <strong>&#9209; Arreter</strong> — le clip est cree automatiquement sur la timeline</li>
+        </ol>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">Dans le chip du clip</h3>
+        <ul style="padding-left:18px;font-size:14px;color:var(--text2)">
+          <li style="margin:4px 0"><strong>Nom editable :</strong> cliquer sur le texte du chip pour le modifier</li>
+          <li style="margin:4px 0"><strong>Waveform :</strong> la forme d'onde est visible (envelope SVG, top bright / bottom dimmer)</li>
+          <li style="margin:4px 0"><strong>Tete de lecture rouge :</strong> se deplace pendant la lecture via requestAnimationFrame</li>
+          <li style="margin:4px 0"><strong>Duree :</strong> affichee en secondes dans le chip</li>
+          <li style="margin:4px 0"><strong>Bouton &#9654; :</strong> lire le clip</li>
+          <li style="margin:4px 0"><strong>Bouton &#x2715; :</strong> supprimer le clip</li>
+        </ul>
+      </div>
+      <div class="warn-box">
+        <strong>Note :</strong> La waveform peut apparaitre vide a la premiere ouverture d'un projet sauvegarde. Elle s'affiche correctement apres la deuxieme ouverture (decode audio asynchrone).
+      </div>
+    </section>
+
+    <!-- 6 - MEMOS TEXTE -->
+    <section class="section" id="s6">
+      <h2><span class="section-num">6</span> Memos texte</h2>
+      <div class="card">
+        <ol class="steps">
+          <li>Dans la palette Blocs, reperer <strong>&#128221; Memo projet</strong></li>
+          <li>Le glisser-deposer sur la piste Memos dans la timeline</li>
+          <li>Le chip s'ouvre avec un fond parchemin et une zone de texte</li>
+          <li>Cliquer directement dans le chip pour saisir ou modifier le texte</li>
+        </ol>
+      </div>
+      <div class="tip">
+        <strong>Ideal pour :</strong> notes d'arrangement, paroles en cours, references d'accords, tempo, tonalite...
+      </div>
+    </section>
+
+    <!-- 7 - FRETBOARD -->
+    <section class="section" id="s7">
+      <h2><span class="section-num">7</span> Fretboard</h2>
+      <div class="card">
+        <p style="font-size:14px;color:var(--text2);margin-bottom:10px">La piste Fretboard affiche des diagrammes d'accords de guitare en vue standard :</p>
+        <ul style="padding-left:18px;font-size:14px;color:var(--text2)">
+          <li style="margin:4px 0"><strong>Orientation :</strong> cordes de haut en bas : e (mi aigu) B G D A E (mi grave)</li>
+          <li style="margin:4px 0"><strong>Cases :</strong> de gauche (case 1) a droite (cases superieures)</li>
+          <li style="margin:4px 0"><strong>Placer un doigt :</strong> cliquer sur l'intersection corde/case</li>
+          <li style="margin:4px 0"><strong>Retirer un doigt :</strong> re-cliquer sur le point existant</li>
+          <li style="margin:4px 0"><strong>Agrandir le chip :</strong> redimensionner le bloc (poignee droite) pour voir plus de cases</li>
+          <li style="margin:4px 0"><strong>Nom de l'accord :</strong> affiche en haut du chip, editable</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 8 - RACCOURCIS -->
+    <section class="section" id="s8">
+      <h2><span class="section-num">8</span> Raccourcis clavier</h2>
+      <div class="card" style="padding:0;overflow:hidden">
+        <table class="shortcuts">
+          <thead>
+            <tr><th>Raccourci</th><th>Action</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><kbd>Cmd+S</kbd></td><td>Sauvegarder le projet (Electron) / Exporter JSON (navigateur)</td></tr>
+            <tr><td><kbd>Cmd+O</kbd></td><td>Ouvrir un projet .bmb (Electron) / Import JSON (navigateur)</td></tr>
+            <tr><td><kbd>Cmd+Z</kbd></td><td>Annuler (60 niveaux)</td></tr>
+            <tr><td><kbd>Cmd+Shift+Z</kbd></td><td>Retablir</td></tr>
+            <tr><td><kbd>Suppr</kbd> / <kbd>Backspace</kbd></td><td>Supprimer le bloc selectionne</td></tr>
+            <tr><td><kbd>Echap</kbd></td><td>Deselectionner / fermer le dialog ouvert</td></tr>
+            <tr>
+              <td><kbd>Ctrl+Clic</kbd> (Staff)</td>
+              <td>Selectionner plusieurs notes</td>
+            </tr>
+            <tr>
+              <td><kbd>&#8593;</kbd> <kbd>&#8595;</kbd> <kbd>&#8592;</kbd> <kbd>&#8594;</kbd></td>
+              <td>Naviguer entre les notes (piste Staff)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="tip">
+        <strong>Mac :</strong> Les raccourcis utilisent <kbd>Cmd</kbd>. Sur Windows/Linux en mode navigateur, remplacer par <kbd>Ctrl</kbd>.
+      </div>
+    </section>
+
+    <!-- 9 - RAILROAD -->
+    <section class="section" id="s9">
+      <h2><span class="section-num">9</span> Vue Railroad &#128650;</h2>
+      <div class="card">
+        <p style="font-size:14px;color:var(--text2);margin-bottom:10px">
+          La vue Railroad est une representation lineaire et epuree de votre structure, optimisee pour l'impression ou la presentation sur scene.
+        </p>
+        <ul style="padding-left:18px;font-size:14px;color:var(--text2)">
+          <li style="margin:4px 0">Cliquer le bouton <strong>&#128650; Railroad</strong> dans le header pour activer la vue</li>
+          <li style="margin:4px 0">Seules les pistes de <strong>structure et sous-pistes</strong> sont affichees</li>
+          <li style="margin:4px 0">Les pistes techniques (Live Memo, Memos) sont exclues</li>
+          <li style="margin:4px 0">La vue est imprimable via <kbd>Cmd+P</kbd></li>
+          <li style="margin:4px 0">Cliquer a nouveau sur Railroad pour revenir a la vue normale</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 10 - COLLAPSE -->
+    <section class="section" id="s10">
+      <h2><span class="section-num">10</span> Collapse des en-tetes</h2>
+      <div class="card">
+        <p style="font-size:14px;color:var(--text2);margin-bottom:10px">
+          Pour maximiser l'espace de la timeline, les labels de piste peuvent etre collapses en mode icone.
+        </p>
+        <ul style="padding-left:18px;font-size:14px;color:var(--text2)">
+          <li style="margin:4px 0">Cliquer le bouton <strong>&#9671;</strong> dans le coin du ruler (en haut a gauche de la timeline)</li>
+          <li style="margin:4px 0">Les en-tetes passent de 220px a 36px (icone seule visible)</li>
+          <li style="margin:4px 0">Cliquer <strong>&#9670;</strong> pour revenir a la vue complete</li>
+          <li style="margin:4px 0">Inspiré du comportement Logic Pro</li>
+        </ul>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer>
+  BertinoMusicBlocs v1.5 &mdash; Guide d'utilisation &mdash; 2026-05-19
+</footer>
+
+</body>
+</html>
