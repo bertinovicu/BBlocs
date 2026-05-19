@@ -819,9 +819,9 @@
     .track-row.is-fretboard .track-label  { align-items: flex-start; padding-top: 10px; }
 
     /* ── LIVE MEMO track ── */
-    .track-row.is-live-memo { min-height: 96px; }
+    .track-row.is-live-memo { min-height: 128px; }
     .track-row.is-live-memo .track-blocks {
-      min-height: 96px;
+      min-height: 128px;
       display: flex;
       flex-direction: column;
       padding: 4px 0;
@@ -829,11 +829,50 @@
     }
     .track-row.is-live-memo .track-label { align-items: flex-start; padding-top: 10px; }
 
+    /* ── MEMOS track ── */
+    .track-row.is-memos { min-height: 84px; }
+    .track-row.is-memos .track-blocks { min-height: 84px; }
+    .track-row.is-memos .track-label  { align-items: flex-start; padding-top: 10px; }
+
+    /* Memo-text chip */
+    .memo-text-chip {
+      position: absolute;
+      min-height: 72px;
+      top: 2px;
+      display: flex !important;
+      flex-direction: column !important;
+      background: #f5f0e8;
+      border: 1.5px solid #d4c9a8;
+      border-radius: 4px;
+      overflow: hidden;
+      cursor: default;
+    }
+    .memo-text-chip .bchip-top {
+      background: #e8dfc8;
+      border-bottom: 1px solid #d4c9a8;
+    }
+    .memo-text-chip .bchip-mute { color: #78716c; }
+    .memo-text-chip .bchip-del  { color: #78716c; }
+    .memo-text-chip textarea {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      resize: none;
+      padding: 4px 8px;
+      font-size: 10px;
+      font-family: 'Space Mono', monospace;
+      color: #1c1917;
+      line-height: 1.5;
+      cursor: text;
+    }
+    .memo-text-chip textarea::placeholder { color: #a8a29e; }
+
     /* Lane A / B */
     .memo-lane {
       display: flex;
       align-items: stretch;
-      height: 40px;
+      height: 58px;
       width: 100%;
     }
 
@@ -892,32 +931,62 @@
     /* Clip chip */
     .memo-chip {
       position: absolute;
-      height: 34px;
+      height: 52px;
       top: 3px;
-      background: linear-gradient(135deg, #1e3a5f 0%, #0f2744 100%);
-      border: 1.5px solid rgba(96,165,250,0.4);
-      border-radius: 5px;
-      display: flex; align-items: center; gap: 5px;
-      padding: 0 8px;
-      color: rgba(255,255,255,0.9);
-      font-size: 11px; font-family: 'Space Mono', monospace;
-      cursor: default; overflow: hidden; user-select: none;
+      background: linear-gradient(160deg, #1a3558 0%, #0c1f36 100%);
+      border: 1.5px solid rgba(96,165,250,0.35);
+      border-radius: 6px;
+      display: flex; flex-direction: column;
+      overflow: hidden; user-select: none;
       transition: border-color 0.15s;
-      min-width: 64px;
+      min-width: 100px;
     }
-    .memo-chip:hover  { border-color: rgba(96,165,250,0.8); }
-    .memo-chip.playing{ border-color: #4ade80; }
+    .memo-chip:hover  { border-color: rgba(96,165,250,0.75); }
+    .memo-chip.playing{ border-color: #4ade80; box-shadow: 0 0 8px rgba(74,222,128,0.3); }
 
-    .memo-chip-wave { font-size: 13px; opacity: 0.65; flex-shrink: 0; }
-    .memo-chip-dur  { font-size: 10px; opacity: 0.9; flex: 1; white-space: nowrap; }
+    /* Waveform area */
+    .memo-chip-wave-area {
+      flex: 1;
+      padding: 3px 6px 0;
+      position: relative;
+      overflow: hidden;
+    }
+    .memo-chip-wave-area svg {
+      display: block;
+      width: 100%; height: 100%;
+    }
+
+    /* Bottom bar : name input + duration + buttons */
+    .memo-chip-bar {
+      display: flex; align-items: center; gap: 4px;
+      padding: 2px 5px;
+      background: rgba(0,0,0,0.25);
+      height: 20px;
+      flex-shrink: 0;
+    }
+    .memo-chip-name {
+      flex: 1;
+      background: none; border: none; outline: none;
+      color: rgba(255,255,255,0.85);
+      font-size: 9px; font-family: 'Space Mono', monospace;
+      min-width: 0;
+      cursor: text;
+    }
+    .memo-chip-name::placeholder { color: rgba(255,255,255,0.3); }
+    .memo-chip-dur {
+      font-size: 9px; font-family: 'Space Mono', monospace;
+      color: rgba(96,165,250,0.85);
+      flex-shrink: 0; white-space: nowrap;
+    }
     .memo-chip-play, .memo-chip-del {
       background: none; border: none;
-      color: rgba(255,255,255,0.55); font-size: 10px;
-      cursor: pointer; padding: 1px 3px; border-radius: 3px;
+      font-size: 9px; cursor: pointer;
+      padding: 1px 2px; border-radius: 2px;
       transition: color 0.12s, background 0.12s; flex-shrink: 0;
+      color: rgba(255,255,255,0.5);
     }
-    .memo-chip-play:hover { color: #4ade80; background: rgba(74,222,128,0.12); }
-    .memo-chip-del:hover  { color: #f87171; background: rgba(248,113,113,0.12); }
+    .memo-chip-play:hover { color: #4ade80; }
+    .memo-chip-del:hover  { color: #f87171; }
     .memo-chip-play.active { color: #4ade80; }
 
     /* Fretboard chip — horizontal 3-column layout */
@@ -1993,6 +2062,7 @@
     on:   { label:'ON',   icon:'⚡', color:'#0369a1' },
     stop: { label:'STOP', icon:'■', color:'#1c1c28' },
     'memo-clip': { label:'Mémo', icon:'🎙', color:'#0f2744' },
+    'memo-text':  { label:'Mémo',   icon:'📝', color:'#1c1917' },
   }
 
   // Subset rendered in the ACTION palette section
@@ -2018,8 +2088,9 @@
     fretboard: { icon:'🎸', badge:'FRET',      name:'Fretboard',      defaultName:'Fretboard',  group:'free' },
     staff:     { icon:'🎼', badge:'STAFF',     name:'Staff',          defaultName:'Staff',      group:'free' },
     'live-memo': { icon:'🎙', badge:'MEMO', name:'Live Memo', defaultName:'Live Memo', group:'free' },
+    'memos':     { icon:'📝', badge:'MÉMOS',   name:'Mémos',          defaultName:'Mémos',      group:'free' },
   }
-  const FREE_TRACK_TYPES = new Set(['lyrics','fretboard','staff','live-memo'])
+  const FREE_TRACK_TYPES = new Set(['lyrics','fretboard','staff','live-memo','memos'])
 
   // Major scale degrees (roman numeral + color)
   const SCALE_DEGREES = [
@@ -2449,6 +2520,7 @@
     if (track.type==='lyrics')    row.classList.add('is-lyrics')
     if (track.type==='fretboard') row.classList.add('is-fretboard')
     if (track.type==='live-memo') row.classList.add('is-live-memo')
+    if (track.type==='memos')     row.classList.add('is-memos')
     if (track.type==='staff') {
       row.classList.add('is-staff')
       if (_staffPaletteMode === 'select') row.classList.add('staff-select-mode')
@@ -2934,11 +3006,25 @@
     const chip = el('div', 'memo-chip')
     chip.dataset.blockId = block.id
     chip.style.left  = ((block.measure - 1) * MEASURE_WIDTH) + 'px'
-    chip.style.width = Math.max(60, block.measures * MEASURE_WIDTH - 4) + 'px'
+    chip.style.width = Math.max(100, block.measures * MEASURE_WIDTH - 4) + 'px'
 
-    const wave = el('span', 'memo-chip-wave', '≋')
-    const dur  = el('span', 'memo-chip-dur',
-      block.duration ? fmtDuration(block.duration) : '…')
+    // ── Waveform area ──
+    const waveArea = el('div', 'memo-chip-wave-area')
+    const svg = drawMemoWaveform(block.waveformData)
+    waveArea.appendChild(svg)
+    chip.appendChild(waveArea)
+
+    // ── Bottom bar : name input | duration | ▶ | ✕ ──
+    const bar = el('div', 'memo-chip-bar')
+
+    const nameInput = el('input', 'memo-chip-name')
+    nameInput.type = 'text'
+    nameInput.value = block.name || ''
+    nameInput.placeholder = 'Nom…'
+    nameInput.addEventListener('click',  e => e.stopPropagation())
+    nameInput.addEventListener('change', () => { block.name = nameInput.value })
+
+    const dur = el('span', 'memo-chip-dur', block.duration ? fmtDuration(block.duration) : '…')
 
     const playBtn = el('button', 'memo-chip-play', '▶')
     playBtn.title = 'Lire'
@@ -2948,11 +3034,109 @@
     delBtn.title = 'Supprimer'
     delBtn.addEventListener('click', e => { e.stopPropagation(); deleteMemoBlock(block.id) })
 
-    chip.appendChild(wave)
-    chip.appendChild(dur)
-    chip.appendChild(playBtn)
-    chip.appendChild(delBtn)
+    bar.appendChild(nameInput)
+    bar.appendChild(dur)
+    bar.appendChild(playBtn)
+    bar.appendChild(delBtn)
+    chip.appendChild(bar)
 
+    return chip
+  }
+
+  function drawMemoWaveform(data) {
+    const NS = 'http://www.w3.org/2000/svg'
+    const svg = document.createElementNS(NS, 'svg')
+    svg.setAttribute('preserveAspectRatio', 'none')
+    svg.setAttribute('viewBox', '0 0 100 20')
+
+    if (!data || !data.length) {
+      // Placeholder: flat dashed line
+      const line = document.createElementNS(NS, 'line')
+      line.setAttribute('x1','0'); line.setAttribute('y1','10')
+      line.setAttribute('x2','100'); line.setAttribute('y2','10')
+      line.setAttribute('stroke','rgba(96,165,250,0.2)')
+      line.setAttribute('stroke-width','0.8')
+      line.setAttribute('stroke-dasharray','3 2')
+      svg.appendChild(line)
+      return svg
+    }
+
+    const mid = 10, amp = 8
+    const pts = data.length
+    const step = 100 / pts
+
+    // Upper path
+    let dU = `M0,${mid}`
+    let dL = `M0,${mid}`
+    data.forEach((v, i) => {
+      const x = (i + 0.5) * step
+      const h = v * amp
+      dU += ` L${x.toFixed(1)},${(mid - h).toFixed(1)}`
+      dL += ` L${x.toFixed(1)},${(mid + h).toFixed(1)}`
+    })
+
+    const pathU = document.createElementNS(NS, 'path')
+    pathU.setAttribute('d', dU)
+    pathU.setAttribute('stroke', 'rgba(96,165,250,0.85)')
+    pathU.setAttribute('stroke-width', '0.8')
+    pathU.setAttribute('fill', 'none')
+
+    const pathL = document.createElementNS(NS, 'path')
+    pathL.setAttribute('d', dL)
+    pathL.setAttribute('stroke', 'rgba(96,165,250,0.5)')
+    pathL.setAttribute('stroke-width', '0.8')
+    pathL.setAttribute('fill', 'none')
+
+    // Fill between
+    const dFill = dU + ` L${(pts * step).toFixed(1)},${mid}` + dL.slice(1).split('L').reverse().join('L').replace(/^/, ' L') + ' Z'
+    const fill = document.createElementNS(NS, 'path')
+    fill.setAttribute('d', dU + ` L100,${mid} ` + dL.slice(1).split(' ').reverse().join(' ') + ' Z')
+    fill.setAttribute('fill', 'rgba(96,165,250,0.1)')
+    fill.setAttribute('stroke', 'none')
+
+    svg.appendChild(fill)
+    svg.appendChild(pathU)
+    svg.appendChild(pathL)
+    return svg
+  }
+
+  function buildMemoTextChip(block) {
+    const chip = el('div', 'block-chip memo-text-chip')
+    chip.dataset.blockId = block.id
+    chip.draggable = true
+    chip.style.left  = ((block.measure - 1) * MEASURE_WIDTH) + 'px'
+    chip.style.width = (block.measures * MEASURE_WIDTH - 4) + 'px'
+
+    const muteLabel = block.muted ? '🔇 MUTED' : '📝'
+    chip.innerHTML = `
+      <div class="bchip-top">
+        <button class="bchip-mute" title="Mute">${muteLabel}</button>
+        <button class="bchip-del"  title="Supprimer">✕</button>
+      </div>
+    `
+    const ta = document.createElement('textarea')
+    ta.value       = block.notes || ''
+    ta.placeholder = 'Notes, idées, paroles…'
+    ta.rows = 3
+    ta.addEventListener('click',  e => e.stopPropagation())
+    ta.addEventListener('change', () => { block.notes = ta.value })
+    ta.addEventListener('input',  () => { block.notes = ta.value })
+    chip.appendChild(ta)
+
+    chip.querySelector('.bchip-mute').addEventListener('click', e => { e.stopPropagation(); toggleMute(block.id) })
+    chip.querySelector('.bchip-del').addEventListener('click',  e => { e.stopPropagation(); quickDeleteBlock(block.id) })
+    chip.addEventListener('dragstart', e => {
+      _dragBlockId = block.id; _chipDragging = true
+      e.dataTransfer.effectAllowed = 'move'
+      e.dataTransfer.setData('application/block-id', block.id)
+      e.dataTransfer.setData('text/plain', '')
+      chip.classList.add('dragging')
+    })
+    chip.addEventListener('dragend', () => {
+      chip.classList.remove('dragging'); _dragBlockId = null
+      setTimeout(() => { _chipDragging = false }, 0)
+    })
+    chip.appendChild(makeResizeHandle(block))
     return chip
   }
 
@@ -2961,6 +3145,7 @@
     if (track && track.type === 'lyrics')    return buildLyricsChip(block)
     if (track && track.type === 'fretboard') return buildFretboardChip(block)
     if (track && track.type === 'staff')     return buildStaffChip(block)
+    if (track && track.type === 'memos')     return buildMemoTextChip(block)
     const def = BLOCK_DEFS[block.type] || { label: block.type, icon:'◼', color:'#475569' }
     const chip = el('div', 'block-chip')
     chip.dataset.blockId = block.id
@@ -3770,7 +3955,8 @@
     const def = BLOCK_DEFS[type]
     if (!def) return
     const isStaff = type === 'staff-bloc'
-    const defaultMeasures = isStaff ? 1 : 4
+    const isMemoText = type === 'memo-text'
+    const defaultMeasures = isStaff ? 1 : isMemoText ? 4 : 4
 
     // Anti-overlap: find first position that fully fits
     const trackBlocks = S.blocks.filter(b => b.trackId === trackId)
@@ -4213,6 +4399,9 @@ ${rows}
 
     if (!S.tracks.some(t => t.type === 'live-memo'))
       S.tracks.push({ id:'t'+TID++, type:'live-memo', name:'Live Memo' })
+
+    if (!S.tracks.some(t => t.type === 'memos'))
+      S.tracks.push({ id:'t'+TID++, type:'memos', name:'Mémos' })
 
     if (!S.tracks.some(t => t.type === 'structure'))
       S.tracks.unshift({ id:'t'+TID++, type:'structure', name:'Structure' })
