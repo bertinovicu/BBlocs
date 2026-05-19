@@ -692,6 +692,47 @@
       cursor: ew-resize !important;
     }
 
+    /* Staff chip expandé (×2) */
+    .staff-chip.expanded { height: 172px !important; }
+    .track-row.is-staff.has-expanded { min-height: 184px; }
+    .track-row.is-staff.has-expanded .track-blocks { min-height: 184px; }
+
+    /* Bouton expand sur chip Staff */
+    .bchip-expand {
+      position: absolute; left: 3px;
+      background: none; border: none;
+      color: rgba(255,255,255,0.45); font-size: 11px; line-height: 14px;
+      padding: 0 3px; cursor: pointer; opacity: 0;
+      transition: opacity 0.15s, color 0.15s;
+    }
+    .block-chip:hover .bchip-expand { opacity: 1; }
+    .bchip-expand:hover { color: rgba(255,255,255,0.95); }
+    .bchip-expand.active { opacity: 1; color: var(--accent2); }
+
+    /* Bouton play sur chip Staff */
+    .bchip-play {
+      position: absolute; right: 22px;
+      background: none; border: none;
+      color: rgba(255,255,255,0.45); font-size: 10px; line-height: 14px;
+      padding: 0 3px; cursor: pointer; opacity: 0;
+      transition: opacity 0.15s, color 0.15s;
+    }
+    .block-chip:hover .bchip-play { opacity: 1; }
+    .bchip-play:hover { color: #4ade80; }
+    .bchip-play.playing { opacity: 1; color: #4ade80; }
+
+    /* Bouton play sur en-tête de piste Staff */
+    .staff-track-play {
+      width: 22px; height: 22px; border-radius: 50%;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.18);
+      color: rgba(255,255,255,0.65); font-size: 9px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s, color 0.15s; flex-shrink: 0;
+    }
+    .staff-track-play:hover { background: var(--accent); color: #fff; }
+    .staff-track-play.playing { background: #16a34a; color: #fff; }
+
     /* Staff block chip */
     .staff-chip {
       height: 92px !important;
@@ -2288,6 +2329,20 @@
       </div>
     `
 
+    // Play button on Staff track header
+    if (track.type === 'staff') {
+      const playTrackBtn = el('button', 'staff-track-play')
+      playTrackBtn.textContent = '▶'
+      playTrackBtn.title = 'Lire toute la piste Staff'
+      playTrackBtn.draggable = false
+      playTrackBtn.style.pointerEvents = 'auto'
+      playTrackBtn.addEventListener('click', e => {
+        e.stopPropagation()
+        playStaffTrack(track.id, playTrackBtn)
+      })
+      label.querySelector('.track-info').appendChild(playTrackBtn)
+    }
+
     // Track drag-to-reorder
     label.addEventListener('dragstart', e => {
       if (e.target.closest('button')) { e.preventDefault(); return }
@@ -2408,9 +2463,15 @@
         const relY = e.clientY - rect.top
         if (relY < 18) { ghost.style.display = 'none'; return }
 
-        const [letter, oct] = staffYToPitch(relY)
+        // Determine scale of chip under cursor (expanded or not)
+        const hoverMeasure = Math.max(1, Math.floor(relX / MEASURE_WIDTH) + 1)
+        const hoverBlock = S.blocks.find(b =>
+          b.trackId === track.id && b.measure <= hoverMeasure && (b.measure + b.measures - 1) >= hoverMeasure
+        )
+        const hoverScale = (hoverBlock && _expandedStaff.has(hoverBlock.id)) ? 2 : 1
+        const [letter, oct] = staffYToPitch(relY, hoverScale)
         const acc = _spalAcc || ''
-        const trackY = staffPitchToTrackY(letter, oct)   // exact snapped Y
+        const trackY = staffPitchToTrackY(letter, oct, hoverScale)
 
         // Stem direction: up if note is on/below B4 (trackY ≥ 54), down if above
         const stemUp = trackY >= 54
@@ -2604,6 +2665,8 @@
   let _resizing      = null   // { blockId, startX, startMeasures, handle }
   let _selectedNotes  = []     // [{ blockId, tokenIdx }] — multi-sélection
   let _staffPaletteMode = 'draw'  // 'draw' | 'select'
+  const _expandedStaff = new Set()   // IDs de chips Staff agrandis
+  let _audioCtx = null               // Web Audio API context (lazy)
 
   // ── Note selection helpers ───────────────────────────────────
   const _DIATONIC = ['C','D','E','F','G','A','B']
@@ -2629,8 +2692,9 @@
     const HEAD_W = 18 + keySig.count * 6 + 12 + 4
     const chipW  = block.measures * MEASURE_WIDTH - 6
     const MEAS_W = (chipW - HEAD_W) / numMeasures
-    const svgX   = chipOffsetX
-    const svgY   = trackRelY - 18
+    const staffScale = _expandedStaff.has(block.id) ? 2 : 1
+    const svgX = chipOffsetX
+    const svgY = (trackRelY - 18) / staffScale
     const { notes } = parseStaffTokens(block.staffNotes, beatsPerMeasure)
     let best = null, bestDist = 16   // 16px snap radius
     notes.forEach((n, idx) => {
@@ -2846,8 +2910,10 @@
 
   /* ── STAFF CHIP ──────────────────────────────────────────── */
   function buildStaffChip(block) {
-    const def = BLOCK_DEFS[block.type] || { label: block.type, icon:'◼', color:'#475569' }
-    const chip = el('div', 'block-chip staff-chip')
+    const isExpanded = _expandedStaff.has(block.id)
+    const svgH  = isExpanded ? 148 : 74
+    const chip  = el('div', 'block-chip staff-chip')
+    if (isExpanded) chip.classList.add('expanded')
     chip.dataset.blockId = block.id
     chip.draggable = true
     if (block.id === S.selectedBlockId) chip.classList.add('selected')
@@ -2859,14 +2925,31 @@
     const muteLabel = block.muted ? '🔇 MUTED' : '🔇 Mute'
     chip.innerHTML = `
       <div class="bchip-top">
+        <button class="bchip-expand${isExpanded?' active':''}" title="${isExpanded?'Réduire':'Agrandir pour édition'}">${isExpanded?'⤡':'⤢'}</button>
         <button class="bchip-mute" title="Mute">${muteLabel}</button>
+        <button class="bchip-play" title="Lire ce bloc">▶</button>
         <button class="bchip-del" title="Delete">✕</button>
       </div>
     `
     const chipW = block.measures * MEASURE_WIDTH - 6
-    chip.appendChild(buildStaffSVG(block, chipW, 74))
+    chip.appendChild(buildStaffSVG(block, chipW, svgH))
 
+    // Expand toggle
+    chip.querySelector('.bchip-expand').addEventListener('click', e => {
+      e.stopPropagation()
+      if (_expandedStaff.has(block.id)) _expandedStaff.delete(block.id)
+      else _expandedStaff.add(block.id)
+      // Update track row class
+      const row = chip.closest('.track-row')
+      if (row) row.classList.toggle('has-expanded',
+        S.blocks.some(b => b.trackId === block.trackId && _expandedStaff.has(b.id)))
+      render()
+    })
     chip.querySelector('.bchip-mute').addEventListener('click', e => { e.stopPropagation(); toggleMute(block.id) })
+    chip.querySelector('.bchip-play').addEventListener('click', e => {
+      e.stopPropagation()
+      playStaffBlock(block, chip.querySelector('.bchip-play'))
+    })
     chip.querySelector('.bchip-del').addEventListener('click',  e => { e.stopPropagation(); quickDeleteBlock(block.id) })
     chip.addEventListener('dragstart', e => {
       _dragBlockId = block.id; _chipDragging = true
@@ -2882,14 +2965,14 @@
     chip.addEventListener('click', e => {
       if (_chipDragging) return
       if (e.target.closest('.bchip-top')) openBlockDetail(block.id)
-      // else: bubbles to track-blocks click handler → note entry
     })
     chip.appendChild(makeResizeHandle(block))
     return chip
   }
 
   function buildStaffSVG(block, w, h) {
-    const LINE_Y = [14,24,34,44,54]
+    const scale = h / 74              // 1.0 normal, 2.0 expanded
+    const LINE_Y = [14,24,34,44,54].map(y => y * scale)
     const NS = 'http://www.w3.org/2000/svg'
     const svg = document.createElementNS(NS,'svg')
     svg.setAttribute('width',w); svg.setAttribute('height',h)
@@ -2924,14 +3007,14 @@
     LINE_Y.forEach(y => line(0,y,w,y))
 
     // ── Treble clef ──────────────────────────────────────────────
-    const clef = mk('text',{x:1,y:62,'font-size':54,fill:'rgba(255,255,255,0.70)','font-family':'serif'},svg)
+    const clef = mk('text',{x:1,y:62*scale,'font-size':Math.round(54*scale),fill:'rgba(255,255,255,0.70)','font-family':'serif'},svg)
     clef.textContent = '𝄞'
 
     // ── Key signature ─────────────────────────────────────────────
     if (keySig.count > 0) {
       const sym = keySig.type === '#' ? '♯' : '♭'
       keySig.yPos.forEach((y, i) => {
-        const t = mk('text',{x: CLEF_W + i*6 + 3, y: y+4, 'font-size':9,
+        const t = mk('text',{x: CLEF_W + i*6 + 3, y: Math.round(y*scale)+4, 'font-size':9,
           fill:'rgba(255,255,255,0.90)', 'text-anchor':'middle','font-family':'serif'}, svg)
         t.textContent = sym
       })
@@ -2977,26 +3060,26 @@
 
       const cx = HEAD_W + n.measureIdx * MEAS_W
               + (n.beatInMeasure / beatsPerMeasure) * MEAS_W + 10
-      const cy = STAFF_PITCH_Y[n.note] ?? (n.note==='Rest' ? 34 : 36)
+      const cy = (STAFF_PITCH_Y[n.note] ?? (n.note==='Rest' ? 34 : 36)) * scale
       const isRest  = n.note === 'Rest' || n.note === 'r'
       const isSel   = _selectedNotes.some(s => s.blockId === block.id && s.tokenIdx === idx)
       const isTriplet = n.dur === 'qt' || n.dur === 'et'
       const baseDur   = isTriplet ? n.dur.slice(0,-1) : n.dur  // 'q' or 'e'
       const filled  = baseDur !== 'w' && baseDur !== 'h'
       const hasStem = baseDur !== 'w'
-      const stemUp  = cy >= 34
+      const stemUp  = cy >= 34*scale
       const stemX   = stemUp ? cx+5 : cx-5
-      const stemEndY = stemUp ? cy-18 : cy+18
+      const stemEndY = stemUp ? cy-18*scale : cy+18*scale
       const hasFlag = baseDur === 'e' || baseDur === 's' || n.dur === 'et'
       const beamable = (hasFlag || isTriplet) && !isRest
 
       // ── Ledger lines ──
       if (!isRest) {
-        if (cy >= 59) {
+        if (cy >= 59*scale) {
           const bot = LINE_Y[LINE_Y.length-1]
           for (let ly = bot+10; ly <= cy+3; ly+=10) line(cx-7,ly,cx+7,ly,0.55)
         }
-        if (cy <= 9) {
+        if (cy <= 9*scale) {
           const top = LINE_Y[0]
           for (let ly = top-10; ly >= cy-3; ly-=10) line(cx-7,ly,cx+7,ly,0.55)
         }
@@ -3044,27 +3127,28 @@
         }
         // Selection ring
         if (isSel) {
-          mk('ellipse',{cx,cy,rx:8,ry:6.5,transform:`rotate(-15,${cx},${cy})`,
+          mk('ellipse',{cx,cy,rx:8*scale,ry:6.5*scale,transform:`rotate(-15,${cx},${cy})`,
             fill:'none',stroke:'#4ade80','stroke-width':'1.5','stroke-dasharray':'3 2'},svg)
         }
 
         // ── Dot ──
-        if (n.dotted) mk('circle',{cx:cx+8,cy:cy-1,r:1.5,fill:'rgba(255,255,255,0.8)'},svg)
+        if (n.dotted) mk('circle',{cx:cx+8*scale,cy:cy-1,r:1.5,fill:'rgba(255,255,255,0.8)'},svg)
 
         // ── Stem ──
         if (hasStem) line(stemX,cy,stemX,stemEndY,0.95)
 
         // ── Flag helper (filled leaf shape) ──
-        const drawFlag = (fy0, offset) => {
+        const drawFlag = (fy0, vOffset) => {
+          const s = scale
           const d = stemUp
-            ? `M${stemX},${fy0+offset} C${stemX+11},${fy0+offset+1} ${stemX+10},${fy0+offset+8} ${stemX+1},${fy0+offset+11} C${stemX+5},${fy0+offset+6} ${stemX+2},${fy0+offset+2} ${stemX},${fy0+offset} Z`
-            : `M${stemX},${fy0-offset} C${stemX-11},${fy0-offset-1} ${stemX-10},${fy0-offset-8} ${stemX-1},${fy0-offset-11} C${stemX-5},${fy0-offset-6} ${stemX-2},${fy0-offset-2} ${stemX},${fy0-offset} Z`
+            ? `M${stemX},${fy0+vOffset} C${stemX+11},${fy0+vOffset+s} ${stemX+10},${fy0+vOffset+8*s} ${stemX+1},${fy0+vOffset+11*s} C${stemX+5},${fy0+vOffset+6*s} ${stemX+2},${fy0+vOffset+2*s} ${stemX},${fy0+vOffset} Z`
+            : `M${stemX},${fy0-vOffset} C${stemX-11},${fy0-vOffset-s} ${stemX-10},${fy0-vOffset-8*s} ${stemX-1},${fy0-vOffset-11*s} C${stemX-5},${fy0-vOffset-6*s} ${stemX-2},${fy0-vOffset-2*s} ${stemX},${fy0-vOffset} Z`
           mk('path',{d,fill:'rgba(255,255,255,0.95)',stroke:'none'},svg)
         }
         // ── Flags (8th = 1 flag, 16th = 2 flags, et = 1 flag) ──
         if (n.dur==='e'||n.dur==='s'||n.dur==='et') {
           drawFlag(stemEndY, 0)
-          if (n.dur==='s') drawFlag(stemEndY, stemUp ? 7 : -7)
+          if (n.dur==='s') drawFlag(stemEndY, stemUp ? 7*scale : -7*scale)
         }
 
         // ── Beam grouping data (collect for post-pass) ──
@@ -3119,8 +3203,8 @@
     {l:'B',o:4,y:36},{l:'A',o:4,y:41},{l:'G',o:4,y:46},{l:'F',o:4,y:51},{l:'E',o:4,y:56},
     {l:'D',o:4,y:61},{l:'C',o:4,y:66},{l:'B',o:3,y:71},{l:'A',o:3,y:76},{l:'G',o:3,y:81},
   ]
-  function staffYToPitch(relY) {
-    const svgY = relY - 18  // subtract bchip-top height
+  function staffYToPitch(relY, scale = 1) {
+    const svgY = (relY - 18) / scale
     let best = _STAFF_PITCH_TABLE[0], bestD = Math.abs(svgY - best.y)
     for (const p of _STAFF_PITCH_TABLE) {
       const d = Math.abs(svgY - p.y)
@@ -3128,9 +3212,9 @@
     }
     return [best.l, best.o]
   }
-  function staffPitchToTrackY(letter, octave) {
+  function staffPitchToTrackY(letter, octave, scale = 1) {
     const key = `${letter}${octave}`
-    return 18 + (STAFF_PITCH_Y[key] ?? 36)
+    return 18 + (STAFF_PITCH_Y[key] ?? 36) * scale
   }
 
   /* ── STAFF NOTE POPUP ────────────────────────────────────── */
@@ -4374,6 +4458,120 @@ ${rows}
 
   function printRailroad() {
     window.print()
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     AUDIO ENGINE — Web Audio API (Staff playback)
+  ═══════════════════════════════════════════════════════════ */
+  function getAudioCtx() {
+    if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)()
+    if (_audioCtx.state === 'suspended') _audioCtx.resume()
+    return _audioCtx
+  }
+
+  function noteToFreq(noteName) {
+    const m = noteName.match(/^([A-G])([#b]?)(\d+)$/)
+    if (!m) return null
+    const ST = {C:0,D:2,E:4,F:5,G:7,A:9,B:11}
+    const s = ST[m[1]] + (m[2]==='#'?1:m[2]==='b'?-1:0)
+    return 440 * Math.pow(2, (s + (parseInt(m[3])+1)*12 - 69) / 12)
+  }
+
+  function _pianoNote(ctx, dest, freq, t0, dur) {
+    if (!freq) return
+    const g = ctx.createGain()
+    g.connect(dest)
+    // Piano-like ADSR
+    const at=0.008, dt=0.07
+    g.gain.setValueAtTime(0, t0)
+    g.gain.linearRampToValueAtTime(0.7,         t0 + at)
+    g.gain.exponentialRampToValueAtTime(0.38,   t0 + at + dt)
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur)
+    // Additive synthesis: fundamental + harmonics
+    const osc = (f, vol, type) => {
+      const o = ctx.createOscillator()
+      const og = ctx.createGain()
+      o.type = type; o.frequency.value = f; og.gain.value = vol
+      o.connect(og); og.connect(g)
+      o.start(t0); o.stop(t0 + dur + 0.08)
+    }
+    osc(freq,       0.55, 'triangle')
+    osc(freq*2,     0.12, 'sine')
+    osc(freq*3,     0.04, 'sine')
+    osc(freq*0.5,   0.06, 'sine')
+  }
+
+  let _playStop = null   // function to cancel current playback
+
+  function playStaffBlock(block, btnEl) {
+    if (_playStop) { _playStop(); _playStop = null }
+    const ctx  = getAudioCtx()
+    const bpm  = parseInt(S.tempo) || 120
+    const spb  = 60 / bpm   // seconds per beat
+    const bpMes = parseInt((S.timeSign||'4/4').split('/')[0]) || 4
+    const { notes } = parseStaffTokens(block.staffNotes, bpMes)
+    if (!notes.length) { toast('Bloc vide', 1200); return }
+
+    const master = ctx.createGain(); master.gain.value = 0.45; master.connect(ctx.destination)
+    const t0 = ctx.currentTime + 0.04
+
+    notes.forEach(n => {
+      if (n.note === 'Rest' || n.note === 'r') return
+      const freq = noteToFreq(n.note)
+      const dur  = Math.max(0.06, n.beats * spb * 0.9)
+      _pianoNote(ctx, master, freq, t0 + n.beatPos * spb, dur)
+    })
+
+    const totalSec = notes.reduce((m,n) => Math.max(m, n.beatPos + n.beats), 0) * spb
+    if (btnEl) { btnEl.classList.add('playing'); btnEl.textContent = '■' }
+    const tid = setTimeout(() => {
+      if (btnEl) { btnEl.classList.remove('playing'); btnEl.textContent = '▶' }
+      _playStop = null
+    }, (totalSec + 0.3) * 1000)
+    _playStop = () => {
+      clearTimeout(tid)
+      master.gain.linearRampToValueAtTime(0.0001, ctx.currentTime + 0.06)
+      if (btnEl) { btnEl.classList.remove('playing'); btnEl.textContent = '▶' }
+    }
+  }
+
+  function playStaffTrack(trackId, btnEl) {
+    if (_playStop) { _playStop(); _playStop = null }
+    const ctx  = getAudioCtx()
+    const bpm  = parseInt(S.tempo) || 120
+    const spb  = 60 / bpm
+    const bpMes = parseInt((S.timeSign||'4/4').split('/')[0]) || 4
+    const blocks = S.blocks.filter(b => b.trackId === trackId)
+      .sort((a,b) => a.measure - b.measure)
+    if (!blocks.length) { toast('Piste vide', 1200); return }
+
+    const master = ctx.createGain(); master.gain.value = 0.45; master.connect(ctx.destination)
+    const t0 = ctx.currentTime + 0.04
+    let totalSec = 0
+
+    blocks.forEach(block => {
+      const blockOff = (block.measure - 1) * bpMes * spb
+      const { notes } = parseStaffTokens(block.staffNotes, bpMes)
+      notes.forEach(n => {
+        if (n.note === 'Rest' || n.note === 'r') return
+        const freq = noteToFreq(n.note)
+        const dur  = Math.max(0.06, n.beats * spb * 0.9)
+        const t    = t0 + blockOff + n.beatPos * spb
+        _pianoNote(ctx, master, freq, t, dur)
+        totalSec = Math.max(totalSec, blockOff + n.beatPos * spb + dur)
+      })
+    })
+
+    if (btnEl) { btnEl.classList.add('playing'); btnEl.textContent = '■' }
+    const tid = setTimeout(() => {
+      if (btnEl) { btnEl.classList.remove('playing'); btnEl.textContent = '▶' }
+      _playStop = null
+    }, (totalSec + 0.3) * 1000)
+    _playStop = () => {
+      clearTimeout(tid)
+      master.gain.linearRampToValueAtTime(0.0001, ctx.currentTime + 0.06)
+      if (btnEl) { btnEl.classList.remove('playing'); btnEl.textContent = '▶' }
+    }
   }
 
   /* ═══════════════════════════════════════════════════════════
