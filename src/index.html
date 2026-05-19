@@ -3853,7 +3853,7 @@
     if (display) display.textContent = staffFormat(block.staffNotes)
   }
 
-  function toggleMute(id) {
+  function toggleMute(id) { pushUndo()
     const block = S.blocks.find(b => b.id === id)
     if (!block) return
     block.muted = !block.muted
@@ -3862,6 +3862,7 @@
   }
 
   function quickDeleteBlock(id) {
+    pushUndo()
     S.blocks = S.blocks.filter(b => b.id !== id)
     if (S.selectedBlockId === id) { S.selectedBlockId = null; closePanel() }
     render()
@@ -3940,6 +3941,7 @@
   }
 
   function removeTrack(id) {
+    pushUndo()
     S.tracks = S.tracks.filter(t => t.id !== id)
     S.blocks = S.blocks.filter(b => b.trackId !== id)
     if (S.selectedBlockId && !S.blocks.find(b => b.id === S.selectedBlockId)) {
@@ -3979,10 +3981,27 @@
   }
 
   function moveTrack(id, dir) {
+    pushUndo()
     const idx = S.tracks.findIndex(t => t.id === id)
-    const newIdx = idx + dir
-    if (newIdx < 0 || newIdx >= S.tracks.length) return
-    const tmp = S.tracks[idx]; S.tracks[idx] = S.tracks[newIdx]; S.tracks[newIdx] = tmp
+    const track = S.tracks[idx]
+    const cfg   = TRACK_CONFIGS[track?.type]
+    const isSub = cfg?.group === 'sub'
+
+    // Pour les sous-pistes : chercher le prochain voisin du même rang
+    if (isSub) {
+      let target = idx + dir
+      while (target >= 0 && target < S.tracks.length) {
+        const nCfg = TRACK_CONFIGS[S.tracks[target]?.type]
+        if (nCfg?.group === 'sub') break
+        target += dir
+      }
+      if (target < 0 || target >= S.tracks.length) return
+      const tmp = S.tracks[idx]; S.tracks[idx] = S.tracks[target]; S.tracks[target] = tmp
+    } else {
+      const newIdx = idx + dir
+      if (newIdx < 0 || newIdx >= S.tracks.length) return
+      const tmp = S.tracks[idx]; S.tracks[idx] = S.tracks[newIdx]; S.tracks[newIdx] = tmp
+    }
     normalizeTrackOrder()
     render()
   }
@@ -3990,7 +4009,7 @@
   /* ═══════════════════════════════════════════════════════════
      BLOCKS CRUD
   ═══════════════════════════════════════════════════════════ */
-  function dropBlock(type, trackId, measure = 1) {
+  function dropBlock(type, trackId, measure = 1) { pushUndo()
     const def = BLOCK_DEFS[type]
     if (!def) return
     const isStaff = type === 'staff-bloc'
@@ -4131,6 +4150,7 @@
   }
 
   function deleteBlock() {
+    pushUndo()
     S.blocks = S.blocks.filter(b => b.id !== S.selectedBlockId)
     S.selectedBlockId = null
     closePanel()
@@ -4382,6 +4402,33 @@ ${rows}
   /* ═══════════════════════════════════════════════════════════
      KEYBOARD SHORTCUTS
   ═══════════════════════════════════════════════════════════ */
+  /* ═══════════════════════════════════════════════════════════
+     UNDO / REDO  (Ctrl+Z / Ctrl+Shift+Z)
+  ═══════════════════════════════════════════════════════════ */
+  const _undoStack = []
+  const _redoStack = []
+  const MAX_UNDO   = 60
+
+  function pushUndo() {
+    _undoStack.push(JSON.stringify(S))
+    if (_undoStack.length > MAX_UNDO) _undoStack.shift()
+    _redoStack.length = 0   // toute nouvelle action vide le redo
+  }
+
+  function undo() {
+    if (!_undoStack.length) { toast('Rien à annuler', 900); return }
+    _redoStack.push(JSON.stringify(S))
+    loadState(JSON.parse(_undoStack.pop()))
+    toast('↩ Annulé', 700)
+  }
+
+  function redo() {
+    if (!_redoStack.length) { toast('Rien à rétablir', 900); return }
+    _undoStack.push(JSON.stringify(S))
+    loadState(JSON.parse(_redoStack.pop()))
+    toast('↪ Rétabli', 700)
+  }
+
   function bindKeys() {
     document.addEventListener('click', e => {
       const popup = $('staff-popup')
@@ -4394,6 +4441,8 @@ ${rows}
       if (mod && e.key === 's') { e.preventDefault(); saveProject() }
       if (mod && e.key === 'o') { e.preventDefault(); openProject() }
       if (mod && e.key === 'n') { e.preventDefault(); newProject() }
+      if (mod && e.key === 'z' && !e.shiftKey) { e.preventDefault(); undo(); return }
+      if (mod && (e.key === 'Z' || (e.key === 'z' && e.shiftKey))) { e.preventDefault(); redo(); return }
       if (e.key === 'Escape') {
         if (_selectedNotes.length) { _selectedNotes = []; render(); return }
         if ($('staff-popup').classList.contains('open'))          hideStaffPopup()
