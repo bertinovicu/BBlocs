@@ -4176,11 +4176,11 @@ ${rows}
      DEFAULT TRACKS
   ═══════════════════════════════════════════════════════════ */
   function ensureDefaultTracks() {
-    // Build order: 1.Lyrics  2.Fretboard  3.Structure  …sub-tracks…  4.Staff
+    // Build order: 1.Lyrics  2.Fretboard  3.Structure  …sub-tracks…  4.Live Memo
     // Only insert if not already present (forward-compat with saved files)
 
-    if (!S.tracks.some(t => t.type === 'staff'))
-      S.tracks.push({ id:'t'+TID++, type:'staff', name:'Staff' })
+    if (!S.tracks.some(t => t.type === 'live-memo'))
+      S.tracks.push({ id:'t'+TID++, type:'live-memo', name:'Live Memo' })
 
     if (!S.tracks.some(t => t.type === 'structure'))
       S.tracks.unshift({ id:'t'+TID++, type:'structure', name:'Structure' })
