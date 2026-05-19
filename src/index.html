@@ -2569,12 +2569,16 @@
           const existIdx = _selectedNotes.findIndex(s => s.blockId === block.id && s.tokenIdx === tokenIdx)
           if (existIdx >= 0) {
             _selectedNotes.splice(existIdx, 1)
+            toast('✗ Désélectionné', 800)
           } else {
-            _selectedNotes.push({ blockId: block.id, tokenIdx })
+            _selectedNotes = [{ blockId: block.id, tokenIdx }]  // single select
+            const tokens = (block.staffNotes||'').trim().split(/\s+/).filter(Boolean)
+            const t = tokens[tokenIdx] || ''
+            const noteName = t.split(':')[1] || '?'
+            toast(`♩ ${noteName} sélectionné — ↑↓ pitch  ←→ déplacer`, 1800)
           }
-        } else {
-          _selectedNotes = []
         }
+        // Note: ne pas vider _selectedNotes si clic manqué (garde la sélection active)
         refreshStaffChip(block)
       })
 
@@ -2594,13 +2598,6 @@
         let block = S.blocks.find(b =>
           b.trackId === track.id && b.measure <= measure && (b.measure + b.measures - 1) >= measure
         )
-
-        // Deselect on normal click
-        if (_selectedNotes.length) {
-          const affectedIds = [...new Set(_selectedNotes.map(s => s.blockId))]
-          _selectedNotes = []
-          affectedIds.forEach(bid => { const sb = S.blocks.find(b => b.id === bid); if (sb) refreshStaffChip(sb) })
-        }
 
         if (!block) {
           block = { id:'b'+BID++, type:'staff-bloc', trackId:track.id,
@@ -3140,8 +3137,10 @@
       if (filled) ell.setAttribute('fill', noteColor)
       else { ell.setAttribute('fill','none'); ell.setAttribute('stroke',noteColor); ell.setAttribute('stroke-width','1.5') }
 
-      if (isSel) mk('ellipse',{cx,cy,rx:8,ry:6.5,transform:`rotate(-15,${cx},${cy})`,
-        fill:'none',stroke:'#4ade80','stroke-width':'1.5','stroke-dasharray':'3 2'},svg)
+      // Selection ring — scaled + more visible
+      if (isSel) mk('ellipse',{cx,cy,rx:Math.round(9*scale),ry:Math.round(7*scale),
+        transform:`rotate(-15,${cx},${cy})`,fill:'none',stroke:'#4ade80',
+        'stroke-width':'2','stroke-dasharray':`${Math.round(4*scale)} ${Math.round(2*scale)}`},svg)
 
       // Dot
       if (n.dotted) mk('circle',{cx:cx+8,cy:cy-1,r:1.5,fill:'rgba(255,255,255,0.9)'},svg)
