@@ -2688,7 +2688,6 @@
   }
 
   function findNoteAtPos(block, chipOffsetX, trackRelY) {
-    // chipOffsetX: X relative to chip left edge; trackRelY: Y in track-blocks
     const beatsPerMeasure = parseInt((S.timeSign||'4/4').split('/')[0]) || 4
     const numMeasures = Math.max(1, Math.min(4, block.measures || 1))
     const keySig = keySigInfo(S.key || 'C')
@@ -2696,18 +2695,18 @@
     const chipW  = block.measures * MEASURE_WIDTH - 6
     const MEAS_W = (chipW - HEAD_W) / numMeasures
     const staffScale = _expandedStaff.has(block.id) ? 2 : 1
-    const svgX = chipOffsetX
+    const svgX = chipOffsetX - 2   // correction border chip 2px
     const svgY = (trackRelY - 18) / staffScale
     const { notes } = parseStaffTokens(block.staffNotes, beatsPerMeasure)
-    let best = null, bestDist = 16   // 16px snap radius
+    let best = null, bestDist = 24   // rayon élargi à 24px
     notes.forEach((n, idx) => {
-      if (n.measureIdx >= numMeasures) return
+      if (n.measureIdx >= numMeasures || n.note === 'Rest') return
       const cx = HEAD_W + n.measureIdx * MEAS_W + (n.beatInMeasure / beatsPerMeasure) * MEAS_W + 10
       const cy = STAFF_PITCH_Y[n.note] ?? 36
       const d  = Math.sqrt((svgX - cx) ** 2 + (svgY - cy) ** 2)
       if (d < bestDist) { bestDist = d; best = idx }
     })
-    return best  // tokenIdx or null
+    return best
   }
 
   function buildBlockChip(block, track) {
@@ -3045,150 +3044,162 @@
     const { notes, totalBeats } = parseStaffTokens(block.staffNotes, beatsPerMeasure)
     const capacity = numMeasures * beatsPerMeasure
 
-    // ── Overflow indicator ────────────────────────────────────────
     if (totalBeats > capacity + 0.01) {
       const warn = mk('text',{x:w-4,y:10,'font-size':9,fill:'rgba(255,180,50,0.9)',
         'text-anchor':'end','font-family':'sans-serif'},svg)
       warn.textContent = '!'
     }
 
-    // ── Render notes ──────────────────────────────────────────────
-    // Collect beam groups (consecutive e/s in same measure)
+    // ══ PASS 1 : layout + beam groups ═════════════════════════════
+    const STEM_LEN = 18 * scale
+    const BEAM_H   = Math.max(3, Math.round(3.5 * scale))
+    const BEAM_GAP = Math.max(2, Math.round(3 * scale))
+
+    const layout = []       // one entry per token
     const beamGroups = []
-    let curGroup = null
+    let curGrp = null
 
     notes.forEach((n, idx) => {
-      if (n.measureIdx >= numMeasures) return   // outside chip
-
-      const cx = HEAD_W + n.measureIdx * MEAS_W
-              + (n.beatInMeasure / beatsPerMeasure) * MEAS_W + 10
-      const cy = (STAFF_PITCH_Y[n.note] ?? (n.note==='Rest' ? 34 : 36)) * scale
-      const isRest  = n.note === 'Rest' || n.note === 'r'
-      const isSel   = _selectedNotes.some(s => s.blockId === block.id && s.tokenIdx === idx)
+      if (n.measureIdx >= numMeasures) { layout.push(null); return }
+      const cx  = HEAD_W + n.measureIdx * MEAS_W + (n.beatInMeasure / beatsPerMeasure) * MEAS_W + 10
+      const cy  = (STAFF_PITCH_Y[n.note] ?? (n.note === 'Rest' ? 34 : 36)) * scale
+      const isRest    = n.note === 'Rest' || n.note === 'r'
       const isTriplet = n.dur === 'qt' || n.dur === 'et'
-      const baseDur   = isTriplet ? n.dur.slice(0,-1) : n.dur  // 'q' or 'e'
-      const filled  = baseDur !== 'w' && baseDur !== 'h'
-      const hasStem = baseDur !== 'w'
-      const stemUp  = cy >= 34*scale
-      const stemX   = stemUp ? cx+5 : cx-5
-      const stemEndY = stemUp ? cy-18*scale : cy+18*scale
-      const hasFlag = baseDur === 'e' || baseDur === 's' || n.dur === 'et'
-      const beamable = (hasFlag || isTriplet) && !isRest
+      const baseDur   = isTriplet ? n.dur.slice(0, -1) : n.dur
+      const beamable  = !isRest && (baseDur === 'e' || baseDur === 's')
+      const isSel     = _selectedNotes.some(s => s.blockId === block.id && s.tokenIdx === idx)
 
-      // ── Ledger lines ──
+      const entry = { n, idx, cx, cy, isRest, baseDur, beamable, isTriplet, isSel, inGroup: false,
+                      stemUp: cy >= 34 * scale, stemX: 0, stemEndY: 0 }
+      layout.push(entry)
+
+      if (beamable) {
+        const beatGrp = Math.floor(n.beatInMeasure)
+        if (!curGrp || curGrp.measureIdx !== n.measureIdx || curGrp.beatGrp !== beatGrp || curGrp.isTriplet !== isTriplet) {
+          curGrp = { measureIdx: n.measureIdx, beatGrp, isTriplet, entries: [entry] }
+          beamGroups.push(curGrp)
+        } else {
+          curGrp.entries.push(entry)
+        }
+      } else { curGrp = null }
+    })
+
+    // Force uniform stem direction in beam groups with 2+ notes
+    beamGroups.forEach(grp => {
+      if (grp.entries.length < 2) return
+      const avgCy = grp.entries.reduce((s, e) => s + e.cy, 0) / grp.entries.length
+      const up = avgCy >= 34 * scale
+      grp.entries.forEach(e => { e.inGroup = true; e.stemUp = up })
+    })
+
+    // Finalise stemX / stemEndY
+    layout.forEach(e => {
+      if (!e) return
+      e.stemX    = e.stemUp ? e.cx + 5 : e.cx - 5
+      e.stemEndY = e.stemUp ? e.cy - STEM_LEN : e.cy + STEM_LEN
+    })
+
+    // ══ PASS 2 : draw notes ════════════════════════════════════════
+    layout.forEach(e => {
+      if (!e) return
+      const { n, cx, cy, isRest, baseDur, isSel, inGroup, stemUp, stemX, stemEndY } = e
+      const filled = baseDur !== 'w' && baseDur !== 'h'
+
+      // Ledger lines
       if (!isRest) {
-        if (cy >= 59*scale) {
-          const bot = LINE_Y[LINE_Y.length-1]
-          for (let ly = bot+10; ly <= cy+3; ly+=10) line(cx-7,ly,cx+7,ly,0.55)
-        }
-        if (cy <= 9*scale) {
-          const top = LINE_Y[0]
-          for (let ly = top-10; ly >= cy-3; ly-=10) line(cx-7,ly,cx+7,ly,0.55)
-        }
+        const bot = LINE_Y[LINE_Y.length - 1]
+        const top = LINE_Y[0]
+        if (cy >= bot + 5) for (let ly = bot + 10*scale; ly <= cy + 3; ly += 10*scale) line(cx-7,ly,cx+7,ly,0.65)
+        if (cy <= top - 5) for (let ly = top - 10*scale; ly >= cy - 3; ly -= 10*scale) line(cx-7,ly,cx+7,ly,0.65)
       }
 
       if (isRest) {
-        // ── Rests ──
-        if (n.dur === 'w') {
-          // Whole rest: filled rect under line 2
-          mk('rect',{x:cx-6,y:LINE_Y[1],width:12,height:5,
-            fill:'rgba(255,255,255,0.8)'},svg)
-        } else if (n.dur === 'h') {
-          // Half rest: hollow rect on line 3
-          mk('rect',{x:cx-6,y:LINE_Y[2]-5,width:12,height:5,
-            fill:'none',stroke:'rgba(255,255,255,0.8)','stroke-width':1.2},svg)
+        if (baseDur === 'w') {
+          mk('rect',{x:cx-6,y:LINE_Y[1],width:12,height:5,fill:'rgba(255,255,255,0.9)'},svg)
+        } else if (baseDur === 'h') {
+          mk('rect',{x:cx-6,y:LINE_Y[2]-5,width:12,height:5,fill:'none',stroke:'rgba(255,255,255,0.9)','stroke-width':1.2},svg)
         } else {
-          // Quarter/8th/16th rest: Z-shape
-          const zx=cx-4,zy=LINE_Y[1]+2
-          const rp = mk('path',{d:`M${zx},${zy} L${zx+8},${zy} L${zx},${zy+8} L${zx+8},${zy+8}`,
-            stroke:'rgba(255,255,255,0.8)','stroke-width':1.5,fill:'none','stroke-linecap':'round'},svg)
-          if (n.dur==='e'||n.dur==='s') {
-            const fp = mk('path',{d:`M${cx+4},${zy-2} Q${cx+10},${zy+2} ${cx+4},${zy+7}`,
-              stroke:'rgba(255,255,255,0.8)','stroke-width':1.5,fill:'none'},svg)
-          }
+          const zx=cx-4, zy=LINE_Y[1]+2
+          mk('path',{d:`M${zx},${zy} L${zx+8},${zy} L${zx},${zy+8} L${zx+8},${zy+8}`,
+            stroke:'rgba(255,255,255,0.9)','stroke-width':1.5,fill:'none','stroke-linecap':'round'},svg)
         }
-      } else {
-        // ── Accidental ──
-        const accMatch = n.note.match(/[#b]/)
-        if (accMatch) {
-          const accSym = accMatch[0]==='#' ? '♯' : '♭'
-          const at = mk('text',{x:cx-9,y:cy+4,'font-size':9,fill:'rgba(255,255,255,0.8)',
-            'text-anchor':'middle','font-family':'serif'},svg)
-          at.textContent = accSym
-        }
+        return
+      }
 
-        // ── Notehead ──
-        const noteColor = isSel ? '#4ade80' : 'rgba(255,255,255,0.95)'
-        const ell = mk('ellipse',{cx,cy,rx:5,ry:3.5,transform:`rotate(-15,${cx},${cy})`},svg)
-        if (filled) {
-          ell.setAttribute('fill', noteColor)
-        } else {
-          ell.setAttribute('fill','none')
-          ell.setAttribute('stroke', noteColor)
-          ell.setAttribute('stroke-width','1.5')
-        }
-        // Selection ring
-        if (isSel) {
-          mk('ellipse',{cx,cy,rx:8*scale,ry:6.5*scale,transform:`rotate(-15,${cx},${cy})`,
-            fill:'none',stroke:'#4ade80','stroke-width':'1.5','stroke-dasharray':'3 2'},svg)
-        }
+      // Accidental
+      const accM = n.note.match(/[#b]/)
+      if (accM) {
+        const at = mk('text',{x:cx-9,y:cy+4,'font-size':9,fill:'rgba(255,255,255,0.9)',
+          'text-anchor':'middle','font-family':'serif'},svg)
+        at.textContent = accM[0]==='#' ? '♯' : '♭'
+      }
 
-        // ── Dot ──
-        if (n.dotted) mk('circle',{cx:cx+8*scale,cy:cy-1,r:1.5,fill:'rgba(255,255,255,0.8)'},svg)
+      // Notehead
+      const noteColor = isSel ? '#4ade80' : 'rgba(255,255,255,0.95)'
+      const ell = mk('ellipse',{cx,cy,rx:5,ry:3.5,transform:`rotate(-15,${cx},${cy})`},svg)
+      if (filled) ell.setAttribute('fill', noteColor)
+      else { ell.setAttribute('fill','none'); ell.setAttribute('stroke',noteColor); ell.setAttribute('stroke-width','1.5') }
 
-        // ── Stem ──
-        if (hasStem) line(stemX,cy,stemX,stemEndY,0.95)
+      if (isSel) mk('ellipse',{cx,cy,rx:8,ry:6.5,transform:`rotate(-15,${cx},${cy})`,
+        fill:'none',stroke:'#4ade80','stroke-width':'1.5','stroke-dasharray':'3 2'},svg)
 
-        // ── Flag helper (filled leaf shape) ──
-        const drawFlag = (fy0, vOffset) => {
+      // Dot
+      if (n.dotted) mk('circle',{cx:cx+8,cy:cy-1,r:1.5,fill:'rgba(255,255,255,0.9)'},svg)
+
+      // Stem
+      if (baseDur !== 'w') line(stemX, cy, stemX, stemEndY, 0.95)
+
+      // Flags — seulement pour les notes NON beamées
+      if (!inGroup) {
+        const drawFlag = (fy0, vOff) => {
           const s = scale
           const d = stemUp
-            ? `M${stemX},${fy0+vOffset} C${stemX+11},${fy0+vOffset+s} ${stemX+10},${fy0+vOffset+8*s} ${stemX+1},${fy0+vOffset+11*s} C${stemX+5},${fy0+vOffset+6*s} ${stemX+2},${fy0+vOffset+2*s} ${stemX},${fy0+vOffset} Z`
-            : `M${stemX},${fy0-vOffset} C${stemX-11},${fy0-vOffset-s} ${stemX-10},${fy0-vOffset-8*s} ${stemX-1},${fy0-vOffset-11*s} C${stemX-5},${fy0-vOffset-6*s} ${stemX-2},${fy0-vOffset-2*s} ${stemX},${fy0-vOffset} Z`
+            ? `M${stemX},${fy0+vOff} C${stemX+11},${fy0+vOff+s} ${stemX+10},${fy0+vOff+8*s} ${stemX+1},${fy0+vOff+11*s} C${stemX+5},${fy0+vOff+6*s} ${stemX+2},${fy0+vOff+2*s} ${stemX},${fy0+vOff} Z`
+            : `M${stemX},${fy0-vOff} C${stemX-11},${fy0-vOff-s} ${stemX-10},${fy0-vOff-8*s} ${stemX-1},${fy0-vOff-11*s} C${stemX-5},${fy0-vOff-6*s} ${stemX-2},${fy0-vOff-2*s} ${stemX},${fy0-vOff} Z`
           mk('path',{d,fill:'rgba(255,255,255,0.95)',stroke:'none'},svg)
         }
-        // ── Flags (8th = 1 flag, 16th = 2 flags, et = 1 flag) ──
-        if (n.dur==='e'||n.dur==='s'||n.dur==='et') {
+        if (baseDur === 'e' || baseDur === 's' || n.dur === 'et') {
           drawFlag(stemEndY, 0)
-          if (n.dur==='s') drawFlag(stemEndY, stemUp ? 7*scale : -7*scale)
-        }
-
-        // ── Beam grouping data (collect for post-pass) ──
-        if (beamable) {
-          if (!curGroup || curGroup.measureIdx !== n.measureIdx ||
-              curGroup.isTriplet !== isTriplet ||
-              Math.floor(n.beatInMeasure) !== Math.floor(curGroup.lastBeat)) {
-            curGroup = { measureIdx:n.measureIdx, lastBeat:n.beatInMeasure,
-                         isTriplet, items:[{cx, stemX, stemEndY, stemUp}] }
-            beamGroups.push(curGroup)
-          } else {
-            curGroup.items.push({cx, stemX, stemEndY, stemUp})
-            curGroup.lastBeat = n.beatInMeasure
-          }
-        } else {
-          curGroup = null
+          if (baseDur === 's') drawFlag(stemEndY, stemUp ? 7*scale : -7*scale)
         }
       }
     })
 
-    // ── Beams + triplet brackets (draw after all noteheads) ──
+    // ══ PASS 3 : draw beams ════════════════════════════════════════
     beamGroups.forEach(grp => {
-      if (grp.items.length < 2) return
-      const x1 = grp.items[0].stemX
-      const x2 = grp.items[grp.items.length-1].stemX
-      const y1 = grp.items[0].stemEndY
-      const y2 = grp.items[grp.items.length-1].stemEndY
-      // Beam bar
-      mk('line',{x1,y1,x2,y2,stroke:'rgba(255,255,255,0.95)','stroke-width':3,'stroke-linecap':'round'},svg)
+      if (grp.entries.length < 2) return
+      const up = grp.entries[0].stemUp
+
+      // Level beam: all stems reach the highest/lowest endpoint
+      const targetY = up
+        ? Math.min(...grp.entries.map(e => e.stemEndY))
+        : Math.max(...grp.entries.map(e => e.stemEndY))
+
+      // Redraw stems to reach the beam
+      grp.entries.forEach(e => line(e.stemX, e.cy + (up ? -2 : 2), e.stemX, targetY + (up ? BEAM_H : -BEAM_H), 0.95, 1.5))
+
+      const x1 = grp.entries[0].stemX - 1
+      const x2 = grp.entries[grp.entries.length-1].stemX + 1
+      const bw = x2 - x1 + 1
+
+      // Bar 1 (croche/double-croche)
+      const bar1Y = up ? targetY : targetY - BEAM_H
+      mk('rect',{x:x1,y:bar1Y,width:bw,height:BEAM_H,fill:'rgba(255,255,255,0.95)',rx:0.5},svg)
+
+      // Bar 2 (double-croche uniquement)
+      if (grp.entries.some(e => e.baseDur === 's')) {
+        const bar2Y = up ? bar1Y + BEAM_H + BEAM_GAP : bar1Y - BEAM_H - BEAM_GAP
+        mk('rect',{x:x1,y:bar2Y,width:bw,height:BEAM_H,fill:'rgba(255,255,255,0.95)',rx:0.5},svg)
+      }
+
       // Triplet bracket + "3"
-      if (grp.isTriplet && grp.items.length === 3) {
-        const up   = grp.items[0].stemUp
-        const bY   = up ? Math.min(y1,y2) - 5 : Math.max(y1,y2) + 5
-        const midX = (x1 + x2) / 2
+      if (grp.isTriplet && grp.entries.length === 3) {
+        const midX = (grp.entries[0].cx + grp.entries[2].cx) / 2
+        const bY   = up ? bar1Y - 6 : bar1Y + BEAM_H + 6
         const sign = up ? -1 : 1
-        mk('line',{x1:x1-1,y1:bY,x2:x1-1,y2:bY+sign*5,stroke:'rgba(255,255,255,0.85)','stroke-width':1},svg)
-        mk('line',{x1:x1-1,y1:bY,x2:x2+1,y2:bY,stroke:'rgba(255,255,255,0.85)','stroke-width':1},svg)
-        mk('line',{x1:x2+1,y1:bY,x2:x2+1,y2:bY+sign*5,stroke:'rgba(255,255,255,0.85)','stroke-width':1},svg)
+        mk('line',{x1:x1,y1:bY,x2:x1,y2:bY+sign*4,stroke:'rgba(255,255,255,0.75)','stroke-width':1},svg)
+        mk('line',{x1:x1,y1:bY,x2:x2,y2:bY,stroke:'rgba(255,255,255,0.75)','stroke-width':1},svg)
+        mk('line',{x1:x2,y1:bY,x2:x2,y2:bY+sign*4,stroke:'rgba(255,255,255,0.75)','stroke-width':1},svg)
         const t3 = mk('text',{x:midX,y:bY-sign*1,'font-size':8,fill:'rgba(255,255,255,0.85)',
           'text-anchor':'middle','font-family':'serif'},svg)
         t3.textContent = '3'
