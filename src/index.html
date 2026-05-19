@@ -944,35 +944,44 @@
     .memo-chip:hover  { border-color: rgba(96,165,250,0.75); }
     .memo-chip.playing{ border-color: #4ade80; box-shadow: 0 0 8px rgba(74,222,128,0.3); }
 
+    /* Top bar : name input (editable, centered) */
+    .memo-chip-top-bar {
+      display: flex; align-items: center;
+      padding: 3px 6px 2px;
+      border-bottom: 1px solid rgba(96,165,250,0.15);
+      flex-shrink: 0; height: 20px;
+    }
+    .memo-chip-name {
+      flex: 1; text-align: center;
+      background: none; border: none; outline: none;
+      color: rgba(255,255,255,0.92);
+      font-size: 9px; font-family: 'Space Mono', monospace;
+      font-weight: 700; letter-spacing: 0.5px;
+      min-width: 0; cursor: text;
+    }
+    .memo-chip-name::placeholder { color: rgba(255,255,255,0.3); }
+
     /* Waveform area */
     .memo-chip-wave-area {
       flex: 1;
-      padding: 3px 6px 0;
+      padding: 2px 4px;
       position: relative;
       overflow: hidden;
+      min-height: 20px;
     }
     .memo-chip-wave-area svg {
       display: block;
       width: 100%; height: 100%;
     }
 
-    /* Bottom bar : name input + duration + buttons */
+    /* Bottom bar : duration + buttons */
     .memo-chip-bar {
       display: flex; align-items: center; gap: 4px;
-      padding: 2px 5px;
-      background: rgba(0,0,0,0.25);
-      height: 20px;
+      padding: 2px 6px;
+      background: rgba(0,0,0,0.22);
+      height: 18px;
       flex-shrink: 0;
     }
-    .memo-chip-name {
-      flex: 1;
-      background: none; border: none; outline: none;
-      color: rgba(255,255,255,0.85);
-      font-size: 9px; font-family: 'Space Mono', monospace;
-      min-width: 0;
-      cursor: text;
-    }
-    .memo-chip-name::placeholder { color: rgba(255,255,255,0.3); }
     .memo-chip-dur {
       font-size: 9px; font-family: 'Space Mono', monospace;
       color: rgba(96,165,250,0.85);
@@ -3006,24 +3015,26 @@
     const chip = el('div', 'memo-chip')
     chip.dataset.blockId = block.id
     chip.style.left  = ((block.measure - 1) * MEASURE_WIDTH) + 'px'
-    chip.style.width = Math.max(100, block.measures * MEASURE_WIDTH - 4) + 'px'
+    chip.style.width = Math.max(110, block.measures * MEASURE_WIDTH - 4) + 'px'
 
-    // ── Waveform area ──
-    const waveArea = el('div', 'memo-chip-wave-area')
-    const svg = drawMemoWaveform(block.waveformData)
-    waveArea.appendChild(svg)
-    chip.appendChild(waveArea)
-
-    // ── Bottom bar : name input | duration | ▶ | ✕ ──
-    const bar = el('div', 'memo-chip-bar')
-
+    // ── TOP BAR : nom éditable centré ──────────────────────────
+    const topBar = el('div', 'memo-chip-top-bar')
     const nameInput = el('input', 'memo-chip-name')
     nameInput.type = 'text'
     nameInput.value = block.name || ''
-    nameInput.placeholder = 'Nom…'
+    nameInput.placeholder = 'Nom du mémo…'
     nameInput.addEventListener('click',  e => e.stopPropagation())
     nameInput.addEventListener('change', () => { block.name = nameInput.value })
+    topBar.appendChild(nameInput)
+    chip.appendChild(topBar)
 
+    // ── WAVEFORM ───────────────────────────────────────────────
+    const waveArea = el('div', 'memo-chip-wave-area')
+    waveArea.appendChild(drawMemoWaveform(block.waveformData))
+    chip.appendChild(waveArea)
+
+    // ── BOTTOM BAR : durée | ▶ | ✕ ────────────────────────────
+    const bar = el('div', 'memo-chip-bar')
     const dur = el('span', 'memo-chip-dur', block.duration ? fmtDuration(block.duration) : '…')
 
     const playBtn = el('button', 'memo-chip-play', '▶')
@@ -3034,69 +3045,53 @@
     delBtn.title = 'Supprimer'
     delBtn.addEventListener('click', e => { e.stopPropagation(); deleteMemoBlock(block.id) })
 
-    bar.appendChild(nameInput)
-    bar.appendChild(dur)
-    bar.appendChild(playBtn)
-    bar.appendChild(delBtn)
+    bar.appendChild(dur); bar.appendChild(playBtn); bar.appendChild(delBtn)
     chip.appendChild(bar)
-
     return chip
   }
 
   function drawMemoWaveform(data) {
-    const NS = 'http://www.w3.org/2000/svg'
+    const NS  = 'http://www.w3.org/2000/svg'
     const svg = document.createElementNS(NS, 'svg')
     svg.setAttribute('preserveAspectRatio', 'none')
-    svg.setAttribute('viewBox', '0 0 100 20')
+    svg.setAttribute('viewBox', '0 0 100 24')
+
+    const mk = (tag, attrs) => {
+      const el = document.createElementNS(NS, tag)
+      for (const [k,v] of Object.entries(attrs)) el.setAttribute(k, v)
+      svg.appendChild(el); return el
+    }
 
     if (!data || !data.length) {
-      // Placeholder: flat dashed line
-      const line = document.createElementNS(NS, 'line')
-      line.setAttribute('x1','0'); line.setAttribute('y1','10')
-      line.setAttribute('x2','100'); line.setAttribute('y2','10')
-      line.setAttribute('stroke','rgba(96,165,250,0.2)')
-      line.setAttribute('stroke-width','0.8')
-      line.setAttribute('stroke-dasharray','3 2')
-      svg.appendChild(line)
+      mk('line', {x1:0,y1:12,x2:100,y2:12,
+        stroke:'rgba(96,165,250,0.3)','stroke-width':0.8,'stroke-dasharray':'4 3'})
       return svg
     }
 
-    const mid = 10, amp = 8
-    const pts = data.length
-    const step = 100 / pts
+    const mid = 12, amp = 10, pts = data.length
 
-    // Upper path
-    let dU = `M0,${mid}`
-    let dL = `M0,${mid}`
-    data.forEach((v, i) => {
-      const x = (i + 0.5) * step
-      const h = v * amp
-      dU += ` L${x.toFixed(1)},${(mid - h).toFixed(1)}`
-      dL += ` L${x.toFixed(1)},${(mid + h).toFixed(1)}`
+    // Build coordinate arrays
+    const fwd = data.map((v,i) => `${(i*100/(pts-1)).toFixed(1)},${(mid-v*amp).toFixed(1)}`)
+    const bwd = data.slice().reverse().map((v,i) => `${((pts-1-i)*100/(pts-1)).toFixed(1)},${(mid+v*amp).toFixed(1)}`)
+
+    // Filled envelope (closed path)
+    mk('path', {
+      d: `M0,${mid} L${fwd.join(' L')} L${bwd.join(' L')} Z`,
+      fill:'rgba(96,165,250,0.2)', stroke:'none'
     })
 
-    const pathU = document.createElementNS(NS, 'path')
-    pathU.setAttribute('d', dU)
-    pathU.setAttribute('stroke', 'rgba(96,165,250,0.85)')
-    pathU.setAttribute('stroke-width', '0.8')
-    pathU.setAttribute('fill', 'none')
+    // Top edge — bright
+    mk('path', {
+      d: `M0,${mid} L${fwd.join(' L')}`,
+      stroke:'rgba(96,165,250,0.95)', 'stroke-width':1.2, fill:'none', 'stroke-linejoin':'round'
+    })
 
-    const pathL = document.createElementNS(NS, 'path')
-    pathL.setAttribute('d', dL)
-    pathL.setAttribute('stroke', 'rgba(96,165,250,0.5)')
-    pathL.setAttribute('stroke-width', '0.8')
-    pathL.setAttribute('fill', 'none')
+    // Bottom edge — dimmer
+    mk('path', {
+      d: `M0,${mid} L${data.map((v,i) => `${(i*100/(pts-1)).toFixed(1)},${(mid+v*amp).toFixed(1)}`).join(' L')}`,
+      stroke:'rgba(96,165,250,0.5)', 'stroke-width':0.8, fill:'none', 'stroke-linejoin':'round'
+    })
 
-    // Fill between
-    const dFill = dU + ` L${(pts * step).toFixed(1)},${mid}` + dL.slice(1).split('L').reverse().join('L').replace(/^/, ' L') + ' Z'
-    const fill = document.createElementNS(NS, 'path')
-    fill.setAttribute('d', dU + ` L100,${mid} ` + dL.slice(1).split(' ').reverse().join(' ') + ' Z')
-    fill.setAttribute('fill', 'rgba(96,165,250,0.1)')
-    fill.setAttribute('stroke', 'none')
-
-    svg.appendChild(fill)
-    svg.appendChild(pathU)
-    svg.appendChild(pathL)
     return svg
   }
 
@@ -5058,35 +5053,52 @@ ${rows}
     const chunks = []
     const mr = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' })
     mr.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data) }
-    mr.onstop = () => {
+    mr.onstop = async () => {
       stream.getTracks().forEach(t => t.stop())
       const blob     = new Blob(chunks, { type: 'audio/webm' })
       const duration = (Date.now() - _memoRec.startTime) / 1000
-      const reader   = new FileReader()
-      reader.onload  = ev => {
-        const audioData = ev.target.result  // data:audio/webm;base64,...
+
+      // ── Generate waveform from audio data ────────────────────
+      let waveformData = []
+      try {
+        const arrayBuf = await blob.arrayBuffer()
+        const audioBuf = await getAudioCtx().decodeAudioData(arrayBuf)
+        const raw  = audioBuf.getChannelData(0)
+        const PTS  = 80
+        const step = Math.max(1, Math.floor(raw.length / PTS))
+        for (let i = 0; i < PTS; i++) {
+          let peak = 0
+          for (let j = 0; j < step; j++) {
+            const v = Math.abs(raw[i * step + j] || 0)
+            if (v > peak) peak = v
+          }
+          waveformData.push(peak)
+        }
+        // Normalize to 0-1
+        const maxPeak = Math.max(...waveformData, 0.001)
+        waveformData = waveformData.map(v => v / maxPeak)
+      } catch (e) { /* waveform optional */ }
+
+      // ── Store as base64 + create block ───────────────────────
+      const reader = new FileReader()
+      reader.onload = ev => {
+        const audioData      = ev.target.result
         const measuresNeeded = Math.max(1, Math.ceil(duration * (S.tempo/60) / 4))
-        // Find next free measure on this lane
         const existing = S.blocks.filter(b => b.trackId === trackId && b.subTrack === sub)
         let nextMeasure = 1
         existing.forEach(b => { nextMeasure = Math.max(nextMeasure, b.measure + b.measures) })
         const block = {
-          id: 'b' + BID++,
-          type: 'memo-clip',
-          trackId,
-          subTrack: sub,
-          measure: nextMeasure,
-          measures: measuresNeeded,
-          name: `Mémo ${sub}`,
-          duration,
-          audioData,
+          id: 'b' + BID++, type: 'memo-clip',
+          trackId, subTrack: sub,
+          measure: nextMeasure, measures: measuresNeeded,
+          name: `Mémo ${sub}`, duration, audioData, waveformData,
           muted: false,
           notes:'', chords:'', lyrics:'', tempo: S.tempo, key: S.key, fretDots:[], staffNotes:''
         }
         S.blocks.push(block)
         _memoRec = null
         render()
-        toast(`🎙 Mémo ${sub} enregistré (${fmtDuration(duration)})`, 2000)
+        toast(`🎙 Mémo ${sub} — ${fmtDuration(duration)}`, 2000)
       }
       reader.readAsDataURL(blob)
     }
