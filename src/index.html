@@ -4014,15 +4014,14 @@
 
       const structs = S.tracks.filter(t => t.type === 'structure')
       if (structs.length === 0) {
+        // Aucune structure — avertissement, parentWrap caché
         parentWrap.classList.remove('visible')
         warn.classList.add('visible')
-      } else if (structs.length === 1) {
-        _pendingParentId = structs[0].id
-        parentWrap.classList.remove('visible')
-        warn.classList.remove('visible')
       } else {
+        // 1 ou plusieurs structures : toujours afficher le sélecteur
         parentSel.innerHTML = structs.map(t => `<option value="${t.id}">${t.name}</option>`).join('')
         _pendingParentId = structs[0].id
+        parentSel.addEventListener('change', () => { _pendingParentId = parentSel.value })
         parentWrap.classList.add('visible')
         warn.classList.remove('visible')
       }
@@ -4691,7 +4690,7 @@ ${rows}
 
     if (!has('lyrics'))    S.tracks.push(mk('lyrics',    'Lyrics'))
     if (!has('fretboard')) S.tracks.push(mk('fretboard', 'Fretboard'))
-    if (!has('structure')) S.tracks.push(mk('structure', 'Structure'))
+    if (!has('structure')) S.tracks.push(mk('structure', 'Main Structure'))
     if (!has('live-memo')) S.tracks.push(mk('live-memo', 'Live Memo'))
     if (!has('memos'))     S.tracks.push(mk('memos',     'Mémos'))
 
