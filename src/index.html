@@ -337,14 +337,49 @@
     }
 
     .ruler-label-spacer {
-      width: 200px;
-      min-width: 200px;
+      width: 220px;
+      min-width: 220px;
       border-right: 1px solid var(--border2);
       background: var(--surface2);
       flex-shrink: 0;
       position: sticky;
       left: 0;
       z-index: 11;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 4px;
+    }
+
+    /* ── Header collapse toggle (style Logic Pro) ── */
+    #header-toggle-btn {
+      background: none; border: none;
+      color: var(--text3); cursor: pointer;
+      font-size: 15px; padding: 2px 4px;
+      border-radius: 4px; line-height: 1;
+      transition: color 0.12s, background 0.12s;
+      flex-shrink: 0;
+    }
+    #header-toggle-btn:hover { color: var(--text); background: var(--surface3); }
+
+    /* Collapsed state */
+    #main.headers-collapsed .track-label {
+      width: 36px !important; min-width: 36px !important;
+    }
+    #main.headers-collapsed .ruler-label-spacer {
+      width: 36px !important; min-width: 36px !important;
+      justify-content: center; padding-right: 0;
+    }
+    #main.headers-collapsed .track-info,
+    #main.headers-collapsed .track-actions,
+    #main.headers-collapsed .track-badge,
+    #main.headers-collapsed .track-name,
+    #main.headers-collapsed .track-toggle { display: none !important; }
+    #main.headers-collapsed .track-icon {
+      font-size: 14px; margin: 0 auto;
+    }
+    #main.headers-collapsed .track-label {
+      justify-content: center !important; padding: 0 !important;
     }
 
     .ruler-measures {
@@ -386,8 +421,8 @@
     .track-row.drag-over .track-blocks { background: rgba(124, 91, 240, 0.08); }
 
     .track-label {
-      width: 200px;
-      min-width: 200px;
+      width: 220px;
+      min-width: 220px;
       background: var(--surface2);
       border-right: 1px solid var(--border2);
       display: flex;
@@ -2077,7 +2112,9 @@
         <div id="tracks-inner">
           <!-- Ruler — sticky top so it follows vertical scroll; inside scroll so it follows horizontal scroll -->
           <div id="ruler">
-            <div class="ruler-label-spacer"></div>
+            <div class="ruler-label-spacer">
+              <button id="header-toggle-btn" onclick="toggleHeaders()" title="Rétracter / afficher les en-têtes">◧</button>
+            </div>
             <div class="ruler-measures" id="ruler-measures"></div>
           </div>
           <!-- Tracks injected here -->
@@ -4380,6 +4417,14 @@
   /* ═══════════════════════════════════════════════════════════
      DARK / LIGHT MODE
   ═══════════════════════════════════════════════════════════ */
+  function toggleHeaders() {
+    const main = $('main')
+    if (!main) return
+    const collapsed = main.classList.toggle('headers-collapsed')
+    const btn = $('header-toggle-btn')
+    if (btn) btn.textContent = collapsed ? '◨' : '◧'
+  }
+
   function toggleDark() {
     S.darkMode = !S.darkMode
     document.documentElement.classList.toggle('light', !S.darkMode)
