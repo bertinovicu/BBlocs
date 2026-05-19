@@ -2114,7 +2114,7 @@
     on:   { label:'ON',   icon:'⚡', color:'#0369a1' },
     stop: { label:'STOP', icon:'■', color:'#1c1c28' },
     'memo-clip': { label:'Mémo', icon:'🎙', color:'#0f2744', internal:true },
-    'memo-text':  { label:'Mémo',   icon:'📝', color:'#1c1917', internal:true },
+    'memo-text':  { label:'Mémo projet', icon:'📝', color:'#1c1917' },
   }
 
   // Subset rendered in the ACTION palette section
@@ -2459,7 +2459,7 @@
      PALETTE
   ═══════════════════════════════════════════════════════════ */
   // Block types that belong to specific tracks and must NOT appear in the palette
-  const PALETTE_HIDDEN = new Set(['lyric-text','staff-bloc','fretboard-bloc','memo-clip','memo-text'])
+  const PALETTE_HIDDEN = new Set(['lyric-text','staff-bloc','fretboard-bloc','memo-clip'])
 
   function buildPalette() {
     const area = $('palette-blocs-area')
