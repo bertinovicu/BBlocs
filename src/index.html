@@ -614,7 +614,7 @@
       );
     }
 
-    /* Ghost note — covers the full track-blocks; head+label placed by JS */
+    /* Ghost note — full-track overlay for sharp visual feedback */
     .staff-ghost {
       position: absolute;
       inset: 0;
@@ -622,28 +622,48 @@
       z-index: 20;
       display: none;
     }
+    /* Horizontal pitch guide — spans full track width */
+    .staff-ghost-guide {
+      position: absolute;
+      left: 0; right: 0;
+      height: 1px;
+      background: rgba(167,139,250,0.55);
+      box-shadow: 0 0 3px rgba(167,139,250,0.7);
+    }
+    /* Notehead */
     .staff-ghost-head {
       position: absolute;
-      width: 11px; height: 8px;
+      width: 13px; height: 9px;
       border-radius: 50%;
-      border: 1.5px solid rgba(167,139,250,0.9);
-      background: rgba(167,139,250,0.4);
+      border: 2px solid rgba(167,139,250,1);
+      background: rgba(167,139,250,0.5);
       transform: rotate(-15deg);
     }
+    /* Stem */
+    .staff-ghost-stem {
+      position: absolute;
+      width: 1.5px;
+      background: rgba(167,139,250,0.85);
+    }
+    /* Note name badge */
     .staff-ghost-label {
       position: absolute;
-      font-size: 9px;
+      font-size: 10px;
       font-family: 'Space Mono', monospace;
       font-weight: 700;
-      color: rgba(167,139,250,0.95);
+      color: #fff;
+      background: rgba(124,58,237,0.85);
+      padding: 1px 5px;
+      border-radius: 4px;
       white-space: nowrap;
+      letter-spacing: 0.5px;
     }
 
-    /* Pencil cursor everywhere on the staff track (track-blocks + chip) */
+    /* Crosshair cursor on staff track — maximum precision for note placement */
     .track-row.is-staff .track-blocks,
     .track-row.is-staff .staff-chip,
     .track-row.is-staff .staff-chip svg {
-      cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'><path d='M13 2 L18 7 L7 18 L2 19 L3 14 Z' fill='white' stroke='%23111' stroke-width='1.2' stroke-linejoin='round'/><line x1='13' y1='2' x2='15' y2='4' stroke='%23bbb' stroke-width='1'/><path d='M3 14 L7 18 L4.5 16.5 Z' fill='%23555'/></svg>") 3 17, crosshair !important;
+      cursor: crosshair !important;
     }
     /* Restore normal cursors for chip action buttons */
     .track-row.is-staff .bchip-top,
@@ -2309,10 +2329,14 @@
 
     // STAFF track: ghost note preview + click-to-place
     if (track.type === 'staff') {
-      // Ghost note overlay (follows cursor, shows pitch preview)
-      const ghost     = el('div', 'staff-ghost')
-      const ghostHead = el('div', 'staff-ghost-head')
-      const ghostLbl  = el('span', 'staff-ghost-label')
+      // Ghost overlay elements
+      const ghost      = el('div', 'staff-ghost')
+      const ghostGuide = el('div', 'staff-ghost-guide')   // horizontal pitch line
+      const ghostStem  = el('div', 'staff-ghost-stem')    // vertical stem
+      const ghostHead  = el('div', 'staff-ghost-head')    // notehead oval
+      const ghostLbl   = el('span','staff-ghost-label')   // note name badge
+      ghost.appendChild(ghostGuide)
+      ghost.appendChild(ghostStem)
       ghost.appendChild(ghostHead)
       ghost.appendChild(ghostLbl)
       blocksEl.appendChild(ghost)
@@ -2323,15 +2347,34 @@
         const relX = e.clientX - rect.left
         const relY = e.clientY - rect.top
         if (relY < 18) { ghost.style.display = 'none'; return }
+
         const [letter, oct] = staffYToPitch(relY)
         const acc = _spalAcc || ''
-        const trackY = staffPitchToTrackY(letter, oct)
-        ghostHead.style.left = (relX - 5) + 'px'
+        const trackY = staffPitchToTrackY(letter, oct)   // exact snapped Y
+
+        // Stem direction: up if note is on/below B4 (trackY ≥ 54), down if above
+        const stemUp = trackY >= 54
+        const STEM_H = 20
+        const stemTop = stemUp ? trackY - STEM_H : trackY + 4
+
+        // Horizontal guide — full width at exact pitch Y
+        ghostGuide.style.top = (trackY - 1) + 'px'
+
+        // Stem
+        ghostStem.style.left   = (relX + 1) + 'px'
+        ghostStem.style.top    = stemTop + 'px'
+        ghostStem.style.height = STEM_H + 'px'
+
+        // Notehead centered on (relX, trackY)
+        ghostHead.style.left = (relX - 6) + 'px'
         ghostHead.style.top  = (trackY - 4) + 'px'
-        ghostLbl.style.left  = (relX + 8) + 'px'
-        ghostLbl.style.top   = (trackY - 6) + 'px'
-        ghostLbl.textContent = `${letter}${acc || ''}${oct}`
-        ghost.style.display  = 'block'
+
+        // Label badge to the right
+        ghostLbl.style.left  = (relX + 14) + 'px'
+        ghostLbl.style.top   = (trackY - 8) + 'px'
+        ghostLbl.textContent = `${letter}${acc}${oct}`
+
+        ghost.style.display = 'block'
       })
       blocksEl.addEventListener('mouseleave', () => { ghost.style.display = 'none' })
 
