@@ -2427,6 +2427,9 @@
   /* ═══════════════════════════════════════════════════════════
      PALETTE
   ═══════════════════════════════════════════════════════════ */
+  // Block types that belong to specific tracks and must NOT appear in the palette
+  const PALETTE_HIDDEN = new Set(['lyric-text','staff-bloc','fretboard-bloc','memo-clip','memo-text'])
+
   function buildPalette() {
     const area = $('palette-blocs-area')
     area.innerHTML = ''
@@ -2434,6 +2437,7 @@
     // ── BLOCS section (music blocks) ──
     Object.entries(BLOCK_DEFS).forEach(([type, def]) => {
       if (ACTION_TYPES.has(type)) return
+      if (PALETTE_HIDDEN.has(type)) return
       area.appendChild(makePaletteChip(type, def, false))
     })
 
