@@ -363,8 +363,11 @@
     #header-toggle-btn:hover { color: var(--text); background: var(--surface3); }
 
     /* Collapsed state */
+    /* ── Collapsed headers ── */
     #main.headers-collapsed .track-label {
       width: 36px !important; min-width: 36px !important;
+      justify-content: center !important;
+      padding: 0 !important; gap: 0 !important;
     }
     #main.headers-collapsed .ruler-label-spacer {
       width: 36px !important; min-width: 36px !important;
@@ -372,14 +375,10 @@
     }
     #main.headers-collapsed .track-info,
     #main.headers-collapsed .track-actions,
-    #main.headers-collapsed .track-badge,
-    #main.headers-collapsed .track-name,
-    #main.headers-collapsed .track-toggle { display: none !important; }
+    #main.headers-collapsed .track-toggle,
+    #main.headers-collapsed .group-toggle { display: none !important; }
     #main.headers-collapsed .track-icon {
-      font-size: 14px; margin: 0 auto;
-    }
-    #main.headers-collapsed .track-label {
-      justify-content: center !important; padding: 0 !important;
+      font-size: 15px; margin: 0; flex-shrink: 0;
     }
 
     .ruler-measures {
