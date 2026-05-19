@@ -2378,9 +2378,36 @@
       })
       blocksEl.addEventListener('mouseleave', () => { ghost.style.display = 'none' })
 
-      // Click to place note (or Ctrl+click to select an existing note)
+      // ── Ctrl+mousedown: select/deselect a note (mousedown = fiable sur macOS) ──
+      blocksEl.addEventListener('mousedown', e => {
+        if (!(e.ctrlKey || e.metaKey)) return
+        if (e.target.closest('.bchip-mute,.bchip-del,.bchip-resize,.bchip-top')) return
+        e.preventDefault()   // empêche contextmenu macOS + sélection texte
+        const rect = blocksEl.getBoundingClientRect()
+        const relX = e.clientX - rect.left
+        const relY = e.clientY - rect.top
+        if (relY < 18) return
+        const measure = Math.max(1, Math.floor(relX / MEASURE_WIDTH) + 1)
+        const block = S.blocks.find(b =>
+          b.trackId === track.id && b.measure <= measure && (b.measure + b.measures - 1) >= measure
+        )
+        if (!block) { _selectedNote = null; return }
+        const chipOffsetX = relX - (block.measure - 1) * MEASURE_WIDTH
+        const tokenIdx = findNoteAtPos(block, chipOffsetX, relY)
+        if (tokenIdx !== null) {
+          const already = _selectedNote && _selectedNote.blockId === block.id
+                       && _selectedNote.tokenIdx === tokenIdx
+          _selectedNote = already ? null : { blockId: block.id, tokenIdx }
+        } else {
+          _selectedNote = null
+        }
+        refreshStaffChip(block)
+      })
+
+      // ── Click to place note (Ctrl already handled by mousedown) ──
       blocksEl.addEventListener('click', e => {
         if (_dragBlockId || _chipDragging || _resizing) return
+        if (e.ctrlKey || e.metaKey) return  // handled by mousedown
         if (e.target.closest('.bchip-mute,.bchip-del,.bchip-resize')) return
         if (e.target.closest('.bchip-top')) return
         const rect = blocksEl.getBoundingClientRect()
@@ -2393,25 +2420,12 @@
           b.trackId === track.id && b.measure <= measure && (b.measure + b.measures - 1) >= measure
         )
 
-        // ── Ctrl+click: select/deselect a note ──────────────────
-        if (e.ctrlKey || e.metaKey) {
-          if (!block) return
-          const chipOffsetX = relX - (block.measure - 1) * MEASURE_WIDTH
-          const tokenIdx = findNoteAtPos(block, chipOffsetX, relY)
-          if (tokenIdx !== null) {
-            // Toggle selection
-            const already = _selectedNote && _selectedNote.blockId === block.id
-                         && _selectedNote.tokenIdx === tokenIdx
-            _selectedNote = already ? null : { blockId: block.id, tokenIdx }
-          } else {
-            _selectedNote = null
-          }
-          refreshStaffChip(block)
-          return
+        // Deselect on normal click
+        if (_selectedNote) {
+          const sb = S.blocks.find(b => b.id === _selectedNote.blockId)
+          _selectedNote = null
+          if (sb) refreshStaffChip(sb)
         }
-
-        // ── Normal click: deselect + place note ──────────────────
-        if (_selectedNote) { _selectedNote = null; refreshStaffChip(block) }
 
         if (!block) {
           block = { id:'b'+BID++, type:'staff-bloc', trackId:track.id,
@@ -2847,15 +2861,17 @@
       const cx = HEAD_W + n.measureIdx * MEAS_W
               + (n.beatInMeasure / beatsPerMeasure) * MEAS_W + 10
       const cy = STAFF_PITCH_Y[n.note] ?? (n.note==='Rest' ? 34 : 36)
-      const isRest = n.note === 'Rest' || n.note === 'r'
-      const isSel  = _selectedNote && _selectedNote.blockId === block.id && _selectedNote.tokenIdx === idx
-      const filled = n.dur !== 'w' && n.dur !== 'h'
-      const hasStem = n.dur !== 'w'
-      const stemUp  = cy >= 34   // notes on/below middle line → stem up
+      const isRest  = n.note === 'Rest' || n.note === 'r'
+      const isSel   = _selectedNote && _selectedNote.blockId === block.id && _selectedNote.tokenIdx === idx
+      const isTriplet = n.dur === 'qt' || n.dur === 'et'
+      const baseDur   = isTriplet ? n.dur.slice(0,-1) : n.dur  // 'q' or 'e'
+      const filled  = baseDur !== 'w' && baseDur !== 'h'
+      const hasStem = baseDur !== 'w'
+      const stemUp  = cy >= 34
       const stemX   = stemUp ? cx+5 : cx-5
       const stemEndY = stemUp ? cy-18 : cy+18
-      const hasFlag = n.dur === 'e' || n.dur === 's'
-      const beamable = hasFlag && !isRest
+      const hasFlag = baseDur === 'e' || baseDur === 's' || n.dur === 'et'
+      const beamable = (hasFlag || isTriplet) && !isRest
 
       // ── Ledger lines ──
       if (!isRest) {
@@ -2921,30 +2937,26 @@
         // ── Stem ──
         if (hasStem) line(stemX,cy,stemX,stemEndY,0.88)
 
-        // ── Single flag (8th) ──
-        if (n.dur==='e'||n.dur==='s') {
-          const fy = stemEndY
-          const fp = mk('path',{
-            d: stemUp
-              ? `M${stemX},${fy} Q${stemX+8},${fy+4} ${stemX},${fy+9}`
-              : `M${stemX},${fy} Q${stemX-8},${fy-4} ${stemX},${fy-9}`,
-            stroke:'rgba(255,255,255,0.88)','stroke-width':1.5,fill:'none'},svg)
-          // ── 2nd flag (16th) ──
-          if (n.dur==='s') {
-            const fp2 = mk('path',{
-              d: stemUp
-                ? `M${stemX},${fy+5} Q${stemX+8},${fy+9} ${stemX},${fy+14}`
-                : `M${stemX},${fy-5} Q${stemX-8},${fy-9} ${stemX},${fy-14}`,
-              stroke:'rgba(255,255,255,0.88)','stroke-width':1.5,fill:'none'},svg)
-          }
+        // ── Flag helper (filled leaf shape) ──
+        const drawFlag = (fy0, offset) => {
+          const d = stemUp
+            ? `M${stemX},${fy0+offset} C${stemX+11},${fy0+offset+1} ${stemX+10},${fy0+offset+8} ${stemX+1},${fy0+offset+11} C${stemX+5},${fy0+offset+6} ${stemX+2},${fy0+offset+2} ${stemX},${fy0+offset} Z`
+            : `M${stemX},${fy0-offset} C${stemX-11},${fy0-offset-1} ${stemX-10},${fy0-offset-8} ${stemX-1},${fy0-offset-11} C${stemX-5},${fy0-offset-6} ${stemX-2},${fy0-offset-2} ${stemX},${fy0-offset} Z`
+          mk('path',{d,fill:'rgba(255,255,255,0.88)',stroke:'none'},svg)
+        }
+        // ── Flags (8th = 1 flag, 16th = 2 flags, et = 1 flag) ──
+        if (n.dur==='e'||n.dur==='s'||n.dur==='et') {
+          drawFlag(stemEndY, 0)
+          if (n.dur==='s') drawFlag(stemEndY, stemUp ? 7 : -7)
         }
 
         // ── Beam grouping data (collect for post-pass) ──
         if (beamable) {
           if (!curGroup || curGroup.measureIdx !== n.measureIdx ||
+              curGroup.isTriplet !== isTriplet ||
               Math.floor(n.beatInMeasure) !== Math.floor(curGroup.lastBeat)) {
             curGroup = { measureIdx:n.measureIdx, lastBeat:n.beatInMeasure,
-                         items:[{cx, stemX, stemEndY, stemUp}] }
+                         isTriplet, items:[{cx, stemX, stemEndY, stemUp}] }
             beamGroups.push(curGroup)
           } else {
             curGroup.items.push({cx, stemX, stemEndY, stemUp})
@@ -2956,17 +2968,28 @@
       }
     })
 
-    // ── Beams (draw after all noteheads) ──
+    // ── Beams + triplet brackets (draw after all noteheads) ──
     beamGroups.forEach(grp => {
       if (grp.items.length < 2) return
-      const up = grp.items[0].stemUp
-      const y1 = grp.items[0].stemEndY
-      const y2 = grp.items[grp.items.length-1].stemEndY
       const x1 = grp.items[0].stemX
       const x2 = grp.items[grp.items.length-1].stemX
-      // Horizontal beam bar
+      const y1 = grp.items[0].stemEndY
+      const y2 = grp.items[grp.items.length-1].stemEndY
+      // Beam bar
       mk('line',{x1,y1,x2,y2,stroke:'rgba(255,255,255,0.88)','stroke-width':3,'stroke-linecap':'round'},svg)
-      // Remove individual flags from beamed notes — can't easily do post-hoc, acceptable for now
+      // Triplet bracket + "3"
+      if (grp.isTriplet && grp.items.length === 3) {
+        const up   = grp.items[0].stemUp
+        const bY   = up ? Math.min(y1,y2) - 5 : Math.max(y1,y2) + 5
+        const midX = (x1 + x2) / 2
+        const sign = up ? -1 : 1
+        mk('line',{x1:x1-1,y1:bY,x2:x1-1,y2:bY+sign*5,stroke:'rgba(255,255,255,0.65)','stroke-width':1},svg)
+        mk('line',{x1:x1-1,y1:bY,x2:x2+1,y2:bY,stroke:'rgba(255,255,255,0.65)','stroke-width':1},svg)
+        mk('line',{x1:x2+1,y1:bY,x2:x2+1,y2:bY+sign*5,stroke:'rgba(255,255,255,0.65)','stroke-width':1},svg)
+        const t3 = mk('text',{x:midX,y:bY-sign*1,'font-size':8,fill:'rgba(255,255,255,0.85)',
+          'text-anchor':'middle','font-family':'serif'},svg)
+        t3.textContent = '3'
+      }
     })
 
     return svg
@@ -3843,13 +3866,15 @@ ${rows}
   }
 
   const DURATIONS = [
-    { k:'w', sym: NOTE_SVG.w,  tip:'Ronde'     },
-    { k:'h', sym: NOTE_SVG.h,  tip:'Blanche'   },
-    { k:'q', sym: '♩',         tip:'Noire'     },
-    { k:'e', sym: '♪',         tip:'Croche'    },
-    { k:'s', sym: NOTE_SVG.s,  tip:'Double croche' },
+    { k:'w',  sym: NOTE_SVG.w,                              tip:'Ronde'           },
+    { k:'h',  sym: NOTE_SVG.h,                              tip:'Blanche'         },
+    { k:'q',  sym: '♩',                                     tip:'Noire'           },
+    { k:'e',  sym: '♪',                                     tip:'Croche'          },
+    { k:'s',  sym: NOTE_SVG.s,                              tip:'Double croche'   },
+    { k:'qt', sym: '♩<sup style="font-size:7px">3</sup>',   tip:'Noire triolet'   },
+    { k:'et', sym: '♪<sup style="font-size:7px">3</sup>',   tip:'Croche triolet'  },
   ]
-  const DUR_SYMS = { w:'○', h:'◑', q:'♩', e:'♪', s:'♬' }
+  const DUR_SYMS = { w:'○', h:'◑', q:'♩', e:'♪', s:'♬', qt:'♩³', et:'♪³' }
 
   // Treble-clef SVG for staff chip header
   const TREBLE_CLEF_SVG = `<svg width="14" height="52" viewBox="0 0 14 52" fill="none"><path d="M7 50 C3 44 2 38 2 32 C2 26 4 22 7 20 C10 18 12 20 12 24 C12 30 8 33 5 35 C2.5 37 2 39 2 41 C2 45 4.5 47 7.5 47 C10.5 47 12.5 44.5 12.5 41 C12.5 34 11 27 10 20 C9 13 9 7 11 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="7.5" cy="25" r="1.6" fill="currentColor"/></svg>`
@@ -3877,7 +3902,7 @@ ${rows}
   }
 
   // ── v1.5: Staff token parsing ───────────────────────────────
-  const STAFF_BEAT_VALUES = { w:4, h:2, q:1, e:0.5, s:0.25 }
+  const STAFF_BEAT_VALUES = { w:4, h:2, q:1, e:0.5, s:0.25, qt:2/3, et:1/3, ht:4/3 }
 
   const STAFF_KEYSIG = {
     sharps: { C:0,G:1,D:2,A:3,E:4,B:5,'F#':6,'C#':7,
@@ -3921,7 +3946,7 @@ ${rows}
 
   function sanitizeStaffNotes(raw) {
     if (!raw || typeof raw !== 'string') return ''
-    const VALID = new Set(['w','h','q','e','s'])
+    const VALID = new Set(['w','h','q','e','s','qt','et','ht'])
     return (raw.trim().split(/\s+/).filter(token => {
       const ci = token.indexOf(':')
       if (ci < 0) return false
