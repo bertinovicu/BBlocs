@@ -1501,7 +1501,38 @@
       border-radius: 4px;
       padding: 2px 7px;
       color: var(--text2);
+      cursor: pointer;
+      position: relative;
+      user-select: none;
     }
+    .version-badge:hover { border-color: var(--accent); color: var(--text); }
+
+    /* Versions dropdown */
+    #version-dropdown {
+      position: fixed;
+      z-index: 900;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow);
+      min-width: 180px;
+      display: none;
+      flex-direction: column;
+      padding: 4px 0;
+    }
+    #version-dropdown.open { display: flex; }
+    .vd-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 12px;
+      font-size: 11px; font-family: 'Space Mono', monospace;
+      color: var(--text2);
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    .vd-item:hover { background: var(--surface3); color: var(--text); }
+    .vd-item.current { color: var(--accent); font-weight: 700; }
+    .vd-item-badge { font-weight: 700; min-width: 28px; }
+    .vd-item-date  { font-size: 9px; opacity: 0.6; margin-left: auto; }
 
     /* ═══════════════════════════════════════════════════════
        PALETTE CONTEXT SECTIONS (LYRICS / FRETBOARD / STAFF)
@@ -1960,12 +1991,12 @@
     </div>
 
     <div class="header-sep"></div>
-    <span id="version-badge" class="version-badge">v1</span>
-    <button class="btn" onclick="snapshotVersion()" title="Save version snapshot">⏱ Snapshot</button>
+    <span id="version-badge" class="version-badge" onclick="toggleVersionDropdown(event)" title="Versions — clic pour naviguer">v1</span>
+    <button class="btn" onclick="snapshotVersion()" title="Sauvegarder un snapshot">⏱ Snapshot</button>
+    <div id="version-dropdown"></div>
 
     <div class="header-spacer"></div>
 
-    <button class="btn" onclick="showMidiImport()" title="Import MIDI">🎹 MIDI</button>
     <button class="btn" onclick="exportHTML()" title="Export standalone HTML">⬇ HTML</button>
     <button class="btn" onclick="showRailroad()" title="Railroad view — printable song structure">🚂 Railroad</button>
     <button class="btn" onclick="exportPDF()" title="Print / Export PDF">🖨 PDF</button>
@@ -2442,15 +2473,7 @@
       area.appendChild(makePaletteChip(type, def, false))
     })
 
-    // ── ACTION section ──
-    const divider = el('div', 'palette-section-divider', 'Action')
-    area.appendChild(divider)
-
-    const grid = el('div', 'palette-action-grid')
-    ACTION_TYPES.forEach(type => {
-      grid.appendChild(makePaletteChip(type, BLOCK_DEFS[type], true))
-    })
-    area.appendChild(grid)
+    // ACTION section removed
   }
 
   function makePaletteChip(type, def, isAction) {
@@ -4127,8 +4150,59 @@
     S.versions.push({ v: S.version, state: JSON.stringify(S), at: Date.now() })
     S.version++
     $('version-badge').textContent = 'v' + S.version
-    toast(`Snapshot v${S.version - 1} saved`)
+    toast(`✅ Snapshot v${S.version - 1} sauvegardé`)
   }
+
+  function toggleVersionDropdown(e) {
+    e.stopPropagation()
+    const dd = $('version-dropdown')
+    if (dd.classList.contains('open')) { dd.classList.remove('open'); return }
+
+    // Build list: current state + all snapshots (newest first)
+    dd.innerHTML = ''
+
+    // Current (live) state
+    const cur = el('div', 'vd-item current')
+    cur.innerHTML = `<span class="vd-item-badge">v${S.version}</span><span>État actuel</span><span class="vd-item-date">live</span>`
+    cur.addEventListener('click', () => dd.classList.remove('open'))
+    dd.appendChild(cur)
+
+    // Saved snapshots (newest first)
+    if (S.versions.length === 0) {
+      const none = el('div', 'vd-item')
+      none.style.opacity = '0.45'
+      none.textContent = 'Aucun snapshot'
+      dd.appendChild(none)
+    } else {
+      const sorted = [...S.versions].reverse()
+      sorted.forEach(snap => {
+        const item = el('div', 'vd-item')
+        const d = new Date(snap.at)
+        const ts = `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`
+        item.innerHTML = `<span class="vd-item-badge">v${snap.v}</span><span>Snapshot</span><span class="vd-item-date">${ts}</span>`
+        item.addEventListener('click', () => {
+          if (!confirm(`Revenir au snapshot v${snap.v} ? Les modifications actuelles seront perdues.`)) return
+          dd.classList.remove('open')
+          loadState(JSON.parse(snap.state))
+          toast(`⏮ Restauré v${snap.v}`)
+        })
+        dd.appendChild(item)
+      })
+    }
+
+    // Position under the badge
+    const badge = $('version-badge')
+    const r = badge.getBoundingClientRect()
+    dd.style.top  = (r.bottom + 6) + 'px'
+    dd.style.left = r.left + 'px'
+    dd.classList.add('open')
+  }
+
+  // Close dropdown on outside click
+  document.addEventListener('click', () => {
+    const dd = $('version-dropdown')
+    if (dd) dd.classList.remove('open')
+  })
 
   /* ═══════════════════════════════════════════════════════════
      DARK / LIGHT MODE
