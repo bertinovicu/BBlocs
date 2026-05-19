@@ -819,9 +819,9 @@
     .track-row.is-fretboard .track-label  { align-items: flex-start; padding-top: 10px; }
 
     /* ── LIVE MEMO track ── */
-    .track-row.is-live-memo { min-height: 128px; }
+    .track-row.is-live-memo { min-height: 164px; }
     .track-row.is-live-memo .track-blocks {
-      min-height: 128px;
+      min-height: 164px;
       display: flex;
       flex-direction: column;
       padding: 4px 0;
@@ -872,7 +872,7 @@
     .memo-lane {
       display: flex;
       align-items: stretch;
-      height: 58px;
+      height: 76px;
       width: 100%;
     }
 
@@ -931,7 +931,7 @@
     /* Clip chip */
     .memo-chip {
       position: absolute;
-      height: 52px;
+      height: 70px;
       top: 3px;
       background: linear-gradient(160deg, #1a3558 0%, #0c1f36 100%);
       border: 1.5px solid rgba(96,165,250,0.35);
@@ -972,6 +972,18 @@
     .memo-chip-wave-area svg {
       display: block;
       width: 100%; height: 100%;
+    }
+    /* Playhead */
+    .memo-playhead {
+      position: absolute;
+      top: 0; bottom: 0;
+      width: 2px;
+      background: #ef4444;
+      box-shadow: 0 0 6px rgba(239,68,68,0.8);
+      pointer-events: none;
+      display: none;
+      z-index: 5;
+      border-radius: 1px;
     }
 
     /* Bottom bar : duration + buttons */
@@ -2096,7 +2108,7 @@
     lyrics:    { icon:'📝', badge:'LYRICS',    name:'Lyrics',         defaultName:'Lyrics',     group:'free' },
     fretboard: { icon:'🎸', badge:'FRET',      name:'Fretboard',      defaultName:'Fretboard',  group:'free' },
     staff:     { icon:'🎼', badge:'STAFF',     name:'Staff',          defaultName:'Staff',      group:'free' },
-    'live-memo': { icon:'🎙', badge:'MEMO', name:'Live Memo', defaultName:'Live Memo', group:'free' },
+    'live-memo': { icon:'🎙', badge:'MEMO', name:'Live Memo', defaultName:'Live Memo', group:'system' },
     'memos':     { icon:'📝', badge:'MÉMOS',   name:'Mémos',          defaultName:'Mémos',      group:'free' },
   }
   const FREE_TRACK_TYPES = new Set(['lyrics','fretboard','staff','live-memo','memos'])
@@ -3028,9 +3040,11 @@
     topBar.appendChild(nameInput)
     chip.appendChild(topBar)
 
-    // ── WAVEFORM ───────────────────────────────────────────────
+    // ── WAVEFORM + PLAYHEAD ────────────────────────────────────
     const waveArea = el('div', 'memo-chip-wave-area')
     waveArea.appendChild(drawMemoWaveform(block.waveformData))
+    const playhead = el('div', 'memo-playhead')
+    waveArea.appendChild(playhead)
     chip.appendChild(waveArea)
 
     // ── BOTTOM BAR : durée | ▶ | ✕ ────────────────────────────
@@ -5034,8 +5048,9 @@ ${rows}
   /* ═══════════════════════════════════════════════════════════
      LIVE MEMO — Enregistrement micro + lecture
   ═══════════════════════════════════════════════════════════ */
-  let _memoRec   = null   // { trackId, sub, mediaRecorder, chunks, startTime, btnEl }
-  let _memoPlay  = null   // { source, btnEl }
+  let _memoRec      = null   // { trackId, sub, mediaRecorder, chunks, startTime, btnEl }
+  let _memoPlay     = null   // { source, btnEl, rafId }
+  let _memoPlayhead = null   // { playheadEl, startCtxTime, duration, rafId }
 
   function fmtDuration(sec) {
     const m = Math.floor(sec / 60), s = Math.floor(sec % 60)
@@ -5115,33 +5130,65 @@ ${rows}
     if (mediaRecorder.state !== 'inactive') mediaRecorder.stop()
   }
 
+  function _stopMemoPlayhead() {
+    if (_memoPlayhead) {
+      cancelAnimationFrame(_memoPlayhead.rafId)
+      if (_memoPlayhead.el) { _memoPlayhead.el.style.display = 'none' }
+      _memoPlayhead = null
+    }
+  }
+
+  function _startMemoPlayhead(blockId, duration) {
+    _stopMemoPlayhead()
+    const chip = document.querySelector(`.memo-chip[data-block-id="${blockId}"]`)
+    if (!chip) return
+    const el = chip.querySelector('.memo-playhead')
+    if (!el) return
+    el.style.display = 'block'
+    const ctx = getAudioCtx()
+    const t0  = ctx.currentTime
+    const tick = () => {
+      const pct = Math.min(1, (ctx.currentTime - t0) / duration)
+      el.style.left = (pct * 100) + '%'
+      if (pct < 1 && _memoPlayhead) {
+        _memoPlayhead.rafId = requestAnimationFrame(tick)
+      } else {
+        el.style.display = 'none'
+        _memoPlayhead = null
+      }
+    }
+    _memoPlayhead = { el, rafId: requestAnimationFrame(tick) }
+  }
+
   function playMemoBlock(block, btnEl) {
     if (_memoPlay) {
       try { _memoPlay.source.stop() } catch(e) {}
       if (_memoPlay.btnEl) { _memoPlay.btnEl.textContent = '▶'; _memoPlay.btnEl.classList.remove('playing') }
+      _stopMemoPlayhead()
       if (_memoPlay.btnEl === btnEl) { _memoPlay = null; return }
       _memoPlay = null
     }
     if (!block.audioData) { toast('Aucun audio', 1000); return }
     const ctx = getAudioCtx()
-    // base64 → ArrayBuffer
     const b64  = block.audioData.split(',')[1]
     const bin  = atob(b64)
     const buf  = new ArrayBuffer(bin.length)
     const view = new Uint8Array(buf)
     for (let i = 0; i < bin.length; i++) view[i] = bin.charCodeAt(i)
     ctx.decodeAudioData(buf).then(audioBuf => {
-      const src  = ctx.createBufferSource()
+      const src = ctx.createBufferSource()
       src.buffer = audioBuf
       src.connect(ctx.destination)
       src.start()
       if (btnEl) { btnEl.textContent = '⏹'; btnEl.classList.add('playing') }
       _memoPlay = { source: src, btnEl }
+      _startMemoPlayhead(block.id, audioBuf.duration)
       src.onended = () => {
         if (_memoPlay && _memoPlay.source === src) {
           if (btnEl) { btnEl.textContent = '▶'; btnEl.classList.remove('playing') }
           _memoPlay = null
         }
+        _stopMemoPlayhead()
       }
     }).catch(err => toast('Erreur lecture : ' + err.message, 2000))
   }
