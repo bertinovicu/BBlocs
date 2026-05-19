@@ -2378,11 +2378,11 @@
       })
       blocksEl.addEventListener('mouseleave', () => { ghost.style.display = 'none' })
 
-      // Click to place note at cursor Y position
+      // Click to place note (or Ctrl+click to select an existing note)
       blocksEl.addEventListener('click', e => {
         if (_dragBlockId || _chipDragging || _resizing) return
         if (e.target.closest('.bchip-mute,.bchip-del,.bchip-resize')) return
-        if (e.target.closest('.bchip-top')) return  // handled by chip (open detail)
+        if (e.target.closest('.bchip-top')) return
         const rect = blocksEl.getBoundingClientRect()
         const relX = e.clientX - rect.left
         const relY = e.clientY - rect.top
@@ -2392,6 +2392,27 @@
         let block = S.blocks.find(b =>
           b.trackId === track.id && b.measure <= measure && (b.measure + b.measures - 1) >= measure
         )
+
+        // ── Ctrl+click: select/deselect a note ──────────────────
+        if (e.ctrlKey || e.metaKey) {
+          if (!block) return
+          const chipOffsetX = relX - (block.measure - 1) * MEASURE_WIDTH
+          const tokenIdx = findNoteAtPos(block, chipOffsetX, relY)
+          if (tokenIdx !== null) {
+            // Toggle selection
+            const already = _selectedNote && _selectedNote.blockId === block.id
+                         && _selectedNote.tokenIdx === tokenIdx
+            _selectedNote = already ? null : { blockId: block.id, tokenIdx }
+          } else {
+            _selectedNote = null
+          }
+          refreshStaffChip(block)
+          return
+        }
+
+        // ── Normal click: deselect + place note ──────────────────
+        if (_selectedNote) { _selectedNote = null; refreshStaffChip(block) }
+
         if (!block) {
           block = { id:'b'+BID++, type:'staff-bloc', trackId:track.id,
             measure, measures:4, name:'Staff', notes:'', chords:'',
@@ -2447,10 +2468,49 @@
     return h
   }
 
-  let _dragBlockId  = null   // id of block chip being dragged
-  let _chipDragging = false  // guard to suppress click after drag
-  let _dragTrackId  = null   // id of track row being reordered
-  let _resizing     = null   // { blockId, startX, startMeasures, handle }
+  let _dragBlockId   = null   // id of block chip being dragged
+  let _chipDragging  = false  // guard to suppress click after drag
+  let _dragTrackId   = null   // id of track row being reordered
+  let _resizing      = null   // { blockId, startX, startMeasures, handle }
+  let _selectedNote  = null   // { blockId, tokenIdx } — Ctrl+click selection
+
+  // ── Note selection helpers ───────────────────────────────────
+  const _DIATONIC = ['C','D','E','F','G','A','B']
+
+  function shiftNotePitch(note, dir) {
+    // dir: +1 = up (higher pitch), -1 = down
+    const m = note.match(/^([A-G])([#b]?)(\d+)$/)
+    if (!m) return note
+    let oct = parseInt(m[3])
+    let idx = _DIATONIC.indexOf(m[1])
+    idx += dir
+    if (idx >= 7) { idx -= 7; oct++ }
+    if (idx < 0)  { idx += 7; oct-- }
+    oct = Math.max(2, Math.min(7, oct))
+    return `${_DIATONIC[idx]}${oct}`  // strip accidental on step move (standard)
+  }
+
+  function findNoteAtPos(block, chipOffsetX, trackRelY) {
+    // chipOffsetX: X relative to chip left edge; trackRelY: Y in track-blocks
+    const beatsPerMeasure = parseInt((S.timeSign||'4/4').split('/')[0]) || 4
+    const numMeasures = Math.max(1, Math.min(4, block.measures || 1))
+    const keySig = keySigInfo(S.key || 'C')
+    const HEAD_W = 18 + keySig.count * 6 + 12 + 4
+    const chipW  = block.measures * MEASURE_WIDTH - 6
+    const MEAS_W = (chipW - HEAD_W) / numMeasures
+    const svgX   = chipOffsetX
+    const svgY   = trackRelY - 18
+    const { notes } = parseStaffTokens(block.staffNotes, beatsPerMeasure)
+    let best = null, bestDist = 16   // 16px snap radius
+    notes.forEach((n, idx) => {
+      if (n.measureIdx >= numMeasures) return
+      const cx = HEAD_W + n.measureIdx * MEAS_W + (n.beatInMeasure / beatsPerMeasure) * MEAS_W + 10
+      const cy = STAFF_PITCH_Y[n.note] ?? 36
+      const d  = Math.sqrt((svgX - cx) ** 2 + (svgY - cy) ** 2)
+      if (d < bestDist) { bestDist = d; best = idx }
+    })
+    return best  // tokenIdx or null
+  }
 
   function buildBlockChip(block, track) {
     if (track && track.type === 'lyrics')    return buildLyricsChip(block)
@@ -2788,6 +2848,7 @@
               + (n.beatInMeasure / beatsPerMeasure) * MEAS_W + 10
       const cy = STAFF_PITCH_Y[n.note] ?? (n.note==='Rest' ? 34 : 36)
       const isRest = n.note === 'Rest' || n.note === 'r'
+      const isSel  = _selectedNote && _selectedNote.blockId === block.id && _selectedNote.tokenIdx === idx
       const filled = n.dur !== 'w' && n.dur !== 'h'
       const hasStem = n.dur !== 'w'
       const stemUp  = cy >= 34   // notes on/below middle line → stem up
@@ -2839,13 +2900,19 @@
         }
 
         // ── Notehead ──
+        const noteColor = isSel ? '#4ade80' : 'rgba(255,255,255,0.88)'
         const ell = mk('ellipse',{cx,cy,rx:5,ry:3.5,transform:`rotate(-15,${cx},${cy})`},svg)
         if (filled) {
-          ell.setAttribute('fill','rgba(255,255,255,0.88)')
+          ell.setAttribute('fill', noteColor)
         } else {
           ell.setAttribute('fill','none')
-          ell.setAttribute('stroke','rgba(255,255,255,0.88)')
+          ell.setAttribute('stroke', noteColor)
           ell.setAttribute('stroke-width','1.5')
+        }
+        // Selection ring
+        if (isSel) {
+          mk('ellipse',{cx,cy,rx:8,ry:6.5,transform:`rotate(-15,${cx},${cy})`,
+            fill:'none',stroke:'#4ade80','stroke-width':'1.5','stroke-dasharray':'3 2'},svg)
         }
 
         // ── Dot ──
@@ -3555,6 +3622,7 @@ ${rows}
       if (mod && e.key === 'o') { e.preventDefault(); openProject() }
       if (mod && e.key === 'n') { e.preventDefault(); newProject() }
       if (e.key === 'Escape') {
+        if (_selectedNote) { _selectedNote = null; render(); return }
         if ($('staff-popup').classList.contains('open'))          hideStaffPopup()
         else if ($('staff-palette-float').classList.contains('open')) hideStaffPalette()
         else if ($('railroad-overlay').classList.contains('open')) closeRailroad()
@@ -3564,6 +3632,40 @@ ${rows}
       if ((e.key === 'Delete' || e.key === 'Backspace') && S.selectedBlockId &&
           !['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) {
         deleteBlock()
+      }
+
+      // ── Arrow keys: move selected staff note ──────────────────
+      if (_selectedNote && ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) {
+        if (['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) return
+        e.preventDefault()
+        const block = S.blocks.find(b => b.id === _selectedNote.blockId)
+        if (!block) { _selectedNote = null; return }
+        const tokens = (block.staffNotes||'').trim().split(/\s+/).filter(Boolean)
+        const { tokenIdx } = _selectedNote
+        if (tokenIdx < 0 || tokenIdx >= tokens.length) return
+
+        if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+          // Shift pitch by one diatonic step
+          const dir = e.key === 'ArrowUp' ? 1 : -1
+          const [dur, noteStr] = tokens[tokenIdx].split(':')
+          if (noteStr && noteStr !== 'Rest') {
+            tokens[tokenIdx] = `${dur}:${shiftNotePitch(noteStr, dir)}`
+            block.staffNotes = tokens.join(' ')
+            refreshStaffChip(block)
+          }
+        } else if (e.key === 'ArrowLeft' && tokenIdx > 0) {
+          // Swap with previous token
+          ;[tokens[tokenIdx-1], tokens[tokenIdx]] = [tokens[tokenIdx], tokens[tokenIdx-1]]
+          block.staffNotes = tokens.join(' ')
+          _selectedNote = { ..._selectedNote, tokenIdx: tokenIdx - 1 }
+          refreshStaffChip(block)
+        } else if (e.key === 'ArrowRight' && tokenIdx < tokens.length - 1) {
+          // Swap with next token
+          ;[tokens[tokenIdx], tokens[tokenIdx+1]] = [tokens[tokenIdx+1], tokens[tokenIdx]]
+          block.staffNotes = tokens.join(' ')
+          _selectedNote = { ..._selectedNote, tokenIdx: tokenIdx + 1 }
+          refreshStaffChip(block)
+        }
       }
     })
   }
