@@ -1,10 +1,14 @@
 {
   "name": "bertino-music-blocs",
-  "version": "1.2.0",
+  "version": "1.5.0",
   "description": "BertinoMusicBlocs — Music composition and arrangement for macOS",
   "main": "src/main.js",
   "author": "Bertinovic",
-  "copyright": "Copyright © 2025 Bertinovic",
+  "copyright": "Copyright © 2026 Bertinovic",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Bertinovic/BertinoMusicBlocs.git"
+  },
   "scripts": {
     "dev":           "electron .",
     "build":         "electron-builder --mac --universal",
@@ -20,7 +24,7 @@
   "build": {
     "appId": "com.bertinovic.musicblocs",
     "productName": "BertinoMusicBlocs",
-    "copyright": "Copyright © 2025 Bertinovic",
+    "copyright": "Copyright © 2026 Bertinovic",
     "directories": {
       "output":         "dist",
       "buildResources": "assets"
@@ -33,10 +37,12 @@
     "asar": true,
     "mac": {
       "category": "public.app-category.music",
-      "hardenedRuntime": false,
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
       "entitlements":        "assets/entitlements.mac.plist",
       "entitlementsInherit": "assets/entitlements.mac.plist",
       "icon": "assets/icon.icns",
+      "teamId": "AM5R5684CH",
       "target": [
         { "target": "dmg", "arch": ["arm64", "x64"] },
         { "target": "zip", "arch": ["arm64", "x64"] }
