@@ -1913,7 +1913,9 @@
       const deltaMeasures = Math.round(dx / MEASURE_WIDTH)
       const block = S.blocks.find(b => b.id === _resizing.blockId)
       if (!block) return
-      const newM = Math.max(1, _resizing.startMeasures + deltaMeasures)
+      const isStaffBlock = block.type === 'staff-bloc'
+      const maxM = isStaffBlock ? 4 : MEASURES
+      const newM = Math.max(1, Math.min(maxM, _resizing.startMeasures + deltaMeasures))
       if (newM === block.measures) return
       block.measures = newM
       const chip = document.querySelector(`.block-chip[data-block-id="${block.id}"]`)
@@ -2653,105 +2655,210 @@
   }
 
   function buildStaffSVG(block, w, h) {
-    // Line Y positions (centred in h, 5 lines × 10px spacing)
-    const LINE_Y = [14, 24, 34, 44, 54]   // E4→F5 treble clef lines
-    const tokens = (block.staffNotes || '').trim().split(/\s+/).filter(Boolean)
-
+    const LINE_Y = [14,24,34,44,54]
     const NS = 'http://www.w3.org/2000/svg'
-    const svg = document.createElementNS(NS, 'svg')
-    svg.setAttribute('width', w)
-    svg.setAttribute('height', h)
-    svg.setAttribute('viewBox', `0 0 ${w} ${h}`)
+    const svg = document.createElementNS(NS,'svg')
+    svg.setAttribute('width',w); svg.setAttribute('height',h)
+    svg.setAttribute('viewBox',`0 0 ${w} ${h}`)
 
-    const line = (x1,y1,x2,y2,op=0.22) => {
-      const l = document.createElementNS(NS,'line')
-      l.setAttribute('x1',x1); l.setAttribute('y1',y1)
-      l.setAttribute('x2',x2); l.setAttribute('y2',y2)
-      l.setAttribute('stroke',`rgba(255,255,255,${op})`); l.setAttribute('stroke-width','1')
-      svg.appendChild(l); return l
+    const mk = (tag,attrs,parent) => {
+      const el = document.createElementNS(NS,tag)
+      for(const [k,v] of Object.entries(attrs)) el.setAttribute(k,v)
+      if(parent) parent.appendChild(el)
+      return el
+    }
+    const line = (x1,y1,x2,y2,op=0.22,w=1) =>
+      mk('line',{x1,y1,x2,y2,stroke:`rgba(255,255,255,${op})`,'stroke-width':w},svg)
+    const text = (x,y,str,sz=11,op=0.7,anchor='middle') => {
+      const t = mk('text',{x,y,'font-size':sz,fill:`rgba(255,255,255,${op})`,'text-anchor':anchor,'font-family':'serif'},svg)
+      t.textContent = str; return t
     }
 
-    // Staff lines
-    LINE_Y.forEach(y => line(0, y, w, y))
+    // ── Layout ──────────────────────────────────────────────────
+    const beatsPerMeasure = parseInt((S.timeSign||'4/4').split('/')[0]) || 4
+    const numMeasures     = Math.max(1, Math.min(4, block.measures || 1))
+    const keySig          = keySigInfo(S.key || 'C')
 
-    // Treble clef
-    const clef = document.createElementNS(NS,'text')
-    clef.setAttribute('x','1'); clef.setAttribute('y','62')
-    clef.setAttribute('font-size','54')
-    clef.setAttribute('fill','rgba(255,255,255,0.5)')
-    clef.setAttribute('font-family','serif')
+    const CLEF_W    = 18
+    const KEYSIG_W  = keySig.count * 6
+    const TIMESIG_W = 12
+    const HEAD_W    = CLEF_W + KEYSIG_W + TIMESIG_W + 4
+    const NOTE_AREA = w - HEAD_W
+    const MEAS_W    = NOTE_AREA / numMeasures
+
+    // ── Staff lines ──────────────────────────────────────────────
+    LINE_Y.forEach(y => line(0,y,w,y))
+
+    // ── Treble clef ──────────────────────────────────────────────
+    const clef = mk('text',{x:1,y:62,'font-size':54,fill:'rgba(255,255,255,0.55)','font-family':'serif'},svg)
     clef.textContent = '𝄞'
-    svg.appendChild(clef)
 
-    if (!tokens.length) return svg
+    // ── Key signature ─────────────────────────────────────────────
+    if (keySig.count > 0) {
+      const sym = keySig.type === '#' ? '♯' : '♭'
+      keySig.yPos.forEach((y, i) => {
+        const t = mk('text',{x: CLEF_W + i*6 + 3, y: y+4, 'font-size':9,
+          fill:'rgba(255,255,255,0.75)', 'text-anchor':'middle','font-family':'serif'}, svg)
+        t.textContent = sym
+      })
+    }
 
-    const noteStartX = 22
-    const step = Math.min(18, Math.max(10, (w - noteStartX - 4) / tokens.length))
+    // ── Time signature ────────────────────────────────────────────
+    const [tsTop, tsBot] = (S.timeSign||'4/4').split('/')
+    const tsX = CLEF_W + KEYSIG_W + 8
+    const tTop = mk('text',{x:tsX,y:LINE_Y[1]+3,'font-size':12,fill:'rgba(255,255,255,0.65)',
+      'text-anchor':'middle','font-weight':'bold','font-family':'sans-serif'},svg)
+    tTop.textContent = tsTop || '4'
+    const tBot = mk('text',{x:tsX,y:LINE_Y[3]+4,'font-size':12,fill:'rgba(255,255,255,0.65)',
+      'text-anchor':'middle','font-weight':'bold','font-family':'sans-serif'},svg)
+    tBot.textContent = tsBot || '4'
 
-    tokens.forEach((token, i) => {
-      const [dur, note] = token.split(':')
-      if (!note) return
-      const cx = noteStartX + i * step + 8
-      const isRest = note === 'Rest'
+    // ── Barlines ──────────────────────────────────────────────────
+    for (let i = 1; i < numMeasures; i++) {
+      const bx = HEAD_W + i * MEAS_W
+      line(bx, LINE_Y[0], bx, LINE_Y[4], 0.55, 1.5)
+    }
+    // Final double barline
+    line(w-3, LINE_Y[0], w-3, LINE_Y[4], 0.55, 1.5)
+    line(w-1, LINE_Y[0], w-1, LINE_Y[4], 0.55, 3)
+
+    // ── Parse tokens ──────────────────────────────────────────────
+    const { notes, totalBeats } = parseStaffTokens(block.staffNotes, beatsPerMeasure)
+    const capacity = numMeasures * beatsPerMeasure
+
+    // ── Overflow indicator ────────────────────────────────────────
+    if (totalBeats > capacity + 0.01) {
+      const warn = mk('text',{x:w-4,y:10,'font-size':9,fill:'rgba(255,180,50,0.9)',
+        'text-anchor':'end','font-family':'sans-serif'},svg)
+      warn.textContent = '!'
+    }
+
+    // ── Render notes ──────────────────────────────────────────────
+    // Collect beam groups (consecutive e/s in same measure)
+    const beamGroups = []
+    let curGroup = null
+
+    notes.forEach((n, idx) => {
+      if (n.measureIdx >= numMeasures) return   // outside chip
+
+      const cx = HEAD_W + n.measureIdx * MEAS_W
+              + (n.beatInMeasure / beatsPerMeasure) * MEAS_W + 10
+      const cy = STAFF_PITCH_Y[n.note] ?? (n.note==='Rest' ? 34 : 36)
+      const isRest = n.note === 'Rest' || n.note === 'r'
+      const filled = n.dur !== 'w' && n.dur !== 'h'
+      const hasStem = n.dur !== 'w'
+      const stemUp  = cy >= 34   // notes on/below middle line → stem up
+      const stemX   = stemUp ? cx+5 : cx-5
+      const stemEndY = stemUp ? cy-18 : cy+18
+      const hasFlag = n.dur === 'e' || n.dur === 's'
+      const beamable = hasFlag && !isRest
+
+      // ── Ledger lines ──
+      if (!isRest) {
+        if (cy >= 59) {
+          const bot = LINE_Y[LINE_Y.length-1]
+          for (let ly = bot+10; ly <= cy+3; ly+=10) line(cx-7,ly,cx+7,ly,0.55)
+        }
+        if (cy <= 9) {
+          const top = LINE_Y[0]
+          for (let ly = top-10; ly >= cy-3; ly-=10) line(cx-7,ly,cx+7,ly,0.55)
+        }
+      }
 
       if (isRest) {
-        // Quarter rest: Z shape
-        const zx = cx - 4
-        const rpath = document.createElementNS(NS,'path')
-        rpath.setAttribute('d',`M${zx},28 L${zx+8},28 L${zx},36 L${zx+8},36`)
-        rpath.setAttribute('stroke','rgba(255,255,255,0.8)'); rpath.setAttribute('stroke-width','1.5')
-        rpath.setAttribute('fill','none'); rpath.setAttribute('stroke-linecap','round')
-        svg.appendChild(rpath)
-        return
-      }
-
-      const cy = STAFF_PITCH_Y[note] ?? 34  // default to B4
-      const filled = dur !== 'w' && dur !== 'h'
-
-      // Ledger lines below the staff (C4 and lower)
-      if (cy >= 59) {
-        const bot = LINE_Y[LINE_Y.length - 1]  // 54
-        for (let ly = bot + 10; ly <= cy + 3; ly += 10) line(cx-7, ly, cx+7, ly, 0.5)
-      }
-      // Ledger lines above the staff (above G5)
-      if (cy <= 9) {
-        const top = LINE_Y[0]  // 14
-        for (let ly = top - 10; ly >= cy - 3; ly -= 10) line(cx-7, ly, cx+7, ly, 0.5)
-      }
-
-      // Notehead
-      const ell = document.createElementNS(NS,'ellipse')
-      ell.setAttribute('cx', cx); ell.setAttribute('cy', cy)
-      ell.setAttribute('rx','5'); ell.setAttribute('ry','3.5')
-      ell.setAttribute('transform',`rotate(-15,${cx},${cy})`)
-      if (filled) {
-        ell.setAttribute('fill','rgba(255,255,255,0.88)')
-      } else {
-        ell.setAttribute('fill','none')
-        ell.setAttribute('stroke','rgba(255,255,255,0.88)'); ell.setAttribute('stroke-width','1.5')
-      }
-      svg.appendChild(ell)
-
-      // Stem (not for whole)
-      if (dur !== 'w') {
-        line(cx+5, cy, cx+5, cy-20, 0.88)
-        // Flag(s)
-        if (dur === 'e' || dur === 's') {
-          const fp = document.createElementNS(NS,'path')
-          const fy = cy - 20
-          fp.setAttribute('d',`M${cx+5},${fy} Q${cx+13},${fy+4} ${cx+5},${fy+9}`)
-          fp.setAttribute('stroke','rgba(255,255,255,0.88)'); fp.setAttribute('stroke-width','1.5')
-          fp.setAttribute('fill','none'); svg.appendChild(fp)
+        // ── Rests ──
+        if (n.dur === 'w') {
+          // Whole rest: filled rect under line 2
+          mk('rect',{x:cx-6,y:LINE_Y[1],width:12,height:5,
+            fill:'rgba(255,255,255,0.8)'},svg)
+        } else if (n.dur === 'h') {
+          // Half rest: hollow rect on line 3
+          mk('rect',{x:cx-6,y:LINE_Y[2]-5,width:12,height:5,
+            fill:'none',stroke:'rgba(255,255,255,0.8)','stroke-width':1.2},svg)
+        } else {
+          // Quarter/8th/16th rest: Z-shape
+          const zx=cx-4,zy=LINE_Y[1]+2
+          const rp = mk('path',{d:`M${zx},${zy} L${zx+8},${zy} L${zx},${zy+8} L${zx+8},${zy+8}`,
+            stroke:'rgba(255,255,255,0.8)','stroke-width':1.5,fill:'none','stroke-linecap':'round'},svg)
+          if (n.dur==='e'||n.dur==='s') {
+            const fp = mk('path',{d:`M${cx+4},${zy-2} Q${cx+10},${zy+2} ${cx+4},${zy+7}`,
+              stroke:'rgba(255,255,255,0.8)','stroke-width':1.5,fill:'none'},svg)
+          }
         }
-        if (dur === 's') {
-          const fp2 = document.createElementNS(NS,'path')
-          const fy = cy - 20
-          fp2.setAttribute('d',`M${cx+5},${fy+5} Q${cx+13},${fy+9} ${cx+5},${fy+14}`)
-          fp2.setAttribute('stroke','rgba(255,255,255,0.88)'); fp2.setAttribute('stroke-width','1.5')
-          fp2.setAttribute('fill','none'); svg.appendChild(fp2)
+      } else {
+        // ── Accidental ──
+        const accMatch = n.note.match(/[#b]/)
+        if (accMatch) {
+          const accSym = accMatch[0]==='#' ? '♯' : '♭'
+          const at = mk('text',{x:cx-9,y:cy+4,'font-size':9,fill:'rgba(255,255,255,0.8)',
+            'text-anchor':'middle','font-family':'serif'},svg)
+          at.textContent = accSym
+        }
+
+        // ── Notehead ──
+        const ell = mk('ellipse',{cx,cy,rx:5,ry:3.5,transform:`rotate(-15,${cx},${cy})`},svg)
+        if (filled) {
+          ell.setAttribute('fill','rgba(255,255,255,0.88)')
+        } else {
+          ell.setAttribute('fill','none')
+          ell.setAttribute('stroke','rgba(255,255,255,0.88)')
+          ell.setAttribute('stroke-width','1.5')
+        }
+
+        // ── Dot ──
+        if (n.dotted) mk('circle',{cx:cx+8,cy:cy-1,r:1.5,fill:'rgba(255,255,255,0.8)'},svg)
+
+        // ── Stem ──
+        if (hasStem) line(stemX,cy,stemX,stemEndY,0.88)
+
+        // ── Single flag (8th) ──
+        if (n.dur==='e'||n.dur==='s') {
+          const fy = stemEndY
+          const fp = mk('path',{
+            d: stemUp
+              ? `M${stemX},${fy} Q${stemX+8},${fy+4} ${stemX},${fy+9}`
+              : `M${stemX},${fy} Q${stemX-8},${fy-4} ${stemX},${fy-9}`,
+            stroke:'rgba(255,255,255,0.88)','stroke-width':1.5,fill:'none'},svg)
+          // ── 2nd flag (16th) ──
+          if (n.dur==='s') {
+            const fp2 = mk('path',{
+              d: stemUp
+                ? `M${stemX},${fy+5} Q${stemX+8},${fy+9} ${stemX},${fy+14}`
+                : `M${stemX},${fy-5} Q${stemX-8},${fy-9} ${stemX},${fy-14}`,
+              stroke:'rgba(255,255,255,0.88)','stroke-width':1.5,fill:'none'},svg)
+          }
+        }
+
+        // ── Beam grouping data (collect for post-pass) ──
+        if (beamable) {
+          if (!curGroup || curGroup.measureIdx !== n.measureIdx ||
+              Math.floor(n.beatInMeasure) !== Math.floor(curGroup.lastBeat)) {
+            curGroup = { measureIdx:n.measureIdx, lastBeat:n.beatInMeasure,
+                         items:[{cx, stemX, stemEndY, stemUp}] }
+            beamGroups.push(curGroup)
+          } else {
+            curGroup.items.push({cx, stemX, stemEndY, stemUp})
+            curGroup.lastBeat = n.beatInMeasure
+          }
+        } else {
+          curGroup = null
         }
       }
     })
+
+    // ── Beams (draw after all noteheads) ──
+    beamGroups.forEach(grp => {
+      if (grp.items.length < 2) return
+      const up = grp.items[0].stemUp
+      const y1 = grp.items[0].stemEndY
+      const y2 = grp.items[grp.items.length-1].stemEndY
+      const x1 = grp.items[0].stemX
+      const x2 = grp.items[grp.items.length-1].stemX
+      // Horizontal beam bar
+      mk('line',{x1,y1,x2,y2,stroke:'rgba(255,255,255,0.88)','stroke-width':3,'stroke-linecap':'round'},svg)
+      // Remove individual flags from beamed notes — can't easily do post-hoc, acceptable for now
+    })
+
     return svg
   }
 
@@ -3054,35 +3161,33 @@
   ═══════════════════════════════════════════════════════════ */
   function dropBlock(type, trackId, measure = 1) {
     const def = BLOCK_DEFS[type]
-    // Find next free measure (avoid exact overlap, simple)
-    const occupied = S.blocks
-      .filter(b => b.trackId === trackId)
-      .map(b => b.measure)
+    if (!def) return
+    const isStaff = type === 'staff-bloc'
+    const defaultMeasures = isStaff ? 1 : 4
+
+    // Anti-overlap: find first position that fully fits
+    const trackBlocks = S.blocks.filter(b => b.trackId === trackId)
+    const overlaps = (start, len) =>
+      trackBlocks.some(b => start < b.measure + b.measures && start + len > b.measure)
     let m = measure
-    while (occupied.includes(m)) m++
-    if (m > MEASURES) m = measure  // fallback, allow overlap
+    while (overlaps(m, defaultMeasures) && m + defaultMeasures - 1 <= MEASURES) m++
+    if (m + defaultMeasures - 1 > MEASURES) m = measure  // last resort
 
     const block = {
       id: 'b' + BID++,
       type,
       trackId,
       measure: m,
-      measures: 4,
+      measures: defaultMeasures,
       name: def.label,
-      notes: '',
-      chords: '',
-      lyrics: '',
-      tempo: S.tempo,
-      key: S.key,
-      muted: false,
-      fretDots: [],
-      staffNotes: '',
+      notes: '', chords: '', lyrics: '',
+      tempo: S.tempo, key: S.key, muted: false,
+      fretDots: [], staffNotes: '',
     }
     S.blocks.push(block)
     S.selectedBlockId = block.id
     render()
     openBlockDetail(block.id)
-    toast(`Block "${def.label}" added`)
   }
 
   function openBlockDetail(id) {
@@ -3306,7 +3411,12 @@
     S.darkMode = data.darkMode !== false
     S.version  = data.version  || 1
     S.tracks        = data.tracks        || []
-    S.blocks        = data.blocks        || []
+    S.blocks = (data.blocks || []).map(b => ({
+      ...b,
+      staffNotes: sanitizeStaffNotes(b.staffNotes),
+      fretDots: Array.isArray(b.fretDots) ? b.fretDots : [],
+      measures: Math.max(1, b.measures || 1),
+    }))
     S.groupCollapsed = data.groupCollapsed || false
     S.projectName = data.projectName || 'Untitled Project'
 
@@ -3619,6 +3729,61 @@ ${rows}
     // Sharps/flats octave 3
     'B#3':71,'A#3':76,'G#3':81,'F#3':86,'E#3':91,'D#3':96,'C#3':101,
     'Bb3':71,'Ab3':76,'Gb3':81,'Eb3':91,'Db3':96,
+  }
+
+  // ── v1.5: Staff token parsing ───────────────────────────────
+  const STAFF_BEAT_VALUES = { w:4, h:2, q:1, e:0.5, s:0.25 }
+
+  const STAFF_KEYSIG = {
+    sharps: { C:0,G:1,D:2,A:3,E:4,B:5,'F#':6,'C#':7,
+              Am:0,Em:1,Bm:2,'F#m':3,'C#m':4,'G#m':5,'D#m':6,'A#m':7 },
+    flats:  { F:1,Bb:2,Eb:3,Ab:4,Db:5,Gb:6,Cb:7,
+              Dm:1,Gm:2,Cm:3,Fm:4,Bbm:5,Ebm:6,Abm:7 },
+    sharpY: [16,31,11,26,41,21,36],   // F5 C5 G5 D5 A4 E5 B4
+    flatY:  [36,21,41,26,46,31,51],   // B4 E5 A4 D5 G4 C5 F4
+  }
+
+  function keySigInfo(key) {
+    const ns = STAFF_KEYSIG.sharps[key]
+    if (ns > 0) return { type:'#', count:ns, yPos: STAFF_KEYSIG.sharpY.slice(0,ns) }
+    const nf = STAFF_KEYSIG.flats[key]
+    if (nf > 0) return { type:'b', count:nf, yPos: STAFF_KEYSIG.flatY.slice(0,nf) }
+    return { type:'', count:0, yPos:[] }
+  }
+
+  // Returns array of { dur, dotted, note, beats, measureIdx, beatInMeasure }
+  function parseStaffTokens(staffNotes, beatsPerMeasure) {
+    const bpm = beatsPerMeasure || 4
+    const raw = (staffNotes||'').trim().split(/\s+/).filter(Boolean)
+    const out = []
+    let beatPos = 0
+    for (const token of raw) {
+      const ci = token.indexOf(':')
+      if (ci < 0) continue
+      const durRaw = token.slice(0, ci)
+      const note   = token.slice(ci + 1)
+      const dotted = durRaw.endsWith('.')
+      const durKey = dotted ? durRaw.slice(0,-1) : durRaw
+      let beats = STAFF_BEAT_VALUES[durKey] ?? 1
+      if (dotted) beats *= 1.5
+      const measureIdx    = Math.floor(beatPos / bpm)
+      const beatInMeasure = beatPos - measureIdx * bpm
+      out.push({ dur:durKey, dotted, note, beats, measureIdx, beatInMeasure, beatPos })
+      beatPos += beats
+    }
+    return { notes:out, totalBeats:beatPos }
+  }
+
+  function sanitizeStaffNotes(raw) {
+    if (!raw || typeof raw !== 'string') return ''
+    const VALID = new Set(['w','h','q','e','s'])
+    return (raw.trim().split(/\s+/).filter(token => {
+      const ci = token.indexOf(':')
+      if (ci < 0) return false
+      const d = token.slice(0,ci).replace('.','')
+      const n = token.slice(ci+1)
+      return VALID.has(d) && n.length >= 1
+    })).join(' ')
   }
 
   function buildCtxStaff(block) {
