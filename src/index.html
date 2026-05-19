@@ -4850,7 +4850,7 @@ ${rows}
 
     scroll.innerHTML = ''
 
-    const RR_EXCLUDE = new Set(['lyrics','fretboard','staff'])
+    const RR_EXCLUDE = new Set(['lyrics','fretboard','staff','live-memo','memos'])
     const rrTracks = S.tracks.filter(t => !RR_EXCLUDE.has(t.type))
 
     if (rrTracks.length === 0) {
