@@ -2604,13 +2604,14 @@
 
         if (!block) {
           block = { id:'b'+BID++, type:'staff-bloc', trackId:track.id,
-            measure, measures:4, name:'Staff', notes:'', chords:'',
+            measure, measures:1, name:'Staff', notes:'', chords:'',
             lyrics:'', tempo:S.tempo, key:S.key, muted:false,
             fretDots:[], staffNotes:'' }
           S.blocks.push(block)
           render()
         }
-        const [letter, oct] = staffYToPitch(relY)
+        const clickScale = (block && _expandedStaff.has(block.id)) ? 2 : 1
+        const [letter, oct] = staffYToPitch(relY, clickScale)
         const dur = _spalDur || 'q'
         const acc = _spalAcc || ''
         const token = `${dur}:${letter}${acc}${oct}`
@@ -3004,8 +3005,10 @@
     // ── Staff lines ──────────────────────────────────────────────
     LINE_Y.forEach(y => line(0,y,w,y))
 
-    // ── Treble clef ──────────────────────────────────────────────
-    const clef = mk('text',{x:1,y:62*scale,'font-size':Math.round(54*scale),fill:'rgba(255,255,255,0.70)','font-family':'serif'},svg)
+    // ── Treble clef — font-size proportionnel mais plafonné pour chips étroits ──
+    const clefFontSize = Math.min(Math.round(54 * scale), 68)
+    const clefY = Math.round(LINE_Y[4] + clefFontSize * 0.18)
+    const clef = mk('text',{x:1,y:clefY,'font-size':clefFontSize,fill:'rgba(255,255,255,0.70)','font-family':'serif'},svg)
     clef.textContent = '𝄞'
 
     // ── Key signature ─────────────────────────────────────────────
@@ -3021,10 +3024,11 @@
     // ── Time signature ────────────────────────────────────────────
     const [tsTop, tsBot] = (S.timeSign||'4/4').split('/')
     const tsX = CLEF_W + KEYSIG_W + 8
-    const tTop = mk('text',{x:tsX,y:LINE_Y[1]+3,'font-size':12,fill:'rgba(255,255,255,0.85)',
+    const tsFontSize = Math.min(Math.round(12 * scale), 20)
+    const tTop = mk('text',{x:tsX,y:LINE_Y[1]+Math.round(3*scale),'font-size':tsFontSize,fill:'rgba(255,255,255,0.85)',
       'text-anchor':'middle','font-weight':'bold','font-family':'sans-serif'},svg)
     tTop.textContent = tsTop || '4'
-    const tBot = mk('text',{x:tsX,y:LINE_Y[3]+4,'font-size':12,fill:'rgba(255,255,255,0.85)',
+    const tBot = mk('text',{x:tsX,y:LINE_Y[3]+Math.round(4*scale),'font-size':tsFontSize,fill:'rgba(255,255,255,0.85)',
       'text-anchor':'middle','font-weight':'bold','font-family':'sans-serif'},svg)
     tBot.textContent = tsBot || '4'
 
