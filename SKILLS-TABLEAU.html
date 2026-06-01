@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skills & Agents — Référence rapide · bertinovicu</title>
+<style>
+/* ── SCREEN ──────────────────────────────────────────────── */
+:root {
+  --ink:     #0f172a;
+  --ink2:    #475569;
+  --border:  #cbd5e1;
+  --accent:  #7c3aed;
+  --green:   #059669;
+  --blue:    #1d4ed8;
+  --teal:    #0891b2;
+  --orange:  #d97706;
+  --bg:      #f8fafc;
+  --surface: #ffffff;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  font-size: 13px;
+  color: var(--ink);
+  background: var(--bg);
+  padding: 32px 40px;
+  line-height: 1.5;
+}
+
+/* Header */
+.page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 28px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--ink);
+}
+.page-header h1 { font-size: 22px; font-weight: 800; }
+.page-header .meta { font-size: 11px; color: var(--ink2); text-align: right; }
+
+/* Section headers */
+.section-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--ink2);
+  margin: 24px 0 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Tables */
+table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+thead tr { background: var(--ink); color: #fff; }
+thead th {
+  padding: 7px 10px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  text-align: left;
+}
+tbody tr { border-bottom: 1px solid var(--border); }
+tbody tr:nth-child(even) { background: #f1f5f9; }
+tbody td { padding: 7px 10px; vertical-align: top; }
+
+/* Badges */
+.badge {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: #fff;
+  white-space: nowrap;
+}
+.badge-skill    { background: var(--accent); }
+.badge-agent    { background: var(--blue); }
+.badge-builtin  { background: var(--ink2); }
+.badge-readonly { background: var(--teal); }
+.badge-write    { background: var(--orange); }
+
+/* Invocation */
+code {
+  font-family: 'SF Mono', 'Courier New', monospace;
+  font-size: 11px;
+  background: #e2e8f0;
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+/* Columns */
+.col-name  { width: 16%; font-weight: 700; }
+.col-inv   { width: 22%; }
+.col-desc  { width: 42%; font-size: 12px; color: var(--ink2); }
+.col-out   { width: 20%; font-size: 11px; color: var(--ink2); }
+
+/* Footer */
+.page-footer {
+  margin-top: 28px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 10px;
+  color: var(--ink2);
+  display: flex;
+  justify-content: space-between;
+}
+
+/* ── PRINT ──────────────────────────────────────────────── */
+@media print {
+  @page { size: A4 landscape; margin: 14mm 12mm; }
+  body { background: #fff; padding: 0; font-size: 11px; }
+  .page-header { border-bottom: 2px solid #000; }
+  .section-title { color: #000; border-bottom-color: #999; }
+  thead tr { background: #000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  tbody tr:nth-child(even) { background: #f5f5f5 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .badge { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  code { background: #eee; }
+  a { text-decoration: none; color: #000; }
+  .no-print { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══ HEADER ══════════════════════════════════════════════ -->
+<div class="page-header">
+  <div>
+    <h1>Skills &amp; Agents — Référence rapide</h1>
+    <div style="font-size:12px;color:var(--ink2);margin-top:2px">Claude Code · bertinovicu · Tous projets</div>
+  </div>
+  <div class="meta">
+    Mis à jour : 01/06/2026<br>
+    Invocation : <code>/nomSkill</code> dans le chat<br>
+    <span class="badge badge-skill">Skill</span>
+    <span class="badge badge-agent">Agent</span>
+    <span class="badge badge-builtin">Built-in</span>
+  </div>
+</div>
+
+<!-- ══ SKILLS PERSONNALISÉS ════════════════════════════════ -->
+<div class="section-title">Skills personnalisés (~/.claude/skills/)</div>
+<table>
+  <thead>
+    <tr>
+      <th class="col-name">Nom</th>
+      <th class="col-inv">Invocation(s)</th>
+      <th class="col-desc">Description</th>
+      <th class="col-out">Output</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="col-name"><span class="badge badge-skill">skill</span><br><strong>/versionupdate</strong></td>
+      <td class="col-inv">
+        <code>/versionupdate</code><br>
+        <code>/versionupdate 1.52</code><br>
+        <code>/versionupdate 2.0 150726</code><br>
+        <code>/versionupdate --minor</code>
+      </td>
+      <td class="col-desc">
+        Bump la version au format <strong>vX.XX-DDMMYY</strong>.<br>
+        Détecte package.json, splash.html, VERSION, pubspec.yaml…<br>
+        Met à jour tous les fichiers, commit + push/tag optionnel.<br>
+        Fonctionne sur Electron, Node, Flutter, Python, web.
+      </td>
+      <td class="col-out">
+        <span class="badge badge-write">modifie</span><br>
+        Fichiers de version + commit git
+      </td>
+    </tr>
+    <tr>
+      <td class="col-name"><span class="badge badge-skill">skill</span><br><strong>/twineyes</strong></td>
+      <td class="col-inv">
+        <code>/twineyes</code><br>
+        <code>/twineyes eyeonreal</code><br>
+        <code>/twineyes eyeontime</code><br>
+        <code>/twineyes --resume</code>
+      </td>
+      <td class="col-desc">
+        Test d'acceptation bicéphale. <strong>eyeonreal</strong> (vertical) valide chaque interaction menu/bouton. <strong>eyeontime</strong> (horizontal) trace les flux entrée→sortie et détecte couplages cachés et fuites mémoire.
+      </td>
+      <td class="col-out">
+        <span class="badge badge-readonly">read-only</span><br>
+        3 rapports Markdown sous <code>reports/twineyes/</code>
+      </td>
+    </tr>
+    <tr>
+      <td class="col-name"><span class="badge badge-skill">skill</span><br><strong>/blueagent</strong></td>
+      <td class="col-inv">
+        <code>/blueagent</code><br>
+        <code>/blueagent &lt;path&gt;</code><br>
+        <code>/blueagent &lt;PR# | branche&gt;</code><br>
+        <code>/blueagent --full</code>
+      </td>
+      <td class="col-desc">
+        Inspector Audit Agent (IAA). 7 étapes : (0) Sanctuarisation, (1) Code deep check, (2) Security roll-fix, (3) Architecture pivots, (4) Logical-process fluidity, (5) Outro HTML, <strong>(6) Scénario de développement consolidé</strong> — plan d'action priorisé issu de l'analyse.
+      </td>
+      <td class="col-out">
+        <span class="badge badge-readonly">read-only</span><br>
+        Rapport HTML incrémenté sous <code>reports/blueagent_*.html</code>
+      </td>
+    </tr>
+    <tr>
+      <td class="col-name"><span class="badge badge-skill">skill</span><br><strong>/briefair</strong></td>
+      <td class="col-inv">
+        <code>/briefair</code>
+      </td>
+      <td class="col-desc">
+        Briefing de session (&lt;60s de lecture). Lit SCOPE.md, journaux quotidiens, derniers rapports twineyes/blueagent, commits récents. À invoquer en début de session pour retrouver le contexte.
+      </td>
+      <td class="col-out">
+        <span class="badge badge-readonly">read-only</span><br>
+        <code>BRIEF.md</code>
+      </td>
+    </tr>
+    <tr>
+      <td class="col-name"><span class="badge badge-skill">skill</span><br><strong>/dayclosed</strong></td>
+      <td class="col-inv">
+        <code>/dayclosed</code>
+      </td>
+      <td class="col-desc">
+        Journal de fin de session. Résume la session courante et l'ajoute dans le fichier journal du jour. Append-only — n'écrase jamais les entrées précédentes.
+      </td>
+      <td class="col-out">
+        <span class="badge badge-write">modifie</span><br>
+        <code>reports/daily_YYYY-MM-DD.md</code>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ══ AGENTS SPÉCIALISÉS ══════════════════════════════════ -->
+<div class="section-title">Agents spécialisés (types d'agents Claude)</div>
+<table>
+  <thead>
+    <tr>
+      <th class="col-name">Nom</th>
+      <th class="col-inv">Déclencheur</th>
+      <th class="col-desc">Description</th>
+      <th class="col-out">Output</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="col-name"><span class="badge badge-agent">agent</span><br><strong>scopearea</strong></td>
+      <td class="col-inv">Agent tool : <code>subagent_type: "scopearea"</code></td>
+      <td class="col-desc">Génère ou met à jour le scope d'un projet en phase de prototypage. Modes <code>init</code> (scope vierge) et <code>update</code> (ajout versionné d'une fonction avec filtre 3 questions).</td>
+      <td class="col-out">
+        <code>SCOPE.md</code><br><code>SCOPE_CHANGELOG.md</code>
+      </td>
+    </tr>
+    <tr>
+      <td class="col-name"><span class="badge badge-agent">agent</span><br><strong>retroscope</strong></td>
+      <td class="col-inv">Agent tool : <code>subagent_type: "retroscope"</code></td>
+      <td class="col-desc">Rétro-ingénierie de scope sur une app existante. Reconstruit le scope optimal qu'aurait dû avoir le projet au démarrage + diagnostic des patterns de dérive.</td>
+      <td class="col-out">
+        <code>SCOPE_RETRO.md</code><br>Diagnostic de dérive
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ══ BUILT-IN SKILLS ════════════════════════════════════ -->
+<div class="section-title">Skills built-in Claude Code</div>
+<table>
+  <thead>
+    <tr>
+      <th class="col-name">Nom</th>
+      <th class="col-inv">Invocation</th>
+      <th class="col-desc">Description</th>
+      <th class="col-out">Output</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="col-name"><span class="badge badge-builtin">built-in</span><br><strong>/code-review</strong></td>
+      <td class="col-inv"><code>/code-review</code><br><code>/code-review --fix</code><br><code>/code-review --comment</code></td>
+      <td class="col-desc">Revue du diff courant — bugs, simplifications, efficacité. Niveaux low/medium/high/max/ultra. <code>--fix</code> applique les corrections. <code>--comment</code> poste en inline PR comments.</td>
+      <td class="col-out">Rapport findings ± corrections ± commentaires PR</td>
+    </tr>
+    <tr>
+      <td class="col-name"><span class="badge badge-builtin">built-in</span><br><strong>/security-review</strong></td>
+      <td class="col-inv"><code>/security-review</code></td>
+      <td class="col-desc">Audit sécurité complet des changements en cours sur la branche courante.</td>
+      <td class="col-out">Rapport sécurité + findings</td>
+    </tr>
+    <tr>
+      <td class="col-name"><span class="badge badge-builtin">built-in</span><br><strong>/simplify</strong></td>
+      <td class="col-inv"><code>/simplify</code></td>
+      <td class="col-desc">Revue et simplification du code modifié. Qualité uniquement (pas de chasse aux bugs — utiliser /code-review pour ça).</td>
+      <td class="col-out">Corrections inline</td>
+    </tr>
+    <tr>
+      <td class="col-name"><span class="badge badge-builtin">built-in</span><br><strong>/review</strong></td>
+      <td class="col-inv"><code>/review</code></td>
+      <td class="col-desc">Revue d'une pull request GitHub.</td>
+      <td class="col-out">Rapport PR</td>
+    </tr>
+    <tr>
+      <td class="col-name"><span class="badge badge-builtin">built-in</span><br><strong>/init</strong></td>
+      <td class="col-inv"><code>/init</code></td>
+      <td class="col-desc">Initialise un fichier CLAUDE.md avec la documentation de la base de code.</td>
+      <td class="col-out"><code>CLAUDE.md</code></td>
+    </tr>
+    <tr>
+      <td class="col-name"><span class="badge badge-builtin">built-in</span><br><strong>/run</strong></td>
+      <td class="col-inv"><code>/run</code></td>
+      <td class="col-desc">Lance et pilote l'app du projet pour vérifier qu'un changement fonctionne réellement (Electron, serveur, TUI, navigateur…).</td>
+      <td class="col-out">Observation comportement</td>
+    </tr>
+    <tr>
+      <td class="col-name"><span class="badge badge-builtin">built-in</span><br><strong>/loop</strong></td>
+      <td class="col-inv"><code>/loop 5m /foo</code></td>
+      <td class="col-desc">Exécute une commande ou un skill en boucle à intervalle régulier. Omit l'intervalle pour un auto-pace.</td>
+      <td class="col-out">Exécution récurrente</td>
+    </tr>
+    <tr>
+      <td class="col-name"><span class="badge badge-builtin">built-in</span><br><strong>/schedule</strong></td>
+      <td class="col-inv"><code>/schedule</code></td>
+      <td class="col-desc">Crée, met à jour ou liste des agents schedulés (routines cron). Supporte aussi les exécutions one-shot programmées.</td>
+      <td class="col-out">Tâche planifiée</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ══ FOOTER ══════════════════════════════════════════════ -->
+<div class="page-footer">
+  <span>bertinovicu · Claude Code · Skills &amp; Agents</span>
+  <span>v1.51-010626 · 01/06/2026</span>
+</div>
+
+</body>
+</html>
