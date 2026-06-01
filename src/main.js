@@ -243,6 +243,24 @@ ipcMain.handle('import-midi', async () => {
 // ─── App lifecycle ─────────────────────────────────────────────────────────────
 
 app.whenReady().then(() => {
+  // Grant microphone permission for Live Memo recording
+  const { session } = require('electron')
+  session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
+    const allowed = ['media', 'audioCapture', 'microphone'].includes(permission)
+    callback(allowed)
+  })
+  session.defaultSession.setPermissionCheckHandler((webContents, permission) => {
+    return ['media', 'audioCapture', 'microphone'].includes(permission)
+  })
+
+  // Global error handler — prevent silent crashes
+  process.on('uncaughtException', (err) => {
+    console.error('[uncaughtException]', err)
+  })
+  process.on('unhandledRejection', (reason) => {
+    console.error('[unhandledRejection]', reason)
+  })
+
   createSplash()
   createWindow()
 
