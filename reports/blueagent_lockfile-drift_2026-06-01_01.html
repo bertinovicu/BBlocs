@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>BlueAgent · lockfile-drift · 2026-06-01 #01</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;color:#0f172a;background:#f8fafc;padding:28px 36px;line-height:1.6}
+.header{border-bottom:2px solid #0f172a;padding-bottom:12px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:flex-end}
+.header h1{font-size:18px;font-weight:800}
+.header .meta{font-size:11px;color:#64748b;text-align:right}
+.tldr{background:#fffbeb;border-left:4px solid #d97706;padding:12px 16px;margin-bottom:22px;border-radius:0 6px 6px 0}
+.tldr h2{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#d97706;margin-bottom:6px}
+.tldr p{font-size:13px;color:#1e293b}
+.section{margin-bottom:22px}
+.section h2{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#475569;border-bottom:1px solid #e2e8f0;padding-bottom:4px;margin-bottom:10px}
+.chip{display:inline-block;padding:2px 10px;border-radius:4px;font-size:11px;font-weight:700;color:#fff;margin-bottom:8px}
+.chip-pass{background:#16a34a}.chip-watch{background:#d97706}.chip-fail{background:#dc2626}.chip-ready{background:#7c3aed}.chip-cond{background:#d97706}.chip-blocked{background:#dc2626}
+ul{padding-left:18px}.li-item{margin:4px 0;font-size:13px}
+code{font-family:'SF Mono','Courier New',monospace;font-size:11px;background:#e2e8f0;padding:1px 5px;border-radius:3px}
+pre{background:#1e293b;color:#e2e8f0;padding:14px 16px;border-radius:6px;overflow-x:auto;font-size:11px;font-family:'SF Mono','Courier New',monospace;margin:8px 0}
+.zone-fond{background:#1e40af;color:#fff;padding:1px 6px;border-radius:3px;font-size:9px;font-weight:700;font-family:monospace}
+.zone-watch{background:#d97706;color:#fff;padding:1px 6px;border-radius:3px;font-size:9px;font-weight:700}
+table{width:100%;border-collapse:collapse;font-size:12px;margin:8px 0}
+thead tr{background:#0f172a;color:#fff}
+thead th{padding:6px 10px;text-align:left;font-size:10px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase}
+tbody td{padding:6px 10px;border-bottom:1px solid #e2e8f0;vertical-align:top}
+tbody tr:nth-child(even){background:#f1f5f9}
+.sprint-item{display:flex;gap:8px;padding:6px 0;border-bottom:1px solid #e2e8f0;font-size:12px}
+.sprint-p1{color:#dc2626;font-weight:700}.sprint-p2{color:#d97706;font-weight:700}.sprint-p3{color:#059669;font-weight:700}
+.footer{margin-top:28px;padding-top:10px;border-top:1px solid #e2e8f0;font-size:10px;color:#94a3b8;display:flex;justify-content:space-between}
+@media print{@page{size:A4;margin:14mm}body{background:#fff;padding:0}pre{background:#eee;color:#000}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>BlueAgent IAA · lockfile-drift</h1>
+    <div style="font-size:12px;color:#64748b">scope: package-lock.json · mode: Audit</div>
+  </div>
+  <div class="meta">
+    lead: bertinovicu · #01<br>
+    2026-06-01T10:54Z · build: 1577b83<br>
+    branche: claude/clever-heisenberg-519d09
+  </div>
+</div>
+
+<!-- TL;DR -->
+<div class="tldr">
+  <h2>TL;DR — Ce qu'il faut faire et pourquoi</h2>
+  <p>
+    Le fichier <code>package-lock.json</code> affiche encore la version <strong>1.5.0</strong>
+    alors que <code>package.json</code> est passé à <strong>1.51.0-010626</strong>.
+    Ce décalage est inoffensif pour le build local (electron-builder lit <code>package.json</code>),
+    mais il crée du bruit dans les diffs et bloquerait un <code>npm ci</code> strict (futur CI).
+    Il suffit de committer le lockfile tel quel — ou de relancer <code>npm install</code>
+    après le bump pour l'aligner automatiquement.
+    Aucun bloquant de sécurité ni d'architecture. Un seul ticket : aligner le lockfile.
+  </p>
+</div>
+
+<!-- POINTS CLÉS -->
+<div class="section">
+  <h2>Points clés</h2>
+  <ul>
+    <li class="li-item">✅ Seul fichier non-committé : <code>package-lock.json</code> — 2 lignes modifiées, champ <code>version</code> uniquement.</li>
+    <li class="li-item">✅ Aucune dépendance ajoutée, modifiée, ou supprimée — surface sécurité nulle.</li>
+    <li class="li-item">⚠ Version lockfile <code>1.5.0</code> ≠ version package.json <code>1.51.0-010626</code> — divergence cosmétique.</li>
+    <li class="li-item">✅ Build ARM64 non affecté — electron-builder lit <code>package.json</code> directement.</li>
+    <li class="li-item">⚠ Un <code>npm ci</code> (CI strict) échouerait avec cette divergence — pas de CI actif, pas de risque immédiat.</li>
+    <li class="li-item">✅ Branche synchronisée avec remote (0 commits d'écart).</li>
+  </ul>
+</div>
+
+<!-- DÉVELOPPEMENT -->
+<div class="section">
+  <h2>0. Sanctuarisation</h2>
+  <table>
+    <thead><tr><th>Zone</th><th>Touchée</th><th>Où</th></tr></thead>
+    <tbody>
+      <tr><td><span class="zone-fond">FOND</span> Fondations</td><td>✓</td><td><code>package-lock.json:1-12</code> — version field</td></tr>
+      <tr><td>Structures</td><td>—</td><td>—</td></tr>
+      <tr><td>Fonctions</td><td>—</td><td>—</td></tr>
+      <tr><td>Logique</td><td>—</td><td>—</td></tr>
+      <tr><td>Essentiel</td><td>—</td><td>—</td></tr>
+      <tr><td>Design</td><td>—</td><td>—</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:12px;color:#64748b;margin-top:6px">
+    🔒 Fondations · Le lockfile ne doit jamais être édité manuellement — uniquement régénéré par npm.
+  </p>
+  <pre>{
+  "name": "bertino-music-blocs",
+<span class="zone-fond">FOND</span>  "version": "1.5.0",   // ← STALE vs package.json "1.51.0-010626"
+  "lockfileVersion": 3,
+  "packages": {
+    "": {
+      "name": "bertino-music-blocs",
+<span class="zone-fond">FOND</span>  "version": "1.5.0"    // ← STALE (idem)
+    }
+  }
+}</pre>
+</div>
+
+<div class="section">
+  <h2>1. CODE — Deep Check · Clean · Grant</h2>
+  <span class="chip chip-watch">⚠ WATCH</span>
+  <ul>
+    <li class="li-item"><strong>Divergence lockfile/manifest</strong> — <code>package-lock.json:3</code> et <code>:9</code> : <code>"version": "1.5.0"</code> vs <code>package.json</code> <code>"version": "1.51.0-010626"</code>.</li>
+    <li class="li-item">Cause : <code>npm install</code> exécuté avant le bump manuel de version dans package.json a figé l'ancienne valeur.</li>
+    <li class="li-item">Fix : <code>npm install</code> post-bump OU committer le lockfile en l'état (worktree éphémère).</li>
+    <li class="li-item"><strong>Grant partiel</strong> — committé tel quel, acceptable. Non committé = diff persistant parasite.</li>
+  </ul>
+</div>
+
+<div class="section">
+  <h2>2. Security Roll-Fix</h2>
+  <span class="chip chip-pass">✅ PASS</span>
+  <p style="font-size:12px;color:#64748b">Diff pur sur le champ <code>version</code>. Aucun hash d'intégrité, aucune dépendance, aucun script modifié.</p>
+</div>
+
+<div class="section">
+  <h2>3. Architecture Pivots</h2>
+  <span class="chip chip-pass">✅ PASS</span>
+  <p style="font-size:12px;color:#64748b">Pattern connu : lockfile d'un worktree git reflète l'instant de <code>npm install</code>, pas les bumps manuels ultérieurs. Aucun pivot architectural.</p>
+</div>
+
+<div class="section">
+  <h2>4. Logical-Process Fluidity</h2>
+  <span class="chip chip-pass">✅ PASS</span>
+  <p style="font-size:12px;color:#64748b">electron-builder lit <code>package.json</code> pour nommer le DMG — non affecté. Risque CI futur documenté mais non opérationnel.</p>
+</div>
+
+<!-- STEP 6 — SCÉNARIO DE BUILD -->
+<div class="section">
+  <h2>6. Scénario de développement consolidé</h2>
+  <span class="chip chip-ready">⚠ BUILD-CONDITIONNEL</span>
+  <p style="font-size:12px;color:#64748b;margin-bottom:10px">Conditionnel uniquement sur l'alignement du lockfile. Aucun bloquant fonctionnel.</p>
+
+  <table>
+    <thead><tr><th>Dimension</th><th>Verdict</th><th>Bloquant</th></tr></thead>
+    <tbody>
+      <tr><td>Code qualité (§1)</td><td>⚠ WATCH</td><td>non</td></tr>
+      <tr><td>Sécurité (§2)</td><td>✅ PASS</td><td>non</td></tr>
+      <tr><td>Architecture (§3)</td><td>✅ PASS</td><td>non</td></tr>
+      <tr><td>Flux logiques (§4)</td><td>✅ PASS</td><td>non</td></tr>
+    </tbody>
+  </table>
+
+  <p style="font-size:12px;margin:10px 0 6px"><strong>Sprint de stabilisation</strong></p>
+  <div class="sprint-item"><span class="sprint-p2">🟠 P1</span><span>Aligner lockfile · <code>npm install</code> après le bump · <code>package-lock.json</code> · 2min</span></div>
+  <div class="sprint-item"><span class="sprint-p3">🟡 P2</span><span>Committer le lockfile aligné · <code>git add package-lock.json && git commit -m "chore: sync lockfile v1.51.0-010626"</code> · 1min</span></div>
+
+  <p style="font-size:12px;margin:12px 0 6px"><strong>Build consolidé</strong></p>
+  <pre>Phase 1 — Alignement lockfile    → 1 commit · 3min
+Phase 2 — Push remote            → git push origin · 30s
+Phase 3 — Build ARM64 propre     → npm run build:arm · ~3min
+Phase 4 — Versionner si nécessaire → /versionupdate si patch</pre>
+
+  <p style="font-size:12px;margin:10px 0 4px"><strong>Critères de succès</strong></p>
+  <ul style="font-size:12px;color:#64748b">
+    <li class="li-item">[ ] <code>package-lock.json["version"]</code> === <code>package.json["version"]</code></li>
+    <li class="li-item">[ ] <code>git status</code> clean</li>
+    <li class="li-item">[ ] DMG généré nommé <code>BertinoMusicBlocs-1.51.0-010626-arm64.dmg</code></li>
+  </ul>
+
+  <p style="font-size:12px;margin:10px 0 4px"><strong>Risques résiduels</strong></p>
+  <p style="font-size:12px;color:#64748b">
+    Aucun risque opérationnel. Si un CI est mis en place ultérieurement,
+    il faudra ajouter une étape <code>npm ci --dry-run</code> pour détecter
+    les dérives lockfile avant build.
+  </p>
+</div>
+
+<!-- HISTORIQUE -->
+<div class="section">
+  <h2>Historique d'incrémentation</h2>
+  <table>
+    <thead><tr><th>#</th><th>Timestamp</th><th>Auteur</th><th>Résumé</th></tr></thead>
+    <tbody>
+      <tr><td>#01</td><td>2026-06-01T10:54Z</td><td>bertinovicu</td><td>Audit diff courant — lockfile version drift cosmétique</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="footer">
+  <span>lead: bertinovicu · BlueAgent IAA · /blueagent v3+</span>
+  <span>reports/blueagent_lockfile-drift_2026-06-01_01.html</span>
+</div>
+
+</body>
+</html>
