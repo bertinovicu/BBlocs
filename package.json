@@ -1,6 +1,6 @@
 {
   "name": "bertino-music-blocs",
-  "version": "1.5.0",
+  "version": "1.51.0-010626",
   "description": "BertinoMusicBlocs — Music composition and arrangement for macOS",
   "main": "src/main.js",
   "author": "Bertinovic",
