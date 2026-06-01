@@ -4055,7 +4055,7 @@
         warn.classList.add('visible')
       } else {
         // 1 ou plusieurs structures : toujours afficher le sélecteur
-        parentSel.innerHTML = structs.map(t => `<option value="${t.id}">${t.name}</option>`).join('')
+        parentSel.innerHTML = structs.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join('')
         _pendingParentId = structs[0].id
         parentSel.addEventListener('change', () => { _pendingParentId = parentSel.value })
         parentWrap.classList.add('visible')
@@ -4604,22 +4604,28 @@ ${rows}
   const _redoStack = []
   const MAX_UNDO   = 60
 
+  // Sérialise S en excluant audioData et waveformData (trop lourds pour l'undo)
+  function _serializeForUndo() {
+    return JSON.stringify(S, (k, v) =>
+      (k === 'audioData' || k === 'waveformData') ? undefined : v)
+  }
+
   function pushUndo() {
-    _undoStack.push(JSON.stringify(S))
+    _undoStack.push(_serializeForUndo())
     if (_undoStack.length > MAX_UNDO) _undoStack.shift()
-    _redoStack.length = 0   // toute nouvelle action vide le redo
+    _redoStack.length = 0
   }
 
   function undo() {
     if (!_undoStack.length) { toast('Rien à annuler', 900); return }
-    _redoStack.push(JSON.stringify(S))
+    _redoStack.push(_serializeForUndo())
     loadState(JSON.parse(_undoStack.pop()))
     toast('↩ Annulé', 700)
   }
 
   function redo() {
     if (!_redoStack.length) { toast('Rien à rétablir', 900); return }
-    _undoStack.push(JSON.stringify(S))
+    _undoStack.push(_serializeForUndo())
     loadState(JSON.parse(_redoStack.pop()))
     toast('↪ Rétabli', 700)
   }
@@ -5432,7 +5438,11 @@ ${rows}
       }
       reader.readAsDataURL(blob)
     }
-    _memoRec = { trackId, sub, mediaRecorder: mr, chunks, startTime: Date.now(), btnEl }
+    const maxTimer = setTimeout(() => {
+      stopMemoRecording()
+      toast(`⏹ Limite 60s — clip ${sub} sauvegardé`, 2000)
+    }, 60_000)
+    _memoRec = { trackId, sub, mediaRecorder: mr, chunks, startTime: Date.now(), btnEl, maxTimer }
     mr.start(200)
     if (btnEl) { btnEl.classList.add('active'); btnEl.textContent = '⏹' }
     toast(`⏺ Enregistrement ${sub} en cours…`, 1200)
@@ -5440,7 +5450,8 @@ ${rows}
 
   function stopMemoRecording() {
     if (!_memoRec) return
-    const { mediaRecorder, btnEl } = _memoRec
+    const { mediaRecorder, btnEl, maxTimer } = _memoRec
+    if (maxTimer) clearTimeout(maxTimer)
     if (btnEl) { btnEl.classList.remove('active'); btnEl.textContent = '🎙' }
     if (mediaRecorder.state !== 'inactive') mediaRecorder.stop()
   }
