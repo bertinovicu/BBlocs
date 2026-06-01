@@ -433,10 +433,141 @@
     </section>
 
   </main>
+
+  <!-- ═══════════════════════ SKILLS & AGENTS ═══════════════════════ -->
+  <main style="max-width:900px;margin:0 auto;padding:24px 20px 40px">
+
+    <h1 style="font-size:26px;font-weight:800;margin-bottom:4px">Skills &amp; Agents Claude</h1>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:28px">
+      Commandes slash disponibles dans Claude Code pour ce projet et en global.
+      Invoquer avec <kbd>/nomSkill</kbd> dans le chat.
+    </p>
+
+    <!-- /versionupdate -->
+    <section class="section" id="skill-versionupdate" style="margin-bottom:18px">
+      <h2 style="font-size:17px;font-weight:700;margin-bottom:10px">
+        <span style="background:#7c3aed;color:#fff;padding:2px 8px;border-radius:4px;font-size:12px;margin-right:8px">SKILL</span>
+        /versionupdate
+      </h2>
+      <div class="card">
+        <p style="font-size:14px;color:var(--text2);margin-bottom:10px">
+          Bumpe la version du projet au format <strong>vX.XX-DDMMYY</strong> (convention date du jour).
+          Détecte automatiquement <code>package.json</code>, <code>splash.html</code>, <code>VERSION</code>,
+          <code>pubspec.yaml</code>… Met à jour tous les fichiers, committe et propose un push/tag.
+        </p>
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          <tr style="background:var(--surface2)"><th style="padding:6px 10px;text-align:left">Invocation</th><th style="padding:6px 10px;text-align:left">Effet</th></tr>
+          <tr><td style="padding:5px 10px;border-top:1px solid var(--border)"><code>/versionupdate</code></td><td style="padding:5px 10px;border-top:1px solid var(--border)">Demande la version cible, date = aujourd'hui</td></tr>
+          <tr><td style="padding:5px 10px;border-top:1px solid var(--border)"><code>/versionupdate 1.52</code></td><td style="padding:5px 10px;border-top:1px solid var(--border)">Applique v1.52-DDMMYY automatiquement</td></tr>
+          <tr><td style="padding:5px 10px;border-top:1px solid var(--border)"><code>/versionupdate 2.0 150726</code></td><td style="padding:5px 10px;border-top:1px solid var(--border)">Version + date fournie manuellement</td></tr>
+          <tr><td style="padding:5px 10px;border-top:1px solid var(--border)"><code>/versionupdate --minor</code></td><td style="padding:5px 10px;border-top:1px solid var(--border)">Incrémente le minor de la version courante</td></tr>
+        </table>
+        <p style="font-size:12px;color:var(--text2);margin-top:8px">
+          ⚡ Fonctionne sur tout type de projet : Electron, Node, Flutter, Python, web.
+        </p>
+      </div>
+    </section>
+
+    <!-- /twineyes -->
+    <section class="section" id="skill-twineyes" style="margin-bottom:18px">
+      <h2 style="font-size:17px;font-weight:700;margin-bottom:10px">
+        <span style="background:#0891b2;color:#fff;padding:2px 8px;border-radius:4px;font-size:12px;margin-right:8px">SKILL</span>
+        /twineyes
+      </h2>
+      <div class="card">
+        <p style="font-size:14px;color:var(--text2);margin-bottom:8px">
+          Test d'acceptation bicéphale. Deux axes simultanés :
+        </p>
+        <ul style="padding-left:18px;font-size:13px;color:var(--text2)">
+          <li style="margin:4px 0"><strong>eyeonreal</strong> (vertical) — parcourt chaque menu, bouton, champ et valide "ça fait ce que ça prétend faire"</li>
+          <li style="margin:4px 0"><strong>eyeontime</strong> (horizontal) — trace chaque entrée jusqu'à sa sortie, détecter les couplages cachés et les fuites de données</li>
+        </ul>
+        <p style="font-size:12px;color:var(--text2);margin-top:8px">
+          Produit 3 rapports Markdown incrémentés sous <code>reports/twineyes/</code>. Read-only par défaut.
+        </p>
+      </div>
+    </section>
+
+    <!-- /briefair -->
+    <section class="section" id="skill-briefair" style="margin-bottom:18px">
+      <h2 style="font-size:17px;font-weight:700;margin-bottom:10px">
+        <span style="background:#0891b2;color:#fff;padding:2px 8px;border-radius:4px;font-size:12px;margin-right:8px">SKILL</span>
+        /briefair
+      </h2>
+      <div class="card">
+        <p style="font-size:14px;color:var(--text2)">
+          Génère un briefing de session — résumé en &lt;60s de l'état du projet.
+          Lit SCOPE.md, journaux quotidiens, derniers rapports twineyes/blueagent, commits récents.
+          Produit <code>BRIEF.md</code>. Utile en début de session pour retrouver le contexte.
+        </p>
+      </div>
+    </section>
+
+    <!-- /blueagent -->
+    <section class="section" id="skill-blueagent" style="margin-bottom:18px">
+      <h2 style="font-size:17px;font-weight:700;margin-bottom:10px">
+        <span style="background:#1d4ed8;color:#fff;padding:2px 8px;border-radius:4px;font-size:12px;margin-right:8px">SKILL</span>
+        /blueagent
+      </h2>
+      <div class="card">
+        <p style="font-size:14px;color:var(--text2)">
+          Inspector Audit Agent — analyse structurée en 6 étapes : sanctuarisation du code,
+          deep check, roll-fix sécurité, pivots architecture, fluidité logique, rapport HTML incrémenté.
+          Mode read-only par défaut.
+        </p>
+      </div>
+    </section>
+
+    <!-- /dayclosed -->
+    <section class="section" id="skill-dayclosed" style="margin-bottom:18px">
+      <h2 style="font-size:17px;font-weight:700;margin-bottom:10px">
+        <span style="background:#059669;color:#fff;padding:2px 8px;border-radius:4px;font-size:12px;margin-right:8px">SKILL</span>
+        /dayclosed
+      </h2>
+      <div class="card">
+        <p style="font-size:14px;color:var(--text2)">
+          Journal de fin de session. Résume la session courante et l'ajoute dans
+          <code>reports/daily_YYYY-MM-DD.md</code>. Append-only — n'écrase jamais les entrées précédentes.
+          À invoquer en fin de journée de travail.
+        </p>
+      </div>
+    </section>
+
+    <!-- Agents spécialisés -->
+    <h2 style="font-size:18px;font-weight:700;margin:28px 0 12px">Agents spécialisés</h2>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;font-size:13px">
+      <div class="card">
+        <strong>scopearea</strong><br>
+        <span style="color:var(--text2)">Génère ou met à jour le scope d'un projet (SCOPE.md). Modes <code>init</code> et <code>update</code>.</span>
+      </div>
+      <div class="card">
+        <strong>retroscope</strong><br>
+        <span style="color:var(--text2)">Rétro-ingénierie du scope sur un projet existant. Produit SCOPE_RETRO.md + diagnostic de dérive.</span>
+      </div>
+      <div class="card">
+        <strong>/code-review</strong><br>
+        <span style="color:var(--text2)">Revue du diff courant — bugs, simplifications, efficacité. Niveaux low/medium/high/ultra.</span>
+      </div>
+      <div class="card">
+        <strong>/security-review</strong><br>
+        <span style="color:var(--text2)">Audit sécurité des changements en cours sur la branche.</span>
+      </div>
+      <div class="card">
+        <strong>/simplify</strong><br>
+        <span style="color:var(--text2)">Revue et simplification du code modifié. Qualité uniquement (pas de chasse aux bugs).</span>
+      </div>
+      <div class="card">
+        <strong>/review</strong><br>
+        <span style="color:var(--text2)">Revue d'une pull request GitHub.</span>
+      </div>
+    </div>
+
+  </main>
 </div>
 
 <footer>
-  BertinoMusicBlocs v1.5 &mdash; Guide d'utilisation &mdash; 2026-05-19
+  BertinoMusicBlocs v1.51-010626 &mdash; Guide d'utilisation &mdash; mis à jour 2026-06-01
 </footer>
 
 </body>
